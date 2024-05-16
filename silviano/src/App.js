@@ -1,10 +1,12 @@
 import React from "react";
-// import "primereact/resources/themes/lara-light-cyan/theme.css";
-// import "primereact/resources/primereact.main.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-// import "primeicons.css";
 // import './App.css';
-import ListarGrados from "./Componetes/controllers/ListarGrados";
+import ListarGrados from "./Componetes/Academico/controllers/ListarGrados";
+import Estudiantes from "./Componetes/Academico/controllers/Estudiantes"
+import AgregarGrados from "./Componetes/Academico/controllers/AgregarGrados";
+import "./estilosCSS/flags.css"
+import "./index.css"
+
 
 function App() {
   console.log('Hi broooo')
@@ -12,9 +14,10 @@ function App() {
 
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<h1>HELLO MOTO</h1>}/>
-        <Route path="/grados" element={<ListarGrados/>}/>
-          
+        <Route path="/" element={<h1></h1>}/> entutamineto de inicio
+        <Route path="/grados" element={<ListarGrados/>}/> en rutamiento de grados 
+        <Route path="/agregargados" element={<AgregarGrados/>}/> en rutamiento de grados 
+        <Route path="/estudiantes" element={<Estudiantes/>}/>  
       </Routes>
     </BrowserRouter>
 

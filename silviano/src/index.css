@@ -1,13 +1,111 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import "primereact/resources/themes/lara-light-cyan/theme.css";
+@import "primereact/resources/primereact.min.css";
+@import "primeflex/primeflex.css";
+@import "bootstrap/dist/css/bootstrap.css";
+/*@import "primeicons.css';";*/
+
+.card {
+  padding: 2rem;
+  border-radius: 10px;
+  margin-bottom: 6rem;
+  border: 2px solid #ccc;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+.listarGrados {
+  padding: 20px;
+  border-radius: 5px;
+  margin: 10px 0;
 }
+
+.btn {
+  background: #ccc;
+  width: 20px;
+  height: 20px;
+  margin: 0 5px;
+}
+
+.add-icon {
+  width: 10px;
+  height: 10px;
+}
+
+.icon {
+  width: 15px;
+  height: 15px;
+  position: center;
+  margin-top: -20px;
+  margin-left: -7PX;
+  /*https://www.youtube.com/watch?v=c1MunmL1a2Q* MINUTO 20>8*/
+}
+
+.grado-gradoInfo h1 {
+  margin: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 25px;
+  font-weight: bold;
+  margin-left: 20px;
+}
+
+.grado-gradoInfo .box {
+  padding: 30px;
+  margin-bottom: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.grado-gradoInfo p {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 10px;
+}
+
+.grado-gradoInfo p span {
+  display: inline-block;
+  min-width: 12opx;
+}
+
+.grado-gradoInfo p span:first-child {
+  /*color: #6c757d;*/
+  color: #111010;
+}
+
+.grado-gradoInfo p span:last-child {
+  color: #0f0d0d;
+  font-weight: bold;
+}
+
+.btnAgregar {
+  border-radius: 5px;
+  position: relative;
+  padding: 0 10px;
+  margin-left: 700px;
+  margin-bottom: 10px;
+ 
+}
+.btn-guardar{
+  margin-left:20px;
+  margin-bottom: 20px;
+ 
+}
+.btn-guardar-save{
+  border-radius: 5px;
+  padding: 0 10px;
+}
+
+input p {
+  border-bottom: none;
+}
+
+/*.icon-1{
+  width :15px;
+  height :15px;
+
+  position: center;
+  margin-top: -20px;
+  margin-left: -7PX;
+ 
+
+}*/
