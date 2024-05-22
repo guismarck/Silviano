@@ -17,7 +17,7 @@ function App() {
         <Route path="/" element={<h1></h1>}/> entutamineto de inicio
         <Route path="/grados" element={<ListarGrados/>}/> en rutamiento de grados 
         <Route path="/agregargados" element={<AgregarGrados/>}/> en rutamiento de grados 
-        <Route path="/estudiantes" element={<Estudiantes/>}/>  
+        <Route path="/estudiantes" element={<Estudiantes/>} /*{<h1>estudiante</h1>}*//>  
       </Routes>
     </BrowserRouter>
 

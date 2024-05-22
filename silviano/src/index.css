@@ -2,6 +2,7 @@
 @import "primereact/resources/primereact.min.css";
 @import "primeflex/primeflex.css";
 @import "bootstrap/dist/css/bootstrap.css";
+@import 'primeicons/primeicons.css';
 /*@import "primeicons.css';";*/
 
 .card {
@@ -18,10 +19,12 @@
 }
 
 .btn {
-  background: #ccc;
-  width: 20px;
-  height: 20px;
+
+  width: 25px;
+  height: 25px;
   margin: 0 5px;
+  margin-bottom: 5px;
+  margin-top: 5px;
 }
 
 .add-icon {
@@ -30,11 +33,11 @@
 }
 
 .icon {
-  width: 15px;
-  height: 15px;
+  width: 20px;
+  height: 20px;
   position: center;
-  margin-top: -20px;
-  margin-left: -7PX;
+  margin-top: -15px;
+  margin-left: -10PX;
   /*https://www.youtube.com/watch?v=c1MunmL1a2Q* MINUTO 20>8*/
 }
 
@@ -83,20 +86,38 @@
   padding: 0 10px;
   margin-left: 700px;
   margin-bottom: 10px;
- 
+
 }
-.btn-guardar{
-  margin-left:20px;
+
+.btn-guardar {
+  margin-left: 20px;
   margin-bottom: 20px;
- 
+
 }
-.btn-guardar-save{
+
+.btn-guardar-save {
   border-radius: 5px;
   padding: 0 10px;
 }
 
 input p {
   border-bottom: none;
+}
+
+.busqueda {
+  margin-bottom: 25x;
+  margin-left: 20px;
+  margin-top: 10px;
+  padding: 0;
+  margin: 20px;
+
+
+}
+
+.busqueda-icon {
+
+  width: 200px;
+  height: 30px;
 }
 
 /*.icon-1{

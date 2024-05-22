@@ -8,7 +8,7 @@ import { Button } from 'primereact/button';
 import Vergrado from './VerGrados';
 import Addgrado from './AgregarGrados';
 import Updategrado from './EditarGrado';
-import settings from  '../../../settings.json';
+import settings from '../../../settings.json';
 //import { ServicioGrado } from '../../../Servicios/ServicioGrado';
 
 export default ListarGrados;
@@ -40,17 +40,16 @@ function ListarGrados() {
 
     const onClickDelete = async (id) => {
         try {
-          
+
             const respuesta = await axios
-               .delete(`${urlBase}/${id}`);
+                .delete(`${urlBase}/${id}`);
             if (respuesta) {
                 cargarGrado();
             }
-         } catch (error) {
+        } catch (error) {
             console.log(error)
-         }
+        }
     }
-
 
     const actionsTemplate = (rowDate) => { //botones de la occion
         return (
@@ -59,20 +58,19 @@ function ListarGrados() {
                     setSelectGradoID(rowDate.idGrado)
                     setshowViewMode(true)
                 }} >
-                    <img className='icon' src="https://img.icons8.com/ios/50/add--v1.png" alt="add--v1" />
+                    <img className='icon' src="https://img.icons8.com/material-outlined/visible--v1.png" alt="visible--v1" />
                 </button>
                 <button className='btn btn-primary'
                     onClick={() => {
-
                         setSelectGradoID(rowDate.idGrado)
                         setshowEditMode(true)
                     }}  >
-                    <img className='icon' src="https://img.icons8.com/ios/50/add--v1.png" alt="add--v1" />
+                    <img className='icon' src="https://img.icons8.com/material-outlined/edit--v1.png" alt="edit--v1" />
                 </button>
                 <button className='btn btn-danger' onClick={() => {
                     onClickDelete(rowDate.idGrado);
                 }}  >
-                    <img className='icon' src="https://img.icons8.com/ios/50/add--v1.png" alt="add--v1" />
+                    <img className='icon' src="https://img.icons8.com/material-outlined/filled-trash.png" alt="filled-trash" />
                 </button>
             </>
         )

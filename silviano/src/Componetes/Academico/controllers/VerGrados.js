@@ -31,12 +31,12 @@ function Vergrado(props) {
 
     return (
         <div className='grado-gradoInfo'>
-            <h1>Info de Grados</h1>
+            <h1>Datos del Estudiantes</h1>
             <div className='box'>
                 <div className='row'>
                     <div className='col-sm-12 col-md-6'>
                         <p>
-                            <span>ID: </span>
+                            <span>ID:</span>
                             <span>{gradoInfo.idGrado} </span>
                         </p>
                     </div>
