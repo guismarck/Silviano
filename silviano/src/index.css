@@ -103,30 +103,23 @@
 input p {
   border-bottom: none;
 }
-
-.busqueda {
-  margin-bottom: 25x;
-  margin-left: 20px;
-  margin-top: 10px;
-  padding: 0;
-  margin: 20px;
-
-
+ /*estilos css del boton nuevo estudiantes */
+.busqueda .btn-add {
+  height: 35px;
+  border-radius: 5px;
+  padding: 10px;
 }
 
 .busqueda-icon {
-
-  width: 200px;
-  height: 30px;
+  width: 250px;
+  height: 35px;
+  margin-top: 20px;
+  margin-left: 10px;
+  border-radius: 5px;
+  padding: 10px;
 }
 
-/*.icon-1{
-  width :15px;
-  height :15px;
-
-  position: center;
-  margin-top: -20px;
-  margin-left: -7PX;
- 
-
-}*/
+.btn-add {
+  margin-left: 850px;
+  top: -30px;
+}

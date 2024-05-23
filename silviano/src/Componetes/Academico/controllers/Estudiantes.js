@@ -4,6 +4,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
+import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import settings from '../../../settings.json';
 import axios from 'axios';
@@ -37,11 +38,18 @@ export default function Estudiantes() {
     };
 
     const renderHeader = () => {
+
         return (
+
             <div className="busqueda">
                 <IconField iconPosition="left" >
                     <InputText /*value={}*/ onChange={onGlobalFilterChange} placeholder="Buscar por ID" className='busqueda-icon' />
                 </IconField>
+
+                <div className="btnAdd">
+                    <Button className='btn-add' raised label=" Nuevo " icon="pi pi-plus" />
+                </div>
+
             </div>
         );
     };
@@ -52,8 +60,8 @@ export default function Estudiantes() {
         return (
             <>
                 <button className='btn btn-success' onClick={() => {
-                   setSelectEstudianteID(RowDate.idpersona)
-                     setshowViewMode(true)
+                    setSelectEstudianteID(RowDate.idpersona)
+                    setshowViewMode(true)
                 }} >
                     <img className='icon' src="https://img.icons8.com/material-outlined/visible--v1.png" alt="visible--v1" />
                 </button>
@@ -77,9 +85,12 @@ export default function Estudiantes() {
     return (
         <div className="card">
             <Card title="Estudiantes">
+
                 <DataTable value={estudiantes} paginator rows={10} dataKey="id" stripedRows
                     //  filters={filters} filterDisplay="row" loading={loading}
-                    header={header} emptyMessage="No se encontro el estudiante.">
+                    header={header} emptyMessage="No se encontro el estudiante."
+
+                >
 
                     <Column field="idpersona" header="ID" style={{ minWidth: '4rem' }} />
                     <Column field="cod_estudiante" header="Codigo" style={{ minWidth: '10rem' }} />
@@ -92,7 +103,7 @@ export default function Estudiantes() {
             <Dialog header="" visible={showViewMode}
                 style={{ width: '50vw' }}
                 onHide={() => setshowViewMode(false)} >
-                <VerEstudiante idGrado={selectEstudiantesID} />
+                <VerEstudiante idpersona={selectEstudiantesID} />
             </Dialog>
 
         </div>
