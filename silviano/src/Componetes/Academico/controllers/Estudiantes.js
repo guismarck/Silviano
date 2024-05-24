@@ -9,6 +9,7 @@ import { Card } from 'primereact/card';
 import settings from '../../../settings.json';
 import axios from 'axios';
 import VerEstudiante from '../../../Servicios/EstudiantesServicios/VerEstudinates';
+import AddEstudiante from '../../../Servicios/EstudiantesServicios/AgregarEstudinates';
 
 
 export default function Estudiantes() {
@@ -18,6 +19,8 @@ export default function Estudiantes() {
     const [estudiantes, setEstudiantes] = useState();
     const [showViewMode, setshowViewMode] = useState(false);
     const [selectEstudiantesID, setSelectEstudianteID] = useState(null);
+    const [showAddMode, setshowAddMode] = useState(false);
+
     useEffect(() => {
         cargarEstudiante()
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -47,7 +50,11 @@ export default function Estudiantes() {
                 </IconField>
 
                 <div className="btnAdd">
-                    <Button className='btn-add' raised label=" Nuevo " icon="pi pi-plus" />
+                    <Button className='btn-add' 
+                    raised label=" Nuevo " 
+                    icon="pi pi-plus"
+                    onClick={() => setshowAddMode(true)}
+                     />
                 </div>
 
             </div>
@@ -104,6 +111,15 @@ export default function Estudiantes() {
                 style={{ width: '50vw' }}
                 onHide={() => setshowViewMode(false)} >
                 <VerEstudiante idpersona={selectEstudiantesID} />
+            </Dialog>
+            <Dialog header="" visible={showAddMode}
+                style={{ width: '50vw' }}
+                onHide={() => setshowAddMode(false)} >
+                <AddEstudiante setEstudiantedoAdd={() => {
+
+                    setshowAddMode(false)
+                    cargarEstudiante ()
+                }} />
             </Dialog>
 
         </div>
