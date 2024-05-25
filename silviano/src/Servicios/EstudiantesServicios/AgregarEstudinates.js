@@ -5,6 +5,7 @@ import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
+import { InputSwitch } from "primereact/inputswitch";
 function AddEstudiante(props) {
 
     const urlBase = `${settings.api.baseUrl}/estudiantes/create`;
@@ -14,24 +15,25 @@ function AddEstudiante(props) {
         nombre_completo: '',
         apellido_completo: '',
         direccion: '',
-        partidad_nacimiento: '',
         fecha_nacimiento: '',
         cedula: '',
         cod_estudiante: '',
         codigo_MINED: '',
         nombre_tutor: '',
-        estado: ''
+        estado: '',
+
+
     })
 
     const options = [
-        { sexo: ' Masculino' },
-        { sexo: ' Femenino' },
+        { name: 'F', code:'M' },
+        { name: 'F ', code:'F' },
 
     ];
 
     const optionsAdd = [
-        { partidad_nacimiento: 'Si' },
-        { partidad_nacimiento: 'No' }
+        { name: 'si', code:'Si' },
+        { name: 'no ', code:'No' },
     ]
 
     const AddEstudianteData = async (e) => {
@@ -60,7 +62,6 @@ function AddEstudiante(props) {
                             <span>Nombres : </span>
                             <InputText className='form-control' placeholder='nombres'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, nombre_completo: e.target.value })}
-
                             />
                         </p>
                     </div>
@@ -75,10 +76,18 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Sexo : </span>
-                            <Dropdown value={estudianteInfo} onChange={(e) => setEstudianteInfo(e.value)}
-                                options={options} optionLabel="sexo"
-                                placeholder="Selecione el Genero" className="w-full md:w-14rem" />
+                          
 
+
+                        </p>
+                    </div>
+                    <div className='col-sm-12 col-md-6'>
+                        <p>
+                            <span>Partida de Nacimiento : </span>
+                            <Dropdown  value={estudianteInfo.partidad_nacimiento}
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partidad_nacimiento: e.target.value.code})}
+                                options={optionsAdd} optionLabel="name"
+                                placeholder="Selecione la opcion" className="w-full md:w-14rem" />
                         </p>
                     </div>
                     <div className='col-sm-12 col-md-6'>
@@ -90,21 +99,11 @@ function AddEstudiante(props) {
                         </p>
                     </div>
                     <div className='col-sm-12 col-md-6'>
-                        <p>
-                            <span>Fecha de Nacimiento : </span>
-                            <Calendar className='form-control' value={estudianteInfo} onChange={(e) => setEstudianteInfo(e.value)} />
-
-                        </p>
+                        <span>Fecha de Nacimiento : </span>
+                        <Calendar className='control-form' value={estudianteInfo.fecha_nacimiento}
+                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, fecha_nacimiento: e.target.value })} />
                     </div>
-                    <div className='col-sm-12 col-md-6'>
-                        <p>
-                            <span>Partida de Nacimiento : </span>
 
-                            <Dropdown value={estudianteInfo} onChange={(e) => setEstudianteInfo(e.value)}
-                                options={optionsAdd} optionLabel="partidad_nacimiento"
-                                placeholder="Selecione la opcion" className="w-full md:w-14rem" />
-                        </p>
-                    </div>
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Cedula : </span>
@@ -131,7 +130,7 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>ID :  </span>
-                            <InputText className='form-control' placeholder='ID'
+                            <InputText className='form-control' placeholder='ID' disabled
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, idpersona: e.target.value })}
                             />
 
@@ -155,13 +154,10 @@ function AddEstudiante(props) {
                     </p>
                 </div>
                 <div className='col-sm-12 col-md-6'>
-                    <p>
-                        <span>Estado : </span>
+                    <span>Estado  : </span>
+                    <InputSwitch checked={estudianteInfo.estado}
+                        onChange={e => setEstudianteInfo({ ...estudianteInfo, estado: e.target.value })} />
 
-                        <InputText className='form-control' placeholder='Estado'
-                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, estado: e.target.value })}
-                        />
-                    </p>
                 </div>
             </div>
             <div className='btn-guardar'>
