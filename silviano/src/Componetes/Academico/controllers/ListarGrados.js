@@ -40,7 +40,6 @@ function ListarGrados() {
 
     const onClickDelete = async (id) => {
         try {
-
             const respuesta = await axios
                 .delete(`${urlBase}/${id}`);
             if (respuesta) {
@@ -88,7 +87,7 @@ function ListarGrados() {
 
                 <div className='listarGrados' >
 
-                    <DataTable value={grados} stripedRows tableStyle={{ minWidth: '70rem' }}>
+                    <DataTable value={grados} stripedRows tableStyle={{ minWidth: '50rem' }}>
                         <Column field="idGrado" header="ID-Grado" style={{ width: '25%' }}></Column>
                         <Column field="categoria" header="Nivel" style={{ width: '25%' }} ></Column>
                         <Column field="nombre" header="Nombre" style={{ width: '25%' }}></Column>

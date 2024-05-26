@@ -284,11 +284,18 @@
 
 /*menu panel principal superior */
 .home-section {
-    position: relative;
+   
+    position: absolute;
     background: #39B8B6;
     left: 260px;
     width: calc(100% - 260px);
+  
     transition: all 0.5s ease;
+}
+
+@media(max-width: 750px){
+   
+
 }
 
 .sidebar.close~.home-section {
@@ -301,6 +308,7 @@
     height: 80px;
     display: flex;
     align-items: center;
+    
 }
 
 .home-section .home-content .bx-menu,
@@ -400,3 +408,4 @@
 .instagram {
     color: #bdc3c9
 }
+
