@@ -39,9 +39,6 @@ function Updategrado(props) {
        
    }*/
 
-   // useEffect(() => {
-   //    console.log(gradoInfo)
-   // }, []);
 
    const UpdategradoData = async (e) => {
       try {

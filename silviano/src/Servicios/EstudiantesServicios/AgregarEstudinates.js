@@ -83,12 +83,10 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Sexo : </span>
-                            <Dropdown
-                                value={estudianteInfo.sexo}
-                                optionLabel="label"
-                                onChange={(e) => {console.log(e.target.value);setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value })}}
-                                options={options} placeholder="Seleccione una Opción"
-                                className="w-full md:w-14rem" />
+                            <Dropdown value={estudianteInfo.sexo}
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value.code })}
+                                options={options} optionLabel="name"
+                                className="w-full md:w-14rem"    placeholder=""  />
 
                         </p>
                     </div>
