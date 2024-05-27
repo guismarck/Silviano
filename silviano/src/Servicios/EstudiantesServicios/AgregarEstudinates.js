@@ -21,25 +21,30 @@ function AddEstudiante(props) {
         codigo_MINED: '',
         nombre_tutor: '',
         estado: '',
+        sexo: ''
     })
 
     const options = [
-        { name: 'Femenino ', code: 'masculino' },
-        { name: 'Masculino ', code: 'femenino' },
+        { label: 'Femenino ', value: 'F' },
+        { label: 'Masculino ', value: 'M' },
 
     ];
 
     const optionsAdd = [
-        { name: 'Si', code: 'si' },
-        { name: 'No ', code: 'no' },
+        { label: 'Si', value: 'si' },
+        { label: 'No ', value: 'no' },
     ]
 
     const AddEstudianteData = async (e) => {
 
         try {
             console.log(estudianteInfo)
+            const toSent = estudianteInfo
+            toSent['sexo'] = toSent['sexo'].value
+            toSent['partidad_nacimiento'] = toSent['partidad_nacimiento'].value
+            console.log(toSent)
             const respuesta = await axios
-                .post(urlBase, estudianteInfo).catch(function (error) {
+                .post(urlBase, toSent).catch(function (error) {
                     console.log(error)
                 })
 
@@ -78,9 +83,11 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Sexo : </span>
-                            <Dropdown value={estudianteInfo.sexo}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value.code })}
-                                options={options} optionLabel="name"
+                            <Dropdown
+                                value={estudianteInfo.sexo}
+                                optionLabel="label"
+                                onChange={(e) => {console.log(e.target.value);setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value })}}
+                                options={options} placeholder="Seleccione una Opción"
                                 className="w-full md:w-14rem" />
 
                         </p>
@@ -89,8 +96,8 @@ function AddEstudiante(props) {
                         <p>
                             <span>Partida de Nacimiento : </span>
                             <Dropdown value={estudianteInfo.partidad_nacimiento}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partidad_nacimiento: e.target.value.code })}
-                                options={optionsAdd} optionLabel="name"
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partidad_nacimiento: e.target.value })}
+                                options={optionsAdd} optionLabel="label"
                                 className="w-full md:w-14rem" />
                         </p>
                     </div>
