@@ -19,7 +19,7 @@ function VerEstudiante(props) {
         cod_estudiante: '',
         codigo_MINED: '',
         nombre_tutor: '',
-        estado: ''
+        estado: false
     }
     const [estudianteInfo, setestudianteInfo] = useState(inicialEstudiantesInfo)
 
@@ -127,8 +127,8 @@ function VerEstudiante(props) {
                 </div>
                 <div className='col-sm-12 col-md-6'>
                     <p>
-                        <span>Estado : </span>
-                        <span>{estudianteInfo.estado} </span>
+                        <span>Estado :  </span>
+                        <span>{estudianteInfo.estado?'Activo':'Inactivo'} </span>
                     </p>
                 </div>
             </div>

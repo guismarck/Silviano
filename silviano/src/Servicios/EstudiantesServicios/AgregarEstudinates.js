@@ -84,8 +84,8 @@ function AddEstudiante(props) {
                         <p>
                             <span>Sexo : </span>
                             <Dropdown value={estudianteInfo.sexo}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value.code })}
-                                options={options} optionLabel="name"
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value })}
+                                options={options} optionLabel="label"
                                 className="w-full md:w-14rem"    placeholder=""  />
 
                         </p>
