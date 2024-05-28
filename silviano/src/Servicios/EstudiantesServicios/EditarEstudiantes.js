@@ -9,7 +9,7 @@ import { InputSwitch } from "primereact/inputswitch";
 
 function UpdateEstudiante(props) {
 
-    const urlBase = `${settings.api.baseUrl}/estudiantes/id`;
+    const urlBase = `${settings.api.baseUrl}/estudiantes`;
 
     const [estudianteInfo, setEstudianteInfo] = useState({
         idpersona: '',
@@ -22,6 +22,7 @@ function UpdateEstudiante(props) {
         codigo_MINED: '',
         nombre_tutor: '',
         estado: '',
+        sexo: ''
     })
 
     const options = [
@@ -36,7 +37,7 @@ function UpdateEstudiante(props) {
     ]
 
     useEffect(() => {
-        findById(props.idpersona)
+        findById(props.IDpersona)
         console.log(estudianteInfo)
     }, []);
 
@@ -45,13 +46,17 @@ function UpdateEstudiante(props) {
         try {
             console.log(estudianteInfo)
             const respuesta = await axios
-                .get(urlBase`${id}`).catch(function (error) {
+                .get(`${urlBase}/${id}`).catch(function (error) {
                     console.log(error)
                 })
 
             if (respuesta) {
-                console.log(respuesta.data)
-                setEstudianteInfo(respuesta.data)
+                const data = respuesta.data
+                data.fecha_nacimientop= "01/01/2024"
+
+                console.log(data)
+                setEstudianteInfo(data)
+                
             }
         } catch (error) {
             console.log(error)
@@ -61,10 +66,15 @@ function UpdateEstudiante(props) {
 
         try {
             console.log(estudianteInfo)
+            const toSent = estudianteInfo
+            toSent['sexo'] = toSent['sexo'].value
+            toSent['partidad_nacimiento'] = toSent['partidad_nacimiento'].value
+            console.log(toSent)
             const respuesta = await axios
-                .put(urlBase`${estudianteInfo.idpersona}`, estudianteInfo).catch(function (error) {
-                    console.log(error)
-                })
+                .put(`${urlBase}/${estudianteInfo.idpersona}`
+                    , estudianteInfo,toSent).catch(function (error) {
+                        console.log(error)
+                    })
 
             if (respuesta) {
                 console.log(respuesta.data)
@@ -78,15 +88,18 @@ function UpdateEstudiante(props) {
     return (
 
         <div className='grado-gradoInfo'>
-            <h1>Nuevo Estudiane</h1>
+            <h1>Actualizar Estudiane</h1>
             <div className='box'>
                 <div className='row'>
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Nombres : </span>
                             <InputText className='form-control' placeholder='nombres'
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, nombre_completo: e.target.value })}
+                                   onChange={(e) => setEstudianteInfo({ ...estudianteInfo, nombre_completo: e.target.value })}
+                                   value={estudianteInfo.nombre_completo}
+                              
                             />
+                              
                         </p>
                     </div>
                     <div className='col-sm-12 col-md-6'>
@@ -94,6 +107,7 @@ function UpdateEstudiante(props) {
                             <span>Apellidos : </span>
                             <InputText className='form-control' placeholder='apellidos'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, apellido_completo: e.target.value })}
+                                value={estudianteInfo.apellido_completo}
                             />
                         </p>
                     </div>
@@ -101,7 +115,7 @@ function UpdateEstudiante(props) {
                         <p>
                             <span>Sexo : </span>
                             <Dropdown value={estudianteInfo.sexo}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value.code })}
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value })}
                                 options={options} optionLabel="name"
                                 className="w-full md:w-14rem" />
 
@@ -111,9 +125,10 @@ function UpdateEstudiante(props) {
                         <p>
                             <span>Partida de Nacimiento : </span>
                             <Dropdown value={estudianteInfo.partidad_nacimiento}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partidad_nacimiento: e.target.value.code })}
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partidad_nacimiento: e.target.value })}
                                 options={optionsAdd} optionLabel="name"
                                 className="w-full md:w-14rem" />
+
                         </p>
                     </div>
                     <div className='col-sm-12 col-md-6'>
@@ -121,13 +136,16 @@ function UpdateEstudiante(props) {
                             <span>Direcion : </span>
                             <InputText className='form-control' placeholder='Direccion'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, direccion: e.target.value })}
+                                value={estudianteInfo.direccion}
                             />
                         </p>
                     </div>
                     <div className='col-sm-12 col-md-6'>
                         <span>Fecha de Nacimiento : </span>
                         <Calendar className='control-form' value={estudianteInfo.fecha_nacimiento}
-                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, fecha_nacimiento: e.target.value })} />
+                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, fecha_nacimiento: e.target.value })} 
+                            dateFormat="dd/mm/yyyy"
+                            />
                     </div>
 
                     <div className='col-sm-12 col-md-6'>
@@ -135,6 +153,7 @@ function UpdateEstudiante(props) {
                             <span>Cedula : </span>
                             <InputText className='form-control' placeholder='Cedula'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, cedula: e.target.value })}
+                                value={estudianteInfo.cedula}
                             />
                         </p>
                     </div>
@@ -143,6 +162,7 @@ function UpdateEstudiante(props) {
                             <span>Nombre tutor : </span>
                             <InputText className='form-control' placeholder='Nobre del Tutor'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, nombre_tutor: e.target.value })}
+                                value={estudianteInfo.nombre_tutor}
                             />
                         </p>
                     </div>
@@ -158,6 +178,7 @@ function UpdateEstudiante(props) {
                             <span>ID :  </span>
                             <InputText className='form-control' placeholder='ID' disabled
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, idpersona: e.target.value })}
+                                value={estudianteInfo.idpersona}
                             />
 
                         </p>
@@ -167,6 +188,7 @@ function UpdateEstudiante(props) {
                             <span>Codigo Estudiante : </span>
                             <InputText className='form-control' placeholder='Codigo Estudinate'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, cod_estudiante: e.target.value })}
+                                value={estudianteInfo.cod_estudiante}
                             />
                         </p>
                     </div>
@@ -176,13 +198,16 @@ function UpdateEstudiante(props) {
                         <span>Codigo MINED : </span>
                         <InputText className='form-control' placeholder='Codigo MINED'
                             onChange={(e) => setEstudianteInfo({ ...estudianteInfo, codigo_MINED: e.target.value })}
+                            value={estudianteInfo.codigo_MINED}
                         />
                     </p>
                 </div>
                 <div className='col-sm-12 col-md-6'>
                     <span>Estado  : </span>
                     <InputSwitch checked={estudianteInfo.estado}
-                        onChange={e => setEstudianteInfo({ ...estudianteInfo, estado: e.target.value })} />
+                        onChange={e => setEstudianteInfo({ ...estudianteInfo, estado: e.target.value })} 
+                      
+                        />
 
                 </div>
             </div>

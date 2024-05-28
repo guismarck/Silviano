@@ -115,7 +115,6 @@ function ListarGrados() {
                 <Updategrado
                     gradoID={selectGradoID}
                     setGradoUpdate={() => {
-
                         setshowEditMode(false)
                         cargarGrado()
                     }} />
