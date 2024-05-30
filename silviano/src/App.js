@@ -6,6 +6,7 @@ import Estudiantes from "./Componetes/Academico/controllers/Estudiantes"
 import AgregarGrados from "./Componetes/Academico/controllers/AgregarGrados";
 import "./estilosCSS/flags.css"
 import "./index.css"
+import ListMatriculas from "./Servicios/MatriculasServicios/ListMatriculas";
 
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Route path="/grados" element={<ListarGrados/>}/> en rutamiento de grados 
         <Route path="/agregargados" element={<AgregarGrados/>}/> en rutamiento de grados 
         <Route path="/estudiantes" element={<Estudiantes/>} /*{<h1>estudiante</h1>}*//>  
+        <Route path="/matriculas" element={<ListMatriculas/>} /*{<h1>estudiante</h1>}*//>  
       </Routes>
     </BrowserRouter>
 

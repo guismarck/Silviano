@@ -26,9 +26,8 @@ function UpdateEstudiante(props) {
     })
 
     const options = [
-        { name: 'Femenino ', code: 'masculino' },
-        { name: 'Masculino ', code: 'femenino' },
-
+        { label: 'Femenino ', code: 'masculino' },
+        { label: 'Masculino ', code: 'femenino' },
     ];
 
     const optionsAdd = [
@@ -52,11 +51,11 @@ function UpdateEstudiante(props) {
 
             if (respuesta) {
                 const data = respuesta.data
-                data.fecha_nacimientop= "01/01/2024"
+                data.fecha_nacimientop = "01/01/2024"
 
                 console.log(data)
                 setEstudianteInfo(data)
-                
+
             }
         } catch (error) {
             console.log(error)
@@ -72,7 +71,7 @@ function UpdateEstudiante(props) {
             console.log(toSent)
             const respuesta = await axios
                 .put(`${urlBase}/${estudianteInfo.idpersona}`
-                    , estudianteInfo,toSent).catch(function (error) {
+                    , estudianteInfo, toSent).catch(function (error) {
                         console.log(error)
                     })
 
@@ -95,11 +94,9 @@ function UpdateEstudiante(props) {
                         <p>
                             <span>Nombres : </span>
                             <InputText className='form-control' placeholder='nombres'
-                                   onChange={(e) => setEstudianteInfo({ ...estudianteInfo, nombre_completo: e.target.value })}
-                                   value={estudianteInfo.nombre_completo}
-                              
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, nombre_completo: e.target.value })}
+                                value={estudianteInfo.nombre_completo}
                             />
-                              
                         </p>
                     </div>
                     <div className='col-sm-12 col-md-6'>
@@ -114,20 +111,24 @@ function UpdateEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Sexo : </span>
-                            <Dropdown value={estudianteInfo.sexo}
+                            <Dropdown
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value })}
-                                options={options} optionLabel="name"
-                                className="w-full md:w-14rem" />
+                                options={options} optionLabel="label"
+                                className="w-full md:w-14rem"
+                                value={estudianteInfo.sexo}
+                            />
 
                         </p>
                     </div>
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Partida de Nacimiento : </span>
-                            <Dropdown value={estudianteInfo.partidad_nacimiento}
+                            <Dropdown
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partidad_nacimiento: e.target.value })}
                                 options={optionsAdd} optionLabel="name"
-                                className="w-full md:w-14rem" />
+                                className="w-full md:w-14rem"
+                                value={estudianteInfo.partidad_nacimiento}
+                            />
 
                         </p>
                     </div>
@@ -142,10 +143,11 @@ function UpdateEstudiante(props) {
                     </div>
                     <div className='col-sm-12 col-md-6'>
                         <span>Fecha de Nacimiento : </span>
-                        <Calendar className='control-form' value={estudianteInfo.fecha_nacimiento}
-                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, fecha_nacimiento: e.target.value })} 
+                        <Calendar className='control-form'
+                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, fecha_nacimiento: e.target.value })}
                             dateFormat="dd/mm/yyyy"
-                            />
+                            value={estudianteInfo.fecha_nacimiento}
+                        />
                     </div>
 
                     <div className='col-sm-12 col-md-6'>
@@ -205,9 +207,9 @@ function UpdateEstudiante(props) {
                 <div className='col-sm-12 col-md-6'>
                     <span>Estado  : </span>
                     <InputSwitch checked={estudianteInfo.estado}
-                        onChange={e => setEstudianteInfo({ ...estudianteInfo, estado: e.target.value })} 
-                      
-                        />
+                        onChange={e => setEstudianteInfo({ ...estudianteInfo, estado: e.target.value })}
+
+                    />
 
                 </div>
             </div>
