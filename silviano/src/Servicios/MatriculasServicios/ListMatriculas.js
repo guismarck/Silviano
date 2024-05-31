@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-//import { Button } from 'primereact/button';
+import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import settings from '../../../../silviano/src/settings.json';
 import axios from 'axios';
-//import BuscarEstudiantes from '../../../Servicios/EstudiantesServicios/BuscarEstudiantes';
+import BuscarEstudiantes from '../../../src/Servicios/EstudiantesServicios/BuscarEstudiantes';
 
 export default function ListMatriculas() {
     const urlMatricula = `${settings.api.baseUrl}/matriculas`;
@@ -63,9 +63,9 @@ export default function ListMatriculas() {
 
         return (
 
-            /* <div className="busqueda">
+             <div className="busqueda">
                   <BuscarEstudiantes 
-                  onFilter={onFilter} loadAll={cargarEstudiante}/>
+                  onFilter={onFilter} loadAll={ cargarMatricula()}/>
              
                  <div className="btnAdd">
                      <Button className='btn-add'
@@ -75,8 +75,8 @@ export default function ListMatriculas() {
                      />
                  </div>
               
-             </div>*/
-            <h1>probando cambios</h1>
+             </div>
+            
         );
     };
 
@@ -114,13 +114,13 @@ export default function ListMatriculas() {
 
                 <DataTable  value={matriculas}  paginator rows={10} stripedRows dataKey="id"
                     //  filters={filters} filterDisplay="row" loading={loading}
-                    header={header} emptyMessage="No se encontro el estudiante."
+                    header={header} emptyMessage="No se encontro la matricula."
                 >
-                   
                     <Column field="idmatricula" header="ID Matricula" style={{ minWidth: '10rem' }} />
-                    <Column value={matriculas.idGrado} header="ID Matricula" style={{ minWidth: '10rem' }} />
-                    <Column field="costo_matricula" header="Turno" style={{ minWidth: '12rem' }} />
+                    <Column field="costo_matricula" header="Costo" style={{ minWidth: '12rem' }} />
                     <Column field="turno" header="Turno" style={{ minWidth: '12rem' }} />
+                    <Column field="grado.nombre" header="Nivel" style={{ minWidth: '12rem' }} />
+                    <Column field="estudiante.nombre_completo" header="Nombre" style={{ minWidth: '12rem' }} />
                     <Column header="Accion" body={actionsTemplate} style={{ minWidth: '12rem' }} ></Column>
                 </DataTable> 
 
