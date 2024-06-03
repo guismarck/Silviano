@@ -3,20 +3,21 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
-import settings from '../../../../silviano/src/settings.json';
+import { Dialog } from 'primereact/dialog';
 import axios from 'axios';
 import BuscarEstudiantes from '../../../src/Servicios/EstudiantesServicios/BuscarEstudiantes';
-
+import settings from '../../../../silviano/src/settings.json';
+import VerMatricula from './VerMatriculas';
 export default function ListMatriculas() {
     const urlMatricula = `${settings.api.baseUrl}/matriculas`;
     
     const [matriculas, setMatriculas] = useState([]);
+    const [showViewMode, setshowViewMode] = useState(false);
+    const [selectMatriculaID, setSelectMatriculaID] = useState(null);
 
     useEffect(() => {
         cargarMatricula()
-   
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
 
    /*const cargarMatricula = async () => {//peticion asicrona
         try {
@@ -86,20 +87,20 @@ export default function ListMatriculas() {
         return (
             <>
                 <button className='btn btn-success' onClick={() => {
-                    // setSelectEstudianteID(RowDate.idpersona)
-                    // setshowViewMode(true)
+                     setSelectMatriculaID(RowDate.idmatricula)
+                     setshowViewMode(true)
                 }} >
                     <img className='icon' src="https://img.icons8.com/material-outlined/visible--v1.png" alt="visible--v1" />
                 </button>
                 <button className='btn btn-primary'
                     onClick={() => {
-                        //setSelectEstudianteID(RowDate.idpersona)
+                        // setSelectMatriculaID(RowDate.idmatricula)
                         // setshowEditMode(true)
                     }}  >
                     <img className='icon' src="https://img.icons8.com/material-outlined/edit--v1.png" alt="edit--v1" />
                 </button>
                 <button className='btn btn-danger' onClick={() => {
-                   // onClickDelete(RowDate.idpersona);
+                   // onClickDelete(RowDate.idmatricula);
                 }}  >
                     <img className='icon' src="https://img.icons8.com/material-outlined/filled-trash.png" alt="filled-trash" />
                 </button>
@@ -123,14 +124,15 @@ export default function ListMatriculas() {
                     <Column field="estudiante.nombre_completo" header="Nombre" style={{ minWidth: '12rem' }} />
                     <Column header="Accion" body={actionsTemplate} style={{ minWidth: '12rem' }} ></Column>
                 </DataTable> 
-
             </Card>
-
-
+            <Dialog header="" visible={showViewMode}
+                style={{ width: '50vw' }}
+                onHide={() => setshowViewMode(false)} >
+             <VerMatricula idmatricula={selectMatriculaID} />
+            </Dialog>
+          
         </div>
     );
 }
+  // 
 
-/*<Column field="turno" header="Turno" style={{ minWidth: '12rem' }} />
-                    <Column field="costo_matricula" header="Costo" style={{ minWidth: '12rem' }} />
-                    */
