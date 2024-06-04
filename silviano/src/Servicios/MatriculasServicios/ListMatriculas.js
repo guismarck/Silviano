@@ -8,13 +8,14 @@ import axios from 'axios';
 import BuscarEstudiantes from '../../../src/Servicios/EstudiantesServicios/BuscarEstudiantes';
 import settings from '../../../../silviano/src/settings.json';
 import VerMatricula from './VerMatriculas';
+import NuevaMatricula from '../../Componetes/matriculas/NuevaMatricula';
 export default function ListMatriculas() {
     const urlMatricula = `${settings.api.baseUrl}/matriculas`;
     
     const [matriculas, setMatriculas] = useState([]);
     const [showViewMode, setshowViewMode] = useState(false);
     const [selectMatriculaID, setSelectMatriculaID] = useState(null);
-
+    const [showAddMode, setshowAddMode] = useState(false);
     useEffect(() => {
         cargarMatricula()
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -65,14 +66,13 @@ export default function ListMatriculas() {
         return (
 
              <div className="busqueda">
-                  <BuscarEstudiantes 
-                  onFilter={onFilter} loadAll={ cargarMatricula()}/>
+                  
              
                  <div className="btnAdd">
                      <Button className='btn-add'
                          raised label=" Nuevo "
                          icon="pi pi-plus"
-                        // onClick={() => setshowAddMode(true)}
+                         onClick={() => setshowAddMode(true)}
                      />
                  </div>
               
@@ -130,9 +130,19 @@ export default function ListMatriculas() {
                 onHide={() => setshowViewMode(false)} >
              <VerMatricula idmatricula={selectMatriculaID} />
             </Dialog>
+            <Dialog header="" visible={showAddMode}
+                style={{ width: '50vw' }}
+                onHide={() => setshowAddMode(false)} >
+                <NuevaMatricula setMatriculaAdd={() => {
+
+                    setshowAddMode(false)
+                    cargarMatricula()
+                }} />
+            </Dialog>
           
         </div>
     );
 }
-  // 
+  // <BuscarEstudiantes 
+  //onFilter={onFilter} loadAll={ cargarMatricula()}/>
 

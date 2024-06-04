@@ -6,6 +6,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { InputSwitch } from "primereact/inputswitch";
+
 function AddEstudiante(props) {
 
     const urlBase = `${settings.api.baseUrl}/estudiantes/create`;
@@ -172,11 +173,8 @@ function AddEstudiante(props) {
                     severity="success"
                     raised onClick={AddEstudianteData}
                 />
-
             </div>
-
         </div>
     )
-
 }
 export default AddEstudiante

@@ -100,7 +100,6 @@ export default function Estudiantes() {
     return (
         <div className="card">
             <Card title="Estudiantes">
-
                 <DataTable value={estudiantes} paginator rows={10} dataKey="id" stripedRows
                     //  filters={filters} filterDisplay="row" loading={loading}
                     header={header} emptyMessage="No se encontro el estudiante."
