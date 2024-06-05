@@ -8,8 +8,12 @@ import { Button } from 'primereact/button';
 
 function NuevaMatricula(props) {
 
-  const urlBase = `${settings.api.baseUrl}/matriculas/create`;
+  const urlBase = `${settings.api.baseUrl}/matriculas/create`
   const urlBaseM = `${settings.api.baseUrl}/estudiantes`;
+  const urlBasG = `${settings.api.baseUrl}/grados`;
+  const urlBasePlandeEstudio = `${settings.api.baseUrl}/plandeEstudio`;
+  const urlBasePago = `${settings.api.baseUrl}/pago`;
+
   const inicialMatriculaInfo = {
 
     idmatricula: '',
@@ -22,6 +26,10 @@ function NuevaMatricula(props) {
       categoria: '',
       nombre: ''
     },
+    plan_de_estudio: {
+      idPlan_de_estudio: '',
+      año_electivo: ''
+    },
     turno: '',
     costo_matricula: ''
   }
@@ -33,6 +41,9 @@ function NuevaMatricula(props) {
 
   const [matriculaInfo, setmatriculaInfo] = useState(inicialMatriculaInfo)
   const [listEstudiante, setlistEstudiante] = useState([])
+  const [listGrados, setlistGrados] = useState([])
+  const [listPlandeEstudio, setPlandeEstudio] = useState([])
+  const [listPago, setPago] = useState([])
 
   const AddmatriculaData = async (e) => {
     try {
@@ -54,15 +65,54 @@ function NuevaMatricula(props) {
   }
   useEffect(() => {
     estudianteData()
+    GradoData()
+    PlandeEstudioData()
+    PagoData()
   }, []);
 
   const estudianteData = async () => {
     try {
-      const respuesta = await axios
-        .get(urlBaseM);
+      const respuesta = await axios.get(urlBaseM);
       if (respuesta) {
         console.log(respuesta.data)
+
         setlistEstudiante(respuesta.data)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  const GradoData = async () => {
+    try {
+      const respuestaG = await axios.get(urlBasG);
+      if (respuestaG) {
+        console.log(respuestaG.data)
+
+        setlistGrados(respuestaG.data)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  const PlandeEstudioData = async () => {
+    try {
+      const respuestaPlan = await axios.get(urlBasePlandeEstudio);
+      if (respuestaPlan) {
+        console.log(respuestaPlan.data)
+
+        setPlandeEstudio(respuestaPlan.data)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  const PagoData = async () => {
+    try {
+      const respuestaPago = await axios.get(urlBasePago );
+      if (respuestaPago) {
+        console.log(respuestaPago.data)
+
+        setPlandeEstudio(respuestaPago.data)
       }
     } catch (error) {
       console.log(error)
@@ -86,19 +136,38 @@ function NuevaMatricula(props) {
           </div>
           <div className='col-sm-12 col-md-6'>
             <p>
-              <span>Nombre id : </span>
-              <Dropdown value={matriculaInfo.estudiante}
+              <span>Nombre : </span>
+              <Dropdown value={matriculaInfo.estudiante} checkmark={true} editable
                 onChange={(e) => setmatriculaInfo({ ...matriculaInfo, estudiante: e.target.value })}
                 options={listEstudiante} optionLabel="nombre_completo"
                 className="w-full md:w-14rem" placeholder="" />
+
             </p>
           </div>
           <div className='col-sm-12 col-md-6'>
             <p>
               <span>Grado : </span>
-              <Dropdown value={matriculaInfo.grado}
-                onChange={(e) => setmatriculaInfo({ ...matriculaInfo, grado: e.target.value })}
-                options={listEstudiante} optionLabel="idGrado"
+              <Dropdown value={matriculaInfo.grado} checkmark={true}
+                onChange={(e) => setmatriculaInfo({ ...matriculaInfo, grado: e.target.vslue })}
+                options={listGrados} optionLabel="nombre"
+                className="w-full md:w-14rem" placeholder="" />
+            </p>
+          </div>
+          <div className='col-sm-12 col-md-6'>
+            <p>
+              <span>Plan de Estudio : </span>
+              <Dropdown value={matriculaInfo.plan_de_estudio} checkmark={true}
+                onChange={(e) => setmatriculaInfo({ ...matriculaInfo, plan_de_estudio: e.target.vslue })}
+                optionLabel="año_electivo" options={listEstudiante}
+                className="w-full md:w-14rem" placeholder="" />
+            </p>
+          </div>
+          <div className='col-sm-12 col-md-6'>
+            <p>
+              <span>ID Pago : </span>
+              <Dropdown value={matriculaInfo.pago} checkmark={true}
+                onChange={(e) => setmatriculaInfo({ ...matriculaInfo, pago: e.target.vslue })}
+                optionLabel="idpago" options={listEstudiante}
                 className="w-full md:w-14rem" placeholder="" />
             </p>
           </div>
@@ -111,6 +180,8 @@ function NuevaMatricula(props) {
                 className="w-full md:w-14rem" placeholder="" />
             </p>
           </div>
+
+
           <div className='col-sm-12 col-md-6'>
             <p>
               <span>Costo de Matricula : </span>
