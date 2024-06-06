@@ -6,10 +6,11 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { InputSwitch } from "primereact/inputswitch";
+
 function AddEstudiante(props) {
 
     const urlBase = `${settings.api.baseUrl}/estudiantes/create`;
-
+     
     const [estudianteInfo, setEstudianteInfo] = useState({
         idpersona: '',
         nombre_completo: '',
@@ -27,7 +28,6 @@ function AddEstudiante(props) {
     const options = [
         { label: 'Femenino ', value: 'F' },
         { label: 'Masculino ', value: 'M' },
-
     ];
 
     const optionsAdd = [
@@ -129,9 +129,7 @@ function AddEstudiante(props) {
                             />
                         </p>
                     </div>
-
                 </div>
-
             </div>
             <h1>Infomacion del Estudinate</h1>
             <div className='box'>
@@ -175,11 +173,8 @@ function AddEstudiante(props) {
                     severity="success"
                     raised onClick={AddEstudianteData}
                 />
-
             </div>
-
         </div>
     )
-
 }
 export default AddEstudiante

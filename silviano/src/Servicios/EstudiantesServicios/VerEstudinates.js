@@ -7,7 +7,6 @@ function VerEstudiante(props) {
     const urlBase = `${settings.api.baseUrl}/estudiantes/`;
 
     const inicialEstudiantesInfo = {
-
         idpersona: '',
         nombre_completo: '',
         apellido_completo: '',
@@ -42,12 +41,10 @@ function VerEstudiante(props) {
     }
 
     return (
-
         <div className='grado-gradoInfo'>
             <h1>Datos Personales</h1>
             <div className='box'>
                 <div className='row'>
-                   
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Nombres : </span>
@@ -90,8 +87,6 @@ function VerEstudiante(props) {
                             <span>{estudianteInfo.cedula} </span>
                         </p>
                     </div>
-
-
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Nombre tutor : </span>

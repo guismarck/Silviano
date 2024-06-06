@@ -11,7 +11,6 @@ import AddEstudiante from '../../../Servicios/EstudiantesServicios/AgregarEstudi
 import UpdateEstudiante from '../../../Servicios/EstudiantesServicios/EditarEstudiantes';
 import BuscarEstudiantes from '../../../Servicios/EstudiantesServicios/BuscarEstudiantes';
 
-
 export default function Estudiantes() {
 
     const urlBase = `${settings.api.baseUrl}/estudiantes`;
@@ -21,7 +20,6 @@ export default function Estudiantes() {
     const [showAddMode, setshowAddMode] = useState(false);
     const [showEditMode, setshowEditMode] = useState(false);
     const [selectEstudiantesID, setSelectEstudianteID] = useState(null);
-
 
     useEffect(() => {
         cargarEstudiante()
@@ -53,7 +51,7 @@ export default function Estudiantes() {
         setEstudiantes(data);
     };
     const renderHeader = () => {
-
+        
         return (
 
             <div className="busqueda">
@@ -99,11 +97,9 @@ export default function Estudiantes() {
         )
 
     }
-
     return (
         <div className="card">
             <Card title="Estudiantes">
-
                 <DataTable value={estudiantes} paginator rows={10} dataKey="id" stripedRows
                     //  filters={filters} filterDisplay="row" loading={loading}
                     header={header} emptyMessage="No se encontro el estudiante."
