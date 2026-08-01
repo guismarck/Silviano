@@ -87,7 +87,7 @@ function UpdateEstudiante(props) {
     return (
 
         <div className='grado-gradoInfo'>
-            <h1>Actualizar Estudiane</h1>
+            <h1>Actualizar Estudiante</h1>
             <div className='box'>
                 <div className='row'>
                     <div className='col-sm-12 col-md-6'>
@@ -134,7 +134,7 @@ function UpdateEstudiante(props) {
                     </div>
                     <div className='col-sm-12 col-md-6'>
                         <p>
-                            <span>Direcion : </span>
+                            <span>Dirección : </span>
                             <InputText className='form-control' placeholder='Direccion'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, direccion: e.target.value })}
                                 value={estudianteInfo.direccion}
@@ -172,7 +172,7 @@ function UpdateEstudiante(props) {
                 </div>
 
             </div>
-            <h1>Infomacion del Estudinate</h1>
+            <h1>Infomacion del Estudiante</h1>
             <div className='box'>
                 <div className='row'>
                     <div className='col-sm-12 col-md-6'>

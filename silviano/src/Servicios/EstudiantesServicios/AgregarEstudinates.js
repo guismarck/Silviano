@@ -61,7 +61,7 @@ function AddEstudiante(props) {
     return (
 
         <div className='grado-gradoInfo'>
-            <h1>Nuevo Estudiane</h1>
+            <h1>Nuevo Estudiante</h1>
             <div className='box'>
                 <div className='row'>
                     <div className='col-sm-12 col-md-6'>
@@ -131,7 +131,7 @@ function AddEstudiante(props) {
                     </div>
                 </div>
             </div>
-            <h1>Infomacion del Estudinate</h1>
+            <h1>Infomacion del Estudiante</h1>
             <div className='box'>
                 <div className='row'>
                     <div className='col-sm-12 col-md-6'>
