@@ -20,7 +20,7 @@ function Addsalon(props) {
         try {
             console.log(salonInfo)
             const respuesta = await axios
-                .post('http://localhost:8080/estudiante-app/catalogo/salon/create', salonInfo);
+                .post('https://legendary-cod-pw6grw7p7rgcr654-8080.app.github.dev/estudiante-app/catalogo/salon/create', salonInfo);
             if (respuesta) {
                 console.log(respuesta.data)
                 //gradoInfo(respuesta.data)
