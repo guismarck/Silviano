@@ -4,6 +4,7 @@ import axios from 'axios';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { useState, useEffect } from 'react';
+import api from '../../../Servicios/api/api'; 
 
 function Updatesalon(props) {
 
@@ -19,8 +20,8 @@ function Updatesalon(props) {
 
     const findById = async (id) => {
         try {
-            const respuesta = await axios
-                .get(`http://localhost:8080/estudiante-app/catalogo/salon/${id}`);
+            const respuesta = await api.get(`/estudiante-app/catalogo/salon/${id}`);
+            //const respuesta = await axios .get(`http://localhost:8080/estudiante-app/catalogo/salon/${id}`);
             if (respuesta) {
                 console.log(respuesta.data)
                 setsalonInfo(respuesta.data)
@@ -34,8 +35,8 @@ function Updatesalon(props) {
     const UpdatesalonData = async (e) => {
         try {
             console.log(salonInfo)
-            const respuesta = await axios
-                .put(`http://localhost:8080/estudiante-app/catalogo/salon/${salonInfo.idcatalogo_salon}`, salonInfo);
+            const respuesta = await api.put(`/estudiante-app/catalogo/salon/${salonInfo.idcatalogo_salon}`, salonInfo);
+            //const respuesta = await axios.put(`http://localhost:8080/estudiante-app/catalogo/salon/${salonInfo.idcatalogo_salon}`, salonInfo);
 
             if (respuesta) {
                 console.log(respuesta.data)

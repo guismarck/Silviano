@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
-import { useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form';
+import api from '../../../Servicios/api/api'; 
 
 function Addsalon(props) {
 
@@ -19,8 +20,9 @@ function Addsalon(props) {
     const AddsalonData = async (e) => {
         try {
             console.log(salonInfo)
-            const respuesta = await axios
-                .post('https://legendary-cod-pw6grw7p7rgcr654-8080.app.github.dev/estudiante-app/catalogo/salon/create', salonInfo);
+
+            const respuesta = await api.post('/estudiante-app/catalogo/salon/create', salonInfo);
+            //const respuesta = await axios.post('https://legendary-cod-pw6grw7p7rgcr654-8080.app.github.dev/estudiante-app/catalogo/salon/create', salonInfo);
             if (respuesta) {
                 console.log(respuesta.data)
                 //gradoInfo(respuesta.data)
