@@ -6,10 +6,11 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { InputSwitch } from "primereact/inputswitch";
+import api from '../api/api'; 
 
 function AddEstudiante(props) {
 
-    const urlBase = `${settings.api.baseUrl}/estudiantes/create`;
+    //const urlBase = `${settings.api.baseUrl}/estudiantes/create`;
      
     const [estudianteInfo, setEstudianteInfo] = useState({
         idpersona: '',
@@ -43,14 +44,21 @@ function AddEstudiante(props) {
             toSent['sexo'] = toSent['sexo'].value
             toSent['partidad_nacimiento'] = toSent['partidad_nacimiento'].value
             console.log(toSent)
-            const respuesta = await axios
+
+            const respuesta = await api.post('/estudiante-app/estudiantes/create',toSent).catch(function(error){
+                console.log(error);
+            });
+
+           /* const respuesta = await axios
                 .post(urlBase, toSent).catch(function (error) {
                     console.log(error)
-                })
+                })*/
 
             if (respuesta) {
                 console.log(respuesta.data)
+                props.cargarEstudiante(); 
                 props.setEstudiantedoAdd();
+                
             }
         } catch (error) {
             console.log(error)
@@ -101,7 +109,7 @@ function AddEstudiante(props) {
                     </div>
                     <div className='col-sm-12 col-md-6'>
                         <p>
-                            <span>Direcion : </span>
+                            <span>Dirección : </span>
                             <InputText className='form-control' placeholder='Direccion'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, direccion: e.target.value })}
                             />
@@ -124,14 +132,14 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Nombre tutor : </span>
-                            <InputText className='form-control' placeholder='Nobre del Tutor'
+                            <InputText className='form-control' placeholder='Nombre del Tutor'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, nombre_tutor: e.target.value })}
                             />
                         </p>
                     </div>
                 </div>
             </div>
-            <h1>Infomacion del Estudiante</h1>
+            <h1>Información del Estudiante</h1>
             <div className='box'>
                 <div className='row'>
                     <div className='col-sm-12 col-md-6'>
@@ -146,7 +154,7 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Codigo Estudiante : </span>
-                            <InputText className='form-control' placeholder='Codigo Estudinate'
+                            <InputText className='form-control' placeholder='Codigo Estudiante'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, cod_estudiante: e.target.value })}
                             />
                         </p>

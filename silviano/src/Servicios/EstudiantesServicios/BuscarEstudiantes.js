@@ -3,9 +3,11 @@ import axios from 'axios';
 import settings from '../../settings.json'
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
+import api from '../api/api';
+
 export default function BuscarEstudiantes(props) {
 
-    const urlBase = `${settings.api.baseUrl}/estudiantes`
+    //const urlBase = `${settings.api.baseUrl}/estudiantes`
     const [estudiantes, setEstudiantes] = useState([]);
     const [search, setSearch] = useState();
 
@@ -26,8 +28,13 @@ export default function BuscarEstudiantes(props) {
     //peticion 
     const estudianteSearch = async (search) => {
         try {
-            const respuesta = await axios
-                .get(`${urlBase}?search=${search}`);
+
+             const respuesta = await api.get(`/estudiante-app/estudiantes?search=${search}`).catch(function(error){
+                console.log(error);
+            });
+
+            //const respuesta = await axios.get(`${urlBase}?search=${search}`);
+
             console.log(respuesta)
             if (respuesta) {
                 console.log(respuesta.data)

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import settings from '../../settings.json'
+import settings from '../../settings.json';
+import api from '../api/api';
 
 function VerEstudiante(props) {
 
-    const urlBase = `${settings.api.baseUrl}/estudiantes/`;
+    //const urlBase = `${settings.api.baseUrl}/estudiantes/`;
 
     const inicialEstudiantesInfo = {
         idpersona: '',
@@ -29,8 +30,13 @@ function VerEstudiante(props) {
 
     const estudianteData = async () => {
         try {
-            const respuesta = await axios
-                .get(urlBase + props.idpersona);
+
+            const respuesta = await api.get(`/estudiante-app/estudiantes/${props.idpersona}`).catch(function(error){
+                console.log(error);
+            });
+
+            //const respuesta = await axios.get(urlBase + props.idpersona);
+
             if (respuesta) {
                 console.log(respuesta.data)
                 setestudianteInfo(respuesta.data)
@@ -65,7 +71,7 @@ function VerEstudiante(props) {
                     </div>
                     <div className='col-sm-12 col-md-6'>
                         <p>
-                            <span>Direcion : </span>
+                            <span>Dirección : </span>
                             <span>{estudianteInfo.direccion} </span>
                         </p>
                     </div>
@@ -98,7 +104,7 @@ function VerEstudiante(props) {
                 </div>
 
             </div>
-            <h1>Infomacion del Estudinate</h1>
+            <h1>Información del Estudiante</h1>
             <div className='box'>
                 <div className='row'>
                 <div className='col-sm-12 col-md-6'>

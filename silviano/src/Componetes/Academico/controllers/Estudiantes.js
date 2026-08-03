@@ -10,10 +10,11 @@ import VerEstudiante from '../../../Servicios/EstudiantesServicios/VerEstudinate
 import AddEstudiante from '../../../Servicios/EstudiantesServicios/AgregarEstudinates';
 import UpdateEstudiante from '../../../Servicios/EstudiantesServicios/EditarEstudiantes';
 import BuscarEstudiantes from '../../../Servicios/EstudiantesServicios/BuscarEstudiantes';
+import api from '../../../Servicios/api/api';
 
 export default function Estudiantes() {
 
-    const urlBase = `${settings.api.baseUrl}/estudiantes`;
+    //const urlBase = `${settings.api.baseUrl}/estudiantes`;
 
     const [estudiantes, setEstudiantes] = useState([]);
     const [showViewMode, setshowViewMode] = useState(false);
@@ -25,19 +26,26 @@ export default function Estudiantes() {
         cargarEstudiante()
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const cargarEstudiante = async () => {//peticion asicrona
+    const cargarEstudiante = async () => { // peticion asincrona
         try {
-            const resultado = await axios.get(urlBase);
+            // CORRECCIÓN 1: Cambiamos 'respuesta' por 'resultado' para que coincida con el if de abajo
+            const resultado = await api.get('/estudiante-app/estudiantes').catch(function(error){
+                console.log(error);
+            });
+            
             if (resultado) {
                 // console.log(resultado.data);
                 setEstudiantes(resultado.data);
             }
         } catch (error) { }
     }
+    
     const onClickDelete = async (id) => {
         try {
-            const respuesta = await axios
-                .delete(`${urlBase}/${id}`);
+            const respuesta = await api.delete(`/estudiante-app/estudiantes/${id}`).catch(function(error){
+                console.log(error);
+            });
+            
             if (respuesta) {
                 cargarEstudiante();
             }
@@ -50,10 +58,9 @@ export default function Estudiantes() {
         console.log('Entro')
         setEstudiantes(data);
     };
+    
     const renderHeader = () => {
-        
         return (
-
             <div className="busqueda">
                  <BuscarEstudiantes 
                  onFilter={onFilter} loadAll={cargarEstudiante}/>
@@ -65,7 +72,6 @@ export default function Estudiantes() {
                         onClick={() => setshowAddMode(true)}
                     />
                 </div>
-             
             </div>
         );
     };
@@ -95,13 +101,12 @@ export default function Estudiantes() {
                 </button>
             </>
         )
-
     }
+    
     return (
         <div className="card">
             <Card title="Estudiantes">
                 <DataTable value={estudiantes} paginator rows={10} dataKey="id" stripedRows
-                    //  filters={filters} filterDisplay="row" loading={loading}
                     header={header} emptyMessage="No se encontro el estudiante."
                 >
                     <Column field="idpersona" header="ID" style={{ minWidth: '4rem' }} />
@@ -112,32 +117,33 @@ export default function Estudiantes() {
                     <Column header="Accion" body={actionsTemplate} style={{ minWidth: '12rem' }} ></Column>
                 </DataTable>
             </Card>
+            
             <Dialog header="" visible={showViewMode}
                 style={{ width: '50vw' }}
                 onHide={() => setshowViewMode(false)} >
                 <VerEstudiante idpersona={selectEstudiantesID} />
             </Dialog>
+            
             <Dialog header="" visible={showAddMode}
                 style={{ width: '50vw' }}
                 onHide={() => setshowAddMode(false)} >
-                <AddEstudiante setEstudiantedoAdd={() => {
-
-                    setshowAddMode(false)
-                    cargarEstudiante()
-                }} />
+                {/* Pasamos la prop cargarEstudiante exigida por el hijo */}
+                <AddEstudiante 
+                    cargarEstudiante={cargarEstudiante} 
+                    setEstudiantedoAdd={() => setshowAddMode(false)} 
+                />
             </Dialog>
+            
             <Dialog header="" visible={showEditMode}
                 style={{ width: '50vw' }}
                 onHide={() => setshowEditMode(false)} >
+                {/* Pasamos también cargarEstudiante al formulario de edición */}
                 <UpdateEstudiante
                     IDpersona={selectEstudiantesID}
-                    setEstudianteUpdate={() => {
-
-                        setshowEditMode(false)
-                        cargarEstudiante()
-                    }} />
+                    cargarEstudiante={cargarEstudiante}
+                    setEstudianteUpdate={() => setshowEditMode(false)} 
+                />
             </Dialog>
-
         </div>
     );
 }

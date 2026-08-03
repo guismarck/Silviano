@@ -6,10 +6,11 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { InputSwitch } from "primereact/inputswitch";
+import api from '../api/api'; 
 
 function UpdateEstudiante(props) {
 
-    const urlBase = `${settings.api.baseUrl}/estudiantes`;
+    //const urlBase = `${settings.api.baseUrl}/estudiantes`;
 
     const [estudianteInfo, setEstudianteInfo] = useState({
         idpersona: '',
@@ -44,10 +45,10 @@ function UpdateEstudiante(props) {
 
         try {
             console.log(estudianteInfo)
-            const respuesta = await axios
-                .get(`${urlBase}/${id}`).catch(function (error) {
-                    console.log(error)
-                })
+            const respuesta = await api.get(`/estudiante-app/estudiantes/${id}`).catch(function(error){
+                console.log(error);
+            });
+           // const respuesta = await axios.get(`${urlBase}/${id}`).catch(function (error) {      console.log(error) })
 
             if (respuesta) {
                 const data = respuesta.data
@@ -69,11 +70,17 @@ function UpdateEstudiante(props) {
             toSent['sexo'] = toSent['sexo'].value
             toSent['partidad_nacimiento'] = toSent['partidad_nacimiento'].value
             console.log(toSent)
-            const respuesta = await axios
+
+              const respuesta = await api.put(`/estudiante-app/estudiantes/${estudianteInfo.idpersona}`).catch(function(error){
+                console.log(error);
+            });
+
+                
+           /* const respuesta = await axios
                 .put(`${urlBase}/${estudianteInfo.idpersona}`
                     , estudianteInfo, toSent).catch(function (error) {
                         console.log(error)
-                    })
+                    })*/
 
             if (respuesta) {
                 console.log(respuesta.data)
@@ -172,7 +179,7 @@ function UpdateEstudiante(props) {
                 </div>
 
             </div>
-            <h1>Infomacion del Estudiante</h1>
+            <h1>Información del Estudiante</h1>
             <div className='box'>
                 <div className='row'>
                     <div className='col-sm-12 col-md-6'>
