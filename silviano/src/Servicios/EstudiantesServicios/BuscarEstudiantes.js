@@ -1,80 +1,74 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import settings from '../../settings.json'
+import React, { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
-import api from '../api/api';
+import { InputIcon } from 'primereact/inputicon';
+import { searchEstudiantes } from '../estudianteService';
 
-export default function BuscarEstudiantes(props) {
+export default function BuscarEstudiantes({ onFilter, loadAll, placeholder = 'Buscar por nombre, código, cédula o tutor...' }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const isFirstRender = useRef(true);
 
-    //const urlBase = `${settings.api.baseUrl}/estudiantes`
-    const [estudiantes, setEstudiantes] = useState([]);
-    const [search, setSearch] = useState();
-
-    const [estudianteInfo, setEstudianteInfo] = useState({
-        idpersona: '',
-        nombre_completo: '',
-        apellido_completo: '',
-        direccion: '',
-        fecha_nacimiento: '',
-        cedula: '',
-        cod_estudiante: '',
-        codigo_MINED: '',
-        nombre_tutor: '',
-        estado: '',
-        sexo: ''
-    })
-
-    //peticion 
-    const estudianteSearch = async (search) => {
-        try {
-
-             const respuesta = await api.get(`/estudiante-app/estudiantes?search=${search}`).catch(function(error){
-                console.log(error);
-            });
-
-            //const respuesta = await axios.get(`${urlBase}?search=${search}`);
-
-            console.log(respuesta)
-            if (respuesta) {
-                console.log(respuesta.data)
-                props.onFilter(respuesta.data)
-            }
-        } catch (error) {
-            console.log(error)
-        }
+  useEffect(() => {
+    // Evita la ejecución automática al montar la vista inicial
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
     }
 
-    useEffect(() => {
-        estudianteSearch(estudianteInfo.idpersona)
-        console.log(estudianteInfo)
-    }, []);
-    //funcion de busqueda
-    const Busqueda = (e) => {
-        if (e.key !== 'Enter') return;
-        if (search === undefined ||  search === ''){
-            props.loadAll();
-            return;
-        }
-         
-        estudianteSearch(search);
-    }
-    //filtrar los datos 
-   //* const resultados = !estudiantes ? estudianteInfo : estudianteInfo.filter((val) => val.nombre_completo.toLowerCase().includes(estudianteInfo.toLowerCase().in))*/
-     //console.log(resultados)
+    const timer = setTimeout(async () => {
+      const trimmedQuery = searchTerm.trim();
 
-    return (
-        <>
-            <IconField iconPosition="left" >
-                <InputText value={search}
-                    onChange={(e) => setSearch(e.target.value)} placeholder="Buscar "
-                    onKeyUp={Busqueda}
-                    className='busqueda-icon'
-                    type='text'
-                />
-            </IconField>
+      if (!trimmedQuery) {
+        loadAll();
+        return;
+      }
 
+      setLoading(true);
+      try {
+        const data = await searchEstudiantes(trimmedQuery);
+        onFilter(Array.isArray(data) ? data : []);
+      } catch (error) {
+        onFilter([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 400);
 
-        </>
-    )
+    return () => clearTimeout(timer);
+  }, [searchTerm]); // Depende únicamente del texto del input
+
+  const handleClear = () => {
+    setSearchTerm('');
+    loadAll();
+  };
+
+  return (
+    <div className="p-fluid w-full">
+      <IconField iconPosition="left" className="w-full">
+        <InputIcon className={loading ? 'pi pi-spin pi-spinner text-primary' : 'pi pi-search'} />
+        <InputText
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder={placeholder}
+          className="w-full pr-5 text-lg py-3"
+        />
+        {searchTerm && (
+          <i
+            className="pi pi-times cursor-pointer text-500 hover:text-700 absolute"
+            style={{ right: '1rem', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}
+            onClick={handleClear}
+            title="Limpiar búsqueda"
+          />
+        )}
+      </IconField>
+    </div>
+  );
 }
+
+BuscarEstudiantes.propTypes = {
+  onFilter: PropTypes.func.isRequired,
+  loadAll: PropTypes.func.isRequired,
+  placeholder: PropTypes.string
+};

@@ -1,236 +1,351 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import settings from '../../settings.json'
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
-import { InputSwitch } from "primereact/inputswitch";
-import api from '../api/api'; 
+import { InputSwitch } from 'primereact/inputswitch';
+import { Card } from 'primereact/card';
+import { Toast } from 'primereact/toast';
+import { Divider } from 'primereact/divider';
+import { getEstudianteById, updateEstudianteService } from '../estudianteService';
 
-function UpdateEstudiante(props) {
+const SEXO_OPTIONS = [
+  { label: 'Femenino', value: 'F' },
+  { label: 'Masculino', value: 'M' }
+];
 
-    //const urlBase = `${settings.api.baseUrl}/estudiantes`;
+const PARTIDA_NACIMIENTO_OPTIONS = [
+  { label: 'Sí', value: true },
+  { label: 'No', value: false }
+];
 
-    const [estudianteInfo, setEstudianteInfo] = useState({
-        idpersona: '',
-        nombre_completo: '',
-        apellido_completo: '',
-        direccion: '',
-        fecha_nacimiento: '',
-        cedula: '',
-        cod_estudiante: '',
-        codigo_MINED: '',
-        nombre_tutor: '',
-        estado: '',
-        sexo: ''
-    })
+const UpdateEstudiante = ({ idPersona, onEstudianteUpdate }) => {
+  const toast = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
-    const options = [
-        { label: 'Femenino ', code: 'masculino' },
-        { label: 'Masculino ', code: 'femenino' },
-    ];
+  const [formValues, setFormValues] = useState({
+    idpersona: '',
+    nombre_completo: '',
+    apellido_completo: '',
+    direccion: '',
+    fecha_nacimiento: null,
+    cedula: '',
+    cod_estudiante: '',
+    codigo_MINED: '',
+    nombre_tutor: '',
+    partida_nacimiento: true,
+    estado: true,
+    sexo: ''
+  });
 
-    const optionsAdd = [
-        { name: 'Si', code: 'si' },
-        { name: 'No ', code: 'no' },
-    ]
+  // Convierte string de BD a objeto Date de JavaScript
+  const parseDateFromDB = (dateString) => {
+    if (!dateString) return null;
+    const [year, month, day] = dateString.split('-');
+    return new Date(year, month - 1, day);
+  };
 
-    useEffect(() => {
-        findById(props.IDpersona)
-        console.log(estudianteInfo)
-    }, []);
+  // Formatea Date de JavaScript a formato ISO de BD (YYYY-MM-DD)
+  const formatDateToDB = (dateObj) => {
+    if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) return null;
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
-    const findById = async (id) => {
-
-        try {
-            console.log(estudianteInfo)
-            const respuesta = await api.get(`/estudiante-app/estudiantes/${id}`).catch(function(error){
-                console.log(error);
-            });
-           // const respuesta = await axios.get(`${urlBase}/${id}`).catch(function (error) {      console.log(error) })
-
-            if (respuesta) {
-                const data = respuesta.data
-                data.fecha_nacimientop = "01/01/2024"
-
-                console.log(data)
-                setEstudianteInfo(data)
-
-            }
-        } catch (error) {
-            console.log(error)
-        }
+  const fetchEstudianteData = useCallback(async () => {
+    if (!idPersona) return;
+    setFetching(true);
+    try {
+      const data = await getEstudianteById(idPersona);
+      setFormValues({
+        ...data,
+        fecha_nacimiento: data.fecha_nacimiento ? parseDateFromDB(data.fecha_nacimiento) : null,
+        estado: Boolean(data.estado),
+        partida_nacimiento: Boolean(data.partida_nacimiento)
+      });
+    } catch (error) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error de carga',
+        detail: 'No se pudo obtener la información del estudiante.',
+        life: 4000
+      });
+    } finally {
+      setFetching(false);
     }
-    const UpdateEstudianteData = async (e) => {
+  }, [idPersona]);
 
-        try {
-            console.log(estudianteInfo)
-            const toSent = estudianteInfo
-            toSent['sexo'] = toSent['sexo'].value
-            toSent['partidad_nacimiento'] = toSent['partidad_nacimiento'].value
-            console.log(toSent)
+  useEffect(() => {
+    fetchEstudianteData();
+  }, [fetchEstudianteData]);
 
-              const respuesta = await api.put(`/estudiante-app/estudiantes/${estudianteInfo.idpersona}`).catch(function(error){
-                console.log(error);
-            });
+  const handleChange = (field, value) => {
+    setFormValues((prev) => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
-                
-           /* const respuesta = await axios
-                .put(`${urlBase}/${estudianteInfo.idpersona}`
-                    , estudianteInfo, toSent).catch(function (error) {
-                        console.log(error)
-                    })*/
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-            if (respuesta) {
-                console.log(respuesta.data)
-                props.setEstudianteUpdate();
-            }
-        } catch (error) {
-            console.log(error)
-        }
+    try {
+      const payload = {
+        ...formValues,
+        fecha_nacimiento: formatDateToDB(formValues.fecha_nacimiento)
+      };
+
+      await updateEstudianteService(formValues.idpersona, payload);
+
+      toast.current?.show({
+        severity: 'success',
+        summary: 'Operación Exitosa',
+        detail: 'Expediente del estudiante actualizado correctamente.',
+        life: 3000
+      });
+
+      if (typeof onEstudianteUpdate === 'function') {
+        onEstudianteUpdate();
+      }
+    } catch (error) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error al Guardar',
+        detail: 'Ocurrió un error al intentar actualizar los datos.',
+        life: 4000
+      });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    return (
-
-        <div className='grado-gradoInfo'>
-            <h1>Actualizar Estudiante</h1>
-            <div className='box'>
-                <div className='row'>
-                    <div className='col-sm-12 col-md-6'>
-                        <p>
-                            <span>Nombres : </span>
-                            <InputText className='form-control' placeholder='nombres'
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, nombre_completo: e.target.value })}
-                                value={estudianteInfo.nombre_completo}
-                            />
-                        </p>
-                    </div>
-                    <div className='col-sm-12 col-md-6'>
-                        <p>
-                            <span>Apellidos : </span>
-                            <InputText className='form-control' placeholder='apellidos'
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, apellido_completo: e.target.value })}
-                                value={estudianteInfo.apellido_completo}
-                            />
-                        </p>
-                    </div>
-                    <div className='col-sm-12 col-md-6'>
-                        <p>
-                            <span>Sexo : </span>
-                            <Dropdown
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value })}
-                                options={options} optionLabel="label"
-                                className="w-full md:w-14rem"
-                                value={estudianteInfo.sexo}
-                            />
-
-                        </p>
-                    </div>
-                    <div className='col-sm-12 col-md-6'>
-                        <p>
-                            <span>Partida de Nacimiento : </span>
-                            <Dropdown
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partidad_nacimiento: e.target.value })}
-                                options={optionsAdd} optionLabel="name"
-                                className="w-full md:w-14rem"
-                                value={estudianteInfo.partidad_nacimiento}
-                            />
-
-                        </p>
-                    </div>
-                    <div className='col-sm-12 col-md-6'>
-                        <p>
-                            <span>Dirección : </span>
-                            <InputText className='form-control' placeholder='Direccion'
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, direccion: e.target.value })}
-                                value={estudianteInfo.direccion}
-                            />
-                        </p>
-                    </div>
-                    <div className='col-sm-12 col-md-6'>
-                        <span>Fecha de Nacimiento : </span>
-                        <Calendar className='control-form'
-                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, fecha_nacimiento: e.target.value })}
-                            dateFormat="dd/mm/yyyy"
-                            value={estudianteInfo.fecha_nacimiento}
-                        />
-                    </div>
-
-                    <div className='col-sm-12 col-md-6'>
-                        <p>
-                            <span>Cedula : </span>
-                            <InputText className='form-control' placeholder='Cedula'
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, cedula: e.target.value })}
-                                value={estudianteInfo.cedula}
-                            />
-                        </p>
-                    </div>
-                    <div className='col-sm-12 col-md-6'>
-                        <p>
-                            <span>Nombre tutor : </span>
-                            <InputText className='form-control' placeholder='Nobre del Tutor'
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, nombre_tutor: e.target.value })}
-                                value={estudianteInfo.nombre_tutor}
-                            />
-                        </p>
-                    </div>
-
-                </div>
-
-            </div>
-            <h1>Información del Estudiante</h1>
-            <div className='box'>
-                <div className='row'>
-                    <div className='col-sm-12 col-md-6'>
-                        <p>
-                            <span>ID :  </span>
-                            <InputText className='form-control' placeholder='ID' disabled
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, idpersona: e.target.value })}
-                                value={estudianteInfo.idpersona}
-                            />
-
-                        </p>
-                    </div>
-                    <div className='col-sm-12 col-md-6'>
-                        <p>
-                            <span>Codigo Estudiante : </span>
-                            <InputText className='form-control' placeholder='Codigo Estudinate'
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, cod_estudiante: e.target.value })}
-                                value={estudianteInfo.cod_estudiante}
-                            />
-                        </p>
-                    </div>
-                </div>
-                <div className='col-sm-12 col-md-6'>
-                    <p>
-                        <span>Codigo MINED : </span>
-                        <InputText className='form-control' placeholder='Codigo MINED'
-                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, codigo_MINED: e.target.value })}
-                            value={estudianteInfo.codigo_MINED}
-                        />
-                    </p>
-                </div>
-                <div className='col-sm-12 col-md-6'>
-                    <span>Estado  : </span>
-                    <InputSwitch checked={estudianteInfo.estado}
-                        onChange={e => setEstudianteInfo({ ...estudianteInfo, estado: e.target.value })}
-
-                    />
-
-                </div>
-            </div>
-            <div className='btn-guardar'>
-                <Button className='btn-guardar-save'
-                    label="Guardar"
-                    severity="success"
-                    raised onClick={UpdateEstudianteData}
+  return (
+    <div className="surface-ground p-3 md:p-4 border-round shadow-1">
+      <Toast ref={toast} />
+      
+      <form onSubmit={handleSubmit} className="p-fluid">
+        <Card title="Actualizar Datos Personales" className="mb-4 shadow-1">
+          <div className="row g-3">
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="nombre_completo" className="font-semibold text-700">
+                  Nombres
+                </label>
+                <InputText
+                  id="nombre_completo"
+                  placeholder="Ingrese los nombres"
+                  value={formValues.nombre_completo}
+                  onChange={(e) => handleChange('nombre_completo', e.target.value)}
+                  disabled={fetching}
+                  required
                 />
-
+              </div>
             </div>
 
-        </div>
-    )
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="apellido_completo" className="font-semibold text-700">
+                  Apellidos
+                </label>
+                <InputText
+                  id="apellido_completo"
+                  placeholder="Ingrese los apellidos"
+                  value={formValues.apellido_completo}
+                  onChange={(e) => handleChange('apellido_completo', e.target.value)}
+                  disabled={fetching}
+                  required
+                />
+              </div>
+            </div>
 
-}
-export default UpdateEstudiante
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="sexo" className="font-semibold text-700">
+                  Sexo
+                </label>
+                <Dropdown
+                  id="sexo"
+                  options={SEXO_OPTIONS}
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Seleccione sexo"
+                  value={formValues.sexo}
+                  onChange={(e) => handleChange('sexo', e.value)}
+                  disabled={fetching}
+                />
+              </div>
+            </div>
+
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="partida_nacimiento" className="font-semibold text-700">
+                  Partida de Nacimiento
+                </label>
+                <Dropdown
+                  id="partida_nacimiento"
+                  options={PARTIDA_NACIMIENTO_OPTIONS}
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="¿Cuenta con partida?"
+                  value={formValues.partida_nacimiento}
+                  onChange={(e) => handleChange('partida_nacimiento', e.value)}
+                  disabled={fetching}
+                />
+              </div>
+            </div>
+
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="fecha_nacimiento" className="font-semibold text-700">
+                  Fecha de Nacimiento
+                </label>
+                <Calendar
+                  id="fecha_nacimiento"
+                  value={formValues.fecha_nacimiento}
+                  onChange={(e) => handleChange('fecha_nacimiento', e.value)}
+                  dateFormat="dd/mm/yy"
+                  showIcon
+                  placeholder="dd/mm/aaaa"
+                  disabled={fetching}
+                />
+              </div>
+            </div>
+
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="cedula" className="font-semibold text-700">
+                  Cédula / Identificación
+                </label>
+                <InputText
+                  id="cedula"
+                  placeholder="000-000000-0000X"
+                  value={formValues.cedula}
+                  onChange={(e) => handleChange('cedula', e.target.value)}
+                  disabled={fetching}
+                />
+              </div>
+            </div>
+
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="nombre_tutor" className="font-semibold text-700">
+                  Nombre del Tutor / Apoderado
+                </label>
+                <InputText
+                  id="nombre_tutor"
+                  placeholder="Nombre completo del tutor"
+                  value={formValues.nombre_tutor}
+                  onChange={(e) => handleChange('nombre_tutor', e.target.value)}
+                  disabled={fetching}
+                />
+              </div>
+            </div>
+
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="direccion" className="font-semibold text-700">
+                  Dirección Domiciliar
+                </label>
+                <InputText
+                  id="direccion"
+                  placeholder="Dirección del estudiante"
+                  value={formValues.direccion}
+                  onChange={(e) => handleChange('direccion', e.target.value)}
+                  disabled={fetching}
+                />
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card title="Información Académica y Registro MINED" className="mb-4 shadow-1">
+          <div className="row g-3">
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="idpersona" className="font-semibold text-700">
+                  ID Sistema (Persona)
+                </label>
+                <InputText id="idpersona" value={formValues.idpersona} disabled />
+              </div>
+            </div>
+
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="cod_estudiante" className="font-semibold text-700">
+                  Código de Estudiante
+                </label>
+                <InputText
+                  id="cod_estudiante"
+                  placeholder="Código interno"
+                  value={formValues.cod_estudiante}
+                  onChange={(e) => handleChange('cod_estudiante', e.target.value)}
+                  disabled={fetching}
+                />
+              </div>
+            </div>
+
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="codigo_MINED" className="font-semibold text-700">
+                  Código MINED
+                </label>
+                <InputText
+                  id="codigo_MINED"
+                  placeholder="Código oficial MINED"
+                  value={formValues.codigo_MINED}
+                  onChange={(e) => handleChange('codigo_MINED', e.target.value)}
+                  disabled={fetching}
+                />
+              </div>
+            </div>
+
+            <div className="col-12 col-md-6">
+              <div className="flex flex-column gap-2 mb-3">
+                <label htmlFor="estado" className="font-semibold text-700">
+                  Estado de Matrícula (Activo / Inactivo)
+                </label>
+                <div className="flex align-items-center gap-3 pt-2">
+                  <InputSwitch
+                    id="estado"
+                    checked={formValues.estado}
+                    onChange={(e) => handleChange('estado', e.value)}
+                    disabled={fetching}
+                  />
+                  <span className="font-medium text-600">
+                    {formValues.estado ? 'Matrícula Activa' : 'Matrícula Inactiva'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Divider />
+
+        <div className="flex justify-content-end gap-2 mt-4">
+          <Button
+            type="submit"
+            label="Guardar Cambios"
+            icon="pi pi-check"
+            severity="success"
+            loading={loading}
+            disabled={fetching}
+            className="px-4 py-2"
+          />
+        </div>
+      </form>
+    </div>
+  );
+};
+
+UpdateEstudiante.propTypes = {
+  idPersona: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onEstudianteUpdate: PropTypes.func
+};
+
+export default UpdateEstudiante;
