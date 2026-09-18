@@ -1,148 +1,213 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import { Dialog } from 'primereact/dialog';
-import axios from 'axios';
-import BuscarEstudiantes from '../../../src/Servicios/EstudiantesServicios/BuscarEstudiantes';
-import settings from '../../../../silviano/src/settings.json';
+import { Toast } from 'primereact/toast';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { InputText } from 'primereact/inputtext';
+import { FilterMatchMode } from 'primereact/api';
+
+import { getMatriculas, eliminarMatricula } from '../matriculasService';
 import VerMatricula from './VerMatriculas';
-import NuevaMatricula from '../../Componetes/matriculas/NuevaMatricula';
+import NuevaMatricula from '../../../src/Componentes/matriculas/NuevaMatricula';
+
 export default function ListMatriculas() {
-    const urlMatricula = `${settings.api.baseUrl}/matriculas`;
-    
-    const [matriculas, setMatriculas] = useState([]);
-    const [showViewMode, setshowViewMode] = useState(false);
-    const [selectMatriculaID, setSelectMatriculaID] = useState(null);
-    const [showAddMode, setshowAddMode] = useState(false);
-    useEffect(() => {
-        cargarMatricula()
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const toast = useRef(null);
 
-   /*const cargarMatricula = async () => {//peticion asicrona
-        try {
-            const resulMatricula = await axios.get(urlMatricula);
-            if (resulMatricula) {
-                const m = resulMatricula.data.map((i) => {
+  const [matriculas, setMatriculas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectMatriculaID, setSelectMatriculaID] = useState(null);
 
-                    return { idmatricula: i.idmatricula }
-                })
-                console.log(m);
+  // Estados de Modales
+  const [showViewMode, setShowViewMode] = useState(false);
+  const [showAddMode, setShowAddMode] = useState(false);
 
-                setMatriculas(m)
-            }
-        } catch (error) { }
-    }*/
-    const cargarMatricula = async () => {//peticion asicrona
-        try {
-            const resulMatricula = await axios.get(urlMatricula);
-            if (resulMatricula) {
-                 console.log(resulMatricula.data);
-                setMatriculas(resulMatricula.data);
-            }
-        } catch (error) { }
+  // Filtros Globales de Busqueda
+  const [globalFilterValue, setGlobalFilterValue] = useState('');
+  const [filters, setFilters] = useState({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+  });
+
+  const cargarMatriculas = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getMatriculas();
+      setMatriculas(data || []);
+    } catch (error) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error de Carga',
+        detail: 'No se pudo obtener la lista de matrículas.',
+        life: 4000
+      });
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-   /*const onClickDelete = async (id) => {
+  useEffect(() => {
+    cargarMatriculas();
+  }, [cargarMatriculas]);
+
+  const onGlobalFilterChange = (e) => {
+    const value = e.target.value;
+    let _filters = { ...filters };
+    _filters['global'].value = value;
+
+    setFilters(_filters);
+    setGlobalFilterValue(value);
+  };
+
+  const handleEliminar = (idmatricula) => {
+    confirmDialog({
+      message: '¿Está seguro de eliminar esta matrícula? Esta acción no se puede deshacer.',
+      header: 'Confirmar Eliminación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptClassName: 'p-button-danger',
+      acceptLabel: 'Sí, Eliminar',
+      rejectLabel: 'Cancelar',
+      accept: async () => {
         try {
-            const respuesta = await axios
-                .delete(`${urlBase}/${id}`);
-            if (respuesta) {
-                cargarEstudiante();
-            }
+          await eliminarMatricula(idmatricula);
+          toast.current?.show({
+            severity: 'success',
+            summary: 'Eliminado',
+            detail: 'La matrícula fue removida correctamente.',
+            life: 3000
+          });
+          cargarMatriculas();
         } catch (error) {
-            console.log(error)
+          toast.current?.show({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo eliminar el registro seleccionado.',
+            life: 4000
+          });
         }
-    }*/
+      }
+    });
+  };
 
-    const onFilter = (data) => {
-        console.log('Entro')
-        //setEstudiantes(data);
-    };
+  const formatCurrency = (value) => {
+    return Number(value || 0).toLocaleString('es-NI', {
+      style: 'currency',
+      currency: 'NIO'
+    });
+  };
 
-    const renderHeader = () => {
-
-        return (
-
-             <div className="busqueda">
-                  
-             
-                 <div className="btnAdd">
-                     <Button className='btn-add'
-                         raised label=" Nuevo "
-                         icon="pi pi-plus"
-                         onClick={() => setshowAddMode(true)}
-                     />
-                 </div>
-              
-             </div>
-            
-        );
-    };
-
-    const header = renderHeader();
-
-    const actionsTemplate = (RowDate) => {
-        return (
-            <>
-                <button className='btn btn-success' onClick={() => {
-                     setSelectMatriculaID(RowDate.idmatricula)
-                     setshowViewMode(true)
-                }} >
-                    <img className='icon' src="https://img.icons8.com/material-outlined/visible--v1.png" alt="visible--v1" />
-                </button>
-                <button className='btn btn-primary'
-                    onClick={() => {
-                        // setSelectMatriculaID(RowDate.idmatricula)
-                        // setshowEditMode(true)
-                    }}  >
-                    <img className='icon' src="https://img.icons8.com/material-outlined/edit--v1.png" alt="edit--v1" />
-                </button>
-                <button className='btn btn-danger' onClick={() => {
-                   // onClickDelete(RowDate.idmatricula);
-                }}  >
-                    <img className='icon' src="https://img.icons8.com/material-outlined/filled-trash.png" alt="filled-trash" />
-                </button>
-            </>
-        )
-
-    }
-
+  const actionsTemplate = (rowData) => {
     return (
-        <div className="card">
-            <Card title="Matriculas">
-
-                <DataTable  value={matriculas}  paginator rows={10} stripedRows dataKey="id"
-                    //  filters={filters} filterDisplay="row" loading={loading}
-                    header={header} emptyMessage="No se encontro la matricula."
-                >
-                    <Column field="idmatricula" header="ID Matricula" style={{ minWidth: '10rem' }} />
-                    <Column field="costo_matricula" header="Costo" style={{ minWidth: '12rem' }} />
-                    <Column field="turno" header="Turno" style={{ minWidth: '12rem' }} />
-                    <Column field="grado.nombre" header="Nivel" style={{ minWidth: '12rem' }} />
-                    <Column field="estudiante.nombre_completo" header="Nombre" style={{ minWidth: '12rem' }} />
-                    <Column header="Accion" body={actionsTemplate} style={{ minWidth: '12rem' }} ></Column>
-                </DataTable> 
-            </Card>
-            <Dialog header="" visible={showViewMode}
-                style={{ width: '50vw' }}
-                onHide={() => setshowViewMode(false)} >
-             <VerMatricula idmatricula={selectMatriculaID} />
-            </Dialog>
-            <Dialog header="" visible={showAddMode}
-                style={{ width: '50vw' }}
-                onHide={() => setshowAddMode(false)} >
-                <NuevaMatricula setMatriculaAdd={() => {
-
-                    setshowAddMode(false)
-                    cargarMatricula()
-                }} />
-            </Dialog>
-          
-        </div>
+      <div className="flex gap-2">
+        <Button
+          icon="pi pi-eye"
+          severity="info"
+          size="small"
+          rounded
+          outlined
+          tooltip="Ver Detalle"
+          onClick={() => {
+            setSelectMatriculaID(rowData.idMatricula);
+            setShowViewMode(true);
+          }}
+        />
+        <Button
+          icon="pi pi-trash"
+          severity="danger"
+          size="small"
+          rounded
+          outlined
+          tooltip="Eliminar"
+          onClick={() => handleEliminar(rowData.idMatricula)}
+        />
+      </div>
     );
-}
-  // <BuscarEstudiantes 
-  //onFilter={onFilter} loadAll={ cargarMatricula()}/>
+  };
 
+  const renderHeader = () => {
+    return (
+      <div className="flex flex-column sm:flex-row justify-content-between align-items-center gap-2">
+        <Button
+          label="Nueva Matrícula"
+          icon="pi pi-plus"
+          severity="success"
+          onClick={() => setShowAddMode(true)}
+        />
+        <span className="p-input-icon-left w-full sm:w-auto">
+          <i className="pi pi-search" />
+          <InputText
+            value={globalFilterValue}
+            onChange={onGlobalFilterChange}
+            placeholder="Buscar por estudiante, grado..."
+            className="w-full"
+          />
+        </span>
+      </div>
+    );
+  };
+
+  return (
+    <div className="p-2">
+      <Toast ref={toast} />
+      <ConfirmDialog />
+
+      <Card title="Gestión de Matrículas">
+        <DataTable
+          value={matriculas}
+          paginator
+          rows={10}
+          rowsPerPageOptions={[5, 10, 25]}
+          stripedRows
+          dataKey="idmatricula"
+          loading={loading}
+          filters={filters}
+          header={renderHeader()}
+          emptyMessage="No se encontraron registros de matrículas."
+          responsiveLayout="scroll"
+        >
+          <Column field="idMatricula" header="ID" sortable style={{ minWidth: '6rem' }} />
+          <Column field="estudiante.nombre_completo" header="Estudiante" sortable style={{ minWidth: '14rem' }} />
+          <Column field="grado.nombre" header="Grado" sortable style={{ minWidth: '10rem' }} />
+          <Column field="turno" header="Turno" sortable style={{ minWidth: '8rem' }} />
+          <Column
+            field="costo_matricula"
+            header="Costo"
+            sortable
+            body={(row) => formatCurrency(row.costoMatricula)}
+            style={{ minWidth: '10rem' }}
+          />
+          <Column header="Acciones" body={actionsTemplate} exportable={false} style={{ minWidth: '8rem' }} />
+        </DataTable>
+      </Card>
+
+      {/* Modal de Detalle */}
+      <Dialog
+        header="Detalle de Matrícula"
+        visible={showViewMode}
+        style={{ width: '90vw', maxWidth: '600px' }}
+        onHide={() => setShowViewMode(false)}
+        dismissableMask
+      >
+        <VerMatricula idmatricula={selectMatriculaID} />
+      </Dialog>
+
+      {/* Modal de Registro */}
+      <Dialog
+        header="Registrar Nueva Matrícula"
+        visible={showAddMode}
+        style={{ width: '90vw', maxWidth: '800px' }}
+        onHide={() => setShowAddMode(false)}
+        dismissableMask
+      >
+        <NuevaMatricula
+          setMatriculaAdd={() => {
+            setShowAddMode(false);
+            cargarMatriculas();
+          }}
+          onCancel={() => setShowAddMode(false)}
+        />
+      </Dialog>
+    </div>
+  );
+}
