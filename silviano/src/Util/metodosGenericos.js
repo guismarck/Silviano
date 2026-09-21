@@ -13,10 +13,10 @@ export const TURNOS_ENUM = Object.freeze([
  * Conceptos de pago según ENUM de la tabla `catalogo_tarifa`
  */
 export const CONCEPTOS_TARIFA_ENUM = Object.freeze([
-  { label: 'Matrícula', value: 'Matrícula' },
-  { label: 'Mensualidad', value: 'Mensualidad' },
-  { label: 'Traje Deportivo', value: 'Traje deportivo' },
-  { label: 'Otros', value: 'Otros' }
+  { label: 'Matrícula', value: 'MATRICULA' },
+  { label: 'Mensualidad', value: 'MENSUALIDAD' },
+  { label: 'Traje Deportivo', value: 'TRAJE_DEPORTIVO' },
+  { label: 'Otros', value: 'OTROS' }
 ]);
 
 /**
