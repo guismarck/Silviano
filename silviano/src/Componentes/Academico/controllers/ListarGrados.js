@@ -23,6 +23,7 @@ function ListarGrados() {
     const [showAddMode, setshowAddMode,] = useState(false);
     const [showEditMode, setshowEditMode,] = useState(false);
     const [selectGradoID, setSelectGradoID] = useState(null);
+    
     useEffect(() => {
         cargarGrado();
     }, []);
@@ -115,7 +116,6 @@ function ListarGrados() {
                 <Updategrado
                     gradoID={selectGradoID}
                     setGradoUpdate={() => {
-
                         setshowEditMode(false)
                         cargarGrado()
                     }} />

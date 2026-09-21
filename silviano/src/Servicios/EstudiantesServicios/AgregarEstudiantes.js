@@ -6,10 +6,12 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { InputSwitch } from "primereact/inputswitch";
+import api from '../api/api'; 
+
 function AddEstudiante(props) {
 
-    const urlBase = `${settings.api.baseUrl}/estudiantes/create`;
-
+    //const urlBase = `${settings.api.baseUrl}/estudiantes/create`;
+     
     const [estudianteInfo, setEstudianteInfo] = useState({
         idpersona: '',
         nombre_completo: '',
@@ -21,31 +23,42 @@ function AddEstudiante(props) {
         codigo_MINED: '',
         nombre_tutor: '',
         estado: '',
+        sexo: ''
     })
 
     const options = [
-        { name: 'Femenino ', code: 'masculino' },
-        { name: 'Masculino ', code: 'femenino' },
-
+        { label: 'Femenino ', value: 'F' },
+        { label: 'Masculino ', value: 'M' },
     ];
 
     const optionsAdd = [
-        { name: 'Si', code: 'si' },
-        { name: 'No ', code: 'no' },
+        { label: 'Si', value: 'si' },
+        { label: 'No ', value: 'no' },
     ]
 
     const AddEstudianteData = async (e) => {
 
         try {
             console.log(estudianteInfo)
-            const respuesta = await axios
-                .post(urlBase, estudianteInfo).catch(function (error) {
+            const toSent = estudianteInfo
+            toSent['sexo'] = toSent['sexo'].value
+            toSent['partidad_nacimiento'] = toSent['partidad_nacimiento'].value
+            console.log(toSent)
+
+            const respuesta = await api.post('/estudiante-app/estudiantes/create',toSent).catch(function(error){
+                console.log(error);
+            });
+
+           /* const respuesta = await axios
+                .post(urlBase, toSent).catch(function (error) {
                     console.log(error)
-                })
+                })*/
 
             if (respuesta) {
                 console.log(respuesta.data)
+                props.cargarEstudiante(); 
                 props.setEstudiantedoAdd();
+                
             }
         } catch (error) {
             console.log(error)
@@ -56,7 +69,7 @@ function AddEstudiante(props) {
     return (
 
         <div className='grado-gradoInfo'>
-            <h1>Nuevo Estudiane</h1>
+            <h1>Nuevo Estudiante</h1>
             <div className='box'>
                 <div className='row'>
                     <div className='col-sm-12 col-md-6'>
@@ -79,9 +92,9 @@ function AddEstudiante(props) {
                         <p>
                             <span>Sexo : </span>
                             <Dropdown value={estudianteInfo.sexo}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value.code })}
-                                options={options} optionLabel="name"
-                                className="w-full md:w-14rem" />
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value })}
+                                options={options} optionLabel="label"
+                                className="w-full md:w-14rem"    placeholder=""  />
 
                         </p>
                     </div>
@@ -89,14 +102,14 @@ function AddEstudiante(props) {
                         <p>
                             <span>Partida de Nacimiento : </span>
                             <Dropdown value={estudianteInfo.partidad_nacimiento}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partidad_nacimiento: e.target.value.code })}
-                                options={optionsAdd} optionLabel="name"
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partidad_nacimiento: e.target.value })}
+                                options={optionsAdd} optionLabel="label"
                                 className="w-full md:w-14rem" />
                         </p>
                     </div>
                     <div className='col-sm-12 col-md-6'>
                         <p>
-                            <span>Direcion : </span>
+                            <span>Dirección : </span>
                             <InputText className='form-control' placeholder='Direccion'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, direccion: e.target.value })}
                             />
@@ -119,16 +132,14 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Nombre tutor : </span>
-                            <InputText className='form-control' placeholder='Nobre del Tutor'
+                            <InputText className='form-control' placeholder='Nombre del Tutor'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, nombre_tutor: e.target.value })}
                             />
                         </p>
                     </div>
-
                 </div>
-
             </div>
-            <h1>Infomacion del Estudinate</h1>
+            <h1>Información del Estudiante</h1>
             <div className='box'>
                 <div className='row'>
                     <div className='col-sm-12 col-md-6'>
@@ -143,7 +154,7 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Codigo Estudiante : </span>
-                            <InputText className='form-control' placeholder='Codigo Estudinate'
+                            <InputText className='form-control' placeholder='Codigo Estudiante'
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, cod_estudiante: e.target.value })}
                             />
                         </p>
@@ -170,11 +181,8 @@ function AddEstudiante(props) {
                     severity="success"
                     raised onClick={AddEstudianteData}
                 />
-
             </div>
-
         </div>
     )
-
 }
 export default AddEstudiante
