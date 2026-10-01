@@ -9,6 +9,8 @@ import "./index.css"
 import ListMatriculas from "./Servicios/MatriculasServicios/ListMatriculas";
 import ListarCatalogoSalon from "./Componentes/Academico/controllers/ListarCatalogoSalon";
 import GestionCobroForm from "./Servicios/PagosServicios/gestionCobro";
+import RegistroMatricula from "./Servicios/MatriculasServicios/RegistroMatricula";
+import Calificaciones from "./Componentes/Academico/controllers/RegistroCalificaciones"
 // import AgregarSalon from "./Componetes/Academico/controllers/AgregarSalon";
 
 
@@ -27,6 +29,9 @@ function App() {
         <Route path="/estudiantes" element={<Estudiantes/>} /*{<h1>estudiante</h1>}*//>  
         <Route path="/matriculas" element={<ListMatriculas/>} /*{<h1>estudiante</h1>}*//>
         <Route path="/gestionCobro" element={<GestionCobroForm/>}/>
+        <Route path="/registroMatricula" element={<RegistroMatricula/>}/>
+        <Route path="/calificaciones" element={<Calificaciones/>}/>
+
       </Routes>
     </BrowserRouter>
 

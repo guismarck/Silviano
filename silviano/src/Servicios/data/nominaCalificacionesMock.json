@@ -1,0 +1,41 @@
+[
+  {
+    "idcalificacion": 1,
+    "idmatricula": 11,
+    "codigo_mined": "MINED-2026-0011",
+    "nombre_completo": "ALEJANDRO NAVARRO RUIZ",
+    "acumulado": 55.00,
+    "examen": 38.00,
+    "nota_final": 93.00,
+    "creado_por": "ADMIN",
+    "creado_el": "2026-09-21 20:37:50",
+    "actualizado_por": null,
+    "actualizado_el": null
+  },
+  {
+    "idcalificacion": 2,
+    "idmatricula": 22,
+    "codigo_mined": "MINED-2026-0022",
+    "nombre_completo": "BEATRIZ GONZALEZ LOPEZ",
+    "acumulado": 48.00,
+    "examen": 32.00,
+    "nota_final": 80.00,
+    "creado_por": "ADMIN",
+    "creado_el": "2026-09-21 20:37:50",
+    "actualizado_por": null,
+    "actualizado_el": null
+  },
+  {
+    "idcalificacion": null,
+    "idmatricula": 33,
+    "codigo_mined": "MINED-2026-0033",
+    "nombre_completo": "CARLOS EDUARDO ZEPEDA",
+    "acumulado": 35.50,
+    "examen": 20.00,
+    "nota_final": 55.50,
+    "creado_por": "SYSTEM",
+    "creado_el": "2026-09-30 10:00:00",
+    "actualizado_por": null,
+    "actualizado_el": null
+  }
+]

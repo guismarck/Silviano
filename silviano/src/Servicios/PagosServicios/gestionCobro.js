@@ -1,4 +1,3 @@
-// src/components/GestionPagosMatricula.jsx
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
@@ -12,11 +11,11 @@ import {
   obtenerSalonesDisponibles,
   obtenerMatriculaActiva,
   registrarTransaccionCobro,
+  descargarReciboPDF,
 } from '../PagosServicios/pagoservice';
 
 const ANIO_ACTUAL = new Date().getFullYear();
 
-// Función auxiliar para garantizar el formato ISO de fecha requerido por la BD (YYYY-MM-DD)
 const getFechaFormateadaBD = () => {
   const date = new Date();
   const year = date.getFullYear();
@@ -76,49 +75,94 @@ export const GestionPagosMatricula = () => {
     []
   );
 
-  // Carga inicial de catálogos base en formato { label, value }
+  // Carga inicial de catálogos
   useEffect(() => {
     let isMounted = true;
-    getCatalogosCaja().then(({ estudiantes, niveles }) => {
-      if (isMounted) {
-        setEstudiantesOptions(estudiantes);
-        setNivelesOptions(niveles);
-      }
-    });
+    getCatalogosCaja()
+      .then(({ estudiantes, niveles }) => {
+        if (isMounted) {
+          setEstudiantesOptions(estudiantes || []);
+          setNivelesOptions(niveles || []);
+        }
+      })
+      .catch((error) => {
+        if (isMounted) {
+          toastRef.current?.show({
+            severity: 'error',
+            summary: 'Error de Carga',
+            detail: 'No se pudieron obtener los catálogos base.',
+          });
+        }
+      });
+
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // Carga reactiva de Grados académicos según Nivel
+  // Carga de Grados según Nivel
   useEffect(() => {
     if (!formData.idnivel) {
       setGradosOptions([]);
       return;
     }
-    obtenerGradosPorNivel(formData.idnivel).then(setGradosOptions);
+    let isMounted = true;
+    obtenerGradosPorNivel(formData.idnivel)
+      .then((data) => {
+        if (isMounted) setGradosOptions(data);
+      })
+      .catch(() => {
+        if (isMounted) setGradosOptions([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [formData.idnivel]);
 
-  // Carga reactiva de Salones con vacantes disponibles
+  // Carga de Salones con vacantes
   useEffect(() => {
     if (!formData.idGrado || !formData.anio_lectivo) {
       setSalonesOptions([]);
       return;
     }
-    obtenerSalonesDisponibles(formData.idGrado, formData.anio_lectivo).then(setSalonesOptions);
+    let isMounted = true;
+    obtenerSalonesDisponibles(formData.idGrado, formData.anio_lectivo)
+      .then((data) => {
+        if (isMounted) setSalonesOptions(data);
+      })
+      .catch(() => {
+        if (isMounted) setSalonesOptions([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [formData.idGrado, formData.anio_lectivo]);
 
-  // Consulta de matrícula activa para cobros regulares
+  // Consulta de matrícula activa
   useEffect(() => {
     if (formData.idpersona && formData.anio_lectivo && formData.concepto !== 'MATRICULA') {
-      obtenerMatriculaActiva(formData.idpersona, formData.anio_lectivo).then(setMatriculaActiva);
+      let isMounted = true;
+      obtenerMatriculaActiva(formData.idpersona, formData.anio_lectivo)
+        .then((res) => {
+          if (isMounted) setMatriculaActiva(res);
+        })
+        .catch(() => {
+          if (isMounted) setMatriculaActiva(null);
+        });
+
+      return () => {
+        isMounted = false;
+      };
     } else {
       setMatriculaActiva(null);
     }
   }, [formData.idpersona, formData.anio_lectivo, formData.concepto]);
 
-  // Handler inmutable y unificado para actualización de campos
+  // Handler unificado e inmutable con log de consola
   const handleInputChange = useCallback((field, value) => {
+    console.log(`📝 [Form Change] ${field}:`, value);
     setFormData((prev) => {
       const updated = { ...prev, [field]: value };
       if (field === 'idnivel') {
@@ -133,12 +177,18 @@ export const GestionPagosMatricula = () => {
   }, []);
 
   const handleRestablecer = useCallback(() => {
+    console.log('🧹 Limpiando formulario...');
     setFormData(INITIAL_FORM_STATE);
     setMatriculaActiva(null);
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    console.group('🔍 [VALIDACIÓN PREVIA AL ENVÍO]');
+    console.log('Estado actual del formulario:', formData);
+    console.log('Matrícula Activa en memoria:', matriculaActiva);
+    console.groupEnd();
 
     if (!formData.idpersona || !formData.idnivel || formData.monto <= 0) {
       toastRef.current?.show({
@@ -172,31 +222,39 @@ export const GestionPagosMatricula = () => {
     setLoading(true);
 
     try {
+      const fechaHoraTransaccion = `${formData.fecha_transaccion} 08:00:00`;
+
+      // Se determina idSalon dependiendo de si es matrícula nueva o cobro regular
+      const idSalonCalculado = esMatricula ? formData.idSalon : (matriculaActiva?.idSalon || null);
+
       const payload = {
-        idpersona: formData.idpersona,
-        concepto: formData.concepto,
-        idnivel: formData.idnivel,
-        idGrado: formData.idGrado,
-        idSalon: formData.idSalon,
-        anio_lectivo: formData.anio_lectivo,
-        tipo_pago: formData.tipo_pago,
-        monto: formData.monto,
-        fecha_transaccion: formData.fecha_transaccion,
-        idmatricula: matriculaActiva?.idmatricula || null,
+        p_idpersona: formData.idpersona,
+        p_idSalon: idSalonCalculado,
+        p_anio_lectivo: formData.anio_lectivo,
+        p_concepto: formData.concepto,
+        p_tipo_pago: formData.tipo_pago,
+        p_monto: formData.monto,
+        p_idtarifa: null,
+        p_fecha_transaccion: fechaHoraTransaccion,
+        p_usuario: 'CAJERO_SESION',
       };
 
       const respuesta = await registrarTransaccionCobro(payload);
+      const numReciboGenerado = respuesta.numReciboGenerado || respuesta.id_recibo || respuesta.numRecibo;
 
       toastRef.current?.show({
         severity: 'success',
         summary: 'Transacción Registrada',
-        detail: 'El cobro se ha procesado con éxito. Descargando recibo oficial...',
+        detail: `Recibo #${numReciboGenerado} generado correctamente.`,
       });
 
-  
+      if (numReciboGenerado) {
+        await descargarReciboPDF(numReciboGenerado);
+      }
 
       handleRestablecer();
     } catch (error) {
+      console.error('❌ [Error al Procesar Transacción]:', error);
       toastRef.current?.show({
         severity: 'error',
         summary: 'Error en Transacción',
@@ -209,7 +267,6 @@ export const GestionPagosMatricula = () => {
 
   const esConceptoMatricula = formData.concepto === 'MATRICULA';
 
-  // Memoización segura para extraer la cadena legible del estudiante seleccionado (previene rendering de objetos)
   const estudianteSeleccionadoLabel = useMemo(() => {
     if (!formData.idpersona) return '';
     const encontrado = estudiantesOptions.find((e) => e.value === formData.idpersona);
@@ -362,7 +419,7 @@ export const GestionPagosMatricula = () => {
           />
         </div>
 
-        {/* Mensajes Informativos del Expediente */}
+        {/* Mensajes Informativos */}
         <div className="col-12 mb-3">
           {!esConceptoMatricula && matriculaActiva && (
             <Message
