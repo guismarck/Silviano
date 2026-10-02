@@ -10,7 +10,7 @@ import { TURNOS_ENUM } from '../../Util/metodosGenericos';
 import { 
   getCatalogosNuevaMatricula, 
   crearMatricula 
-} from '../../Servicios/matriculasService';
+} from '../../Servicios/MatriculasServicios/matriculasService';
 
 const INITIAL_FORM_STATE = Object.freeze({
   idpersona: null,
