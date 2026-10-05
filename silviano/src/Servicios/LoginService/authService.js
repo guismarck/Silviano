@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api/auth';
+const API_URL = 'https://miniature-space-enigma-65prg5v459vh46xx-8080.app.github.dev/api/auth';
 
 export const login = async (credentials) => {
   try {
