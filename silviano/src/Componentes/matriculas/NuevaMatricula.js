@@ -6,7 +6,7 @@ import { InputNumber } from 'primereact/inputnumber';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 
-import { TURNOS_ENUM } from '../../Util/metodosGenericos';
+import { TURNOS_ENUM } from '../../../public/css/panel';
 import { 
   getCatalogosNuevaMatricula, 
   crearMatricula 
