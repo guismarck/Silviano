@@ -1,41 +1,104 @@
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-//import '../App.css';
-import ListarGrados from "./Componentes/Academico/controllers/ListarGrados";
-import Estudiantes from "./Componentes/Academico/controllers/Estudiantes"
-import AgregarGrados from "./Componentes/Academico/controllers/AgregarGrados";
-import "./estilosCSS/flags.css"
-import "./index.css"
-import ListMatriculas from "./Servicios/MatriculasServicios/ListMatriculas";
-import ListarCatalogoSalon from "./Componentes/Academico/controllers/ListarCatalogoSalon";
-import GestionCobroForm from "./Servicios/PagosServicios/gestionCobro";
-import RegistroMatricula from "./Servicios/MatriculasServicios/RegistroMatricula";
-import Calificaciones from "./Componentes/Academico/controllers/RegistroCalificaciones"
-// import AgregarSalon from "./Componetes/Academico/controllers/AgregarSalon";
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ProgressSpinner } from 'primereact/progressspinner';
+import { COMPONENT_REGISTRY } from './config/componentRegistry';
+import { menuService } from './Servicios/MenuService/menuService';
+import { MainLayout } from './Componentes/MainLayout';
+import { Login } from './Componentes/Academico/controllers/Login';
+import { useAuth, AuthProvider } from './context/AuthContext';
 
+import 'primereact/resources/themes/lara-light-indigo/theme.css';
+import 'primereact/resources/primereact.min.css';
+import 'primeicons/primeicons.css';
+import 'primeflex/primeflex.css';
+import 'bootstrap/dist/css/bootstrap-grid.min.css';
+import './index.css';
 
-function App() {
-  //console.log('Hi broooo')
+const AppRoutes = () => {
+  const { isAuthenticated } = useAuth();
+  const [modulosMenu, setModulosMenu] = useState([]);
+  const [rutasPlanas, setRutasPlanas] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const cargarRutasPermitidas = useCallback(async () => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // Peticiones paralelas: Árbol para UI y Lista Plana para Rutas
+      const [menuData, rutasData] = await Promise.all([
+        menuService.getModulosUsuario(),
+        menuService.getRutasPlanasUsuario()
+      ]);
+      setModulosMenu(menuData);
+      setRutasPlanas(rutasData);
+    } catch (error) {
+      console.error('Error al cargar estructura dinámicas de seguridad:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    cargarRutasPermitidas();
+  }, [cargarRutasPermitidas]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-content-center align-items-center min-screen-height">
+        <ProgressSpinner />
+      </div>
+    );
+  }
+
   return (
+    <Routes>
+      <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" replace />} />
 
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<h1></h1>}/>
-        <Route path="/grados" element={<ListarGrados/>}/>
-        <Route path="/agregargrados" element={<AgregarGrados/>}/>
-        <Route path="/salon" element={<ListarCatalogoSalon/>}/>
-        {/*<Route path="/catalogo/salon" element={<Estudiantes/>}/>*/}
-        {/*<Route path="/catalogo/salon/create" element={<AgregarSalon/>}/>*/}
-        <Route path="/estudiantes" element={<Estudiantes/>} /*{<h1>estudiante</h1>}*//>  
-        <Route path="/matriculas" element={<ListMatriculas/>} /*{<h1>estudiante</h1>}*//>
-        <Route path="/gestionCobro" element={<GestionCobroForm/>}/>
-        <Route path="/registroMatricula" element={<RegistroMatricula/>}/>
-        <Route path="/calificaciones" element={<Calificaciones/>}/>
+      {isAuthenticated ? (
+        <Route element={<MainLayout modulos={modulosMenu} />}>
+          <Route path="/" element={<h2 className="text-center mt-5">Bienvenido al Portal SIGE</h2>} />
 
-      </Routes>
-    </BrowserRouter>
+          {/* Mapeo dinámico de rutas registradas */}
+          {rutasPlanas.map((modulo) => {
+            const ComponenteLazy = COMPONENT_REGISTRY[modulo.componentKey];
 
+            if (!ComponenteLazy) {
+              console.warn(`Componente no registrado en COMPONENT_REGISTRY: ${modulo.componentKey}`);
+              return null;
+            }
+
+            return (
+              <Route
+                key={modulo.id || modulo.recurso}
+                path={modulo.recurso}
+                element={
+                  <Suspense fallback={<ProgressSpinner style={{ width: '50px', height: '50px' }} />}>
+                    <ComponenteLazy permisos={modulo.permisos} />
+                  </Suspense>
+                }
+              />
+            );
+          })}
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      ) : (
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      )}
+    </Routes>
+  );
+};
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
-
-export default App;
