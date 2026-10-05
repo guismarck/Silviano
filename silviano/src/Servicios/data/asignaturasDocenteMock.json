@@ -1,0 +1,29 @@
+[
+  {
+    "iddetalle_plan_de_estudio": 101,
+    "idPlan_de_estudio": 10,
+    "idAsignatura": 1,
+    "asignatura_nombre": "Lengua y Literatura",
+    "grado_nombre": "7mo Grado",
+    "seccion_nombre": "A",
+    "nivel_academico": "Secundaria Regular"
+  },
+  {
+    "iddetalle_plan_de_estudio": 102,
+    "idPlan_de_estudio": 10,
+    "idAsignatura": 2,
+    "asignatura_nombre": "Matemáticas",
+    "grado_nombre": "7mo Grado",
+    "seccion_nombre": "A",
+    "nivel_academico": "Secundaria Regular"
+  },
+  {
+    "iddetalle_plan_de_estudio": 103,
+    "idPlan_de_estudio": 11,
+    "idAsignatura": 3,
+    "asignatura_nombre": "Ciencias Naturales",
+    "grado_nombre": "8vo Grado",
+    "seccion_nombre": "B",
+    "nivel_academico": "Secundaria Regular"
+  }
+]

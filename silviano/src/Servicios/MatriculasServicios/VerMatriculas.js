@@ -6,7 +6,7 @@ import { Tag } from 'primereact/tag';
 import { Divider } from 'primereact/divider';
 import { Toast } from 'primereact/toast';
 
-import { getMatriculaById } from '../matriculasService';
+import { getMatriculaById } from './matriculasService';
 
 export default function VerMatricula({ idmatricula }) {
   const toast = useRef(null);
