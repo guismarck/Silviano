@@ -1,41 +1,34 @@
 [
   {
-    "idcalificacion": 1,
-    "idmatricula": 11,
-    "codigo_mined": "MINED-2026-0011",
-    "nombre_completo": "ALEJANDRO NAVARRO RUIZ",
-    "acumulado": 55.00,
-    "examen": 38.00,
-    "nota_final": 93.00,
-    "creado_por": "ADMIN",
-    "creado_el": "2026-09-21 20:37:50",
-    "actualizado_por": null,
-    "actualizado_el": null
+    "idEstudiante": 1001,
+    "codigoMINED": "N-2026-00142",
+    "codigoEstudiante": "EST-701",
+    "nombreCompleto": "González Pérez, María José",
+    "acumulado": 38.5,
+    "examen": 55.0
   },
   {
-    "idcalificacion": 2,
-    "idmatricula": 22,
-    "codigo_mined": "MINED-2026-0022",
-    "nombre_completo": "BEATRIZ GONZALEZ LOPEZ",
-    "acumulado": 48.00,
-    "examen": 32.00,
-    "nota_final": 80.00,
-    "creado_por": "ADMIN",
-    "creado_el": "2026-09-21 20:37:50",
-    "actualizado_por": null,
-    "actualizado_el": null
+    "idEstudiante": 1002,
+    "codigoMINED": "N-2026-00189",
+    "codigoEstudiante": "EST-702",
+    "nombreCompleto": "López Bermúdez, Carlos Eduardo",
+    "acumulado": 32.0,
+    "examen": 48.0
   },
   {
-    "idcalificacion": null,
-    "idmatricula": 33,
-    "codigo_mined": "MINED-2026-0033",
-    "nombre_completo": "CARLOS EDUARDO ZEPEDA",
-    "acumulado": 35.50,
-    "examen": 20.00,
-    "nota_final": 55.50,
-    "creado_por": "SYSTEM",
-    "creado_el": "2026-09-30 10:00:00",
-    "actualizado_por": null,
-    "actualizado_el": null
+    "idEstudiante": 1003,
+    "codigoMINED": "N-2026-00210",
+    "codigoEstudiante": "EST-703",
+    "nombreCompleto": "Martínez Ruíz, Ana Sofía",
+    "acumulado": 25.0,
+    "examen": 30.0
+  },
+  {
+    "idEstudiante": 1004,
+    "codigoMINED": "N-2026-00305",
+    "codigoEstudiante": "EST-704",
+    "nombreCompleto": "Rivas Zambrana, Kevin Alexander",
+    "acumulado": 40.0,
+    "examen": 58.5
   }
 ]

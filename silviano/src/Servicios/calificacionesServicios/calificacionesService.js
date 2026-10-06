@@ -1,24 +1,39 @@
 import api from '../api/api';
 import nominaCalificacionesMock from '../data/nominaCalificacionesMock.json';
+
 export const calificacionesService = {
   /**
-   * Carga los estudiantes inscritos con sus notas registradas.
+   * Carga la nómina de estudiantes calculando dinámicamente la nota final.
    */
   getEstudiantesTabla: async (iddetalle_plan_de_estudio, idperiodo_evaluativo) => {
     try {
-      // En producción:
-      // const { data } = await api.get('/calificaciones/nomina', { params: { iddetalle_plan_de_estudio, idperiodo_evaluativo } });
-      // return data;
+      /* Producción Axios:
+      const { data } = await api.get('/calificaciones/nomina', { 
+        params: { iddetalle_plan_de_estudio, idperiodo_evaluativo } 
+      });
+      return data.map(est => ({
+        ...est,
+        notaFinal: (Number(est.acumulado) || 0) + (Number(est.examen) || 0),
+        dirty: false
+      }));
+      */
 
       return new Promise((resolve) => {
         setTimeout(() => {
-          // Clonación inmutable para no contaminar el archivo JSON en memoria
-          const dataClonada = nominaCalificacionesMock.map((estudiante) => ({
-            ...estudiante,
-            dirty: false
-          }));
+          // Clonación inmutable + cálculo derivado de Nota Final
+          const dataClonada = JSON.parse(JSON.stringify(nominaCalificacionesMock)).map((est) => {
+            const acum = Number(est.acumulado) || 0;
+            const exa = Number(est.examen) || 0;
+            return {
+              ...est,
+              acumulado: acum,
+              examen: exa,
+              notaFinal: acum + exa,
+              dirty: false
+            };
+          });
           resolve(dataClonada);
-        }, 600);
+        }, 500);
       });
     } catch (error) {
       throw new Error('No se pudo cargar la nómina de estudiantes.');
@@ -26,26 +41,30 @@ export const calificacionesService = {
   },
 
   /**
-   * Guarda o actualiza calificaciones en lote (Bulk Upsert).
+   * Guardado masivo (Bulk Upsert) enviando acumulado, examen y total.
    */
   guardarCalificacionesBatch: async (payload) => {
-    // En producción:
-    // const { data } = await api.post('/calificaciones/batch', payload);
-    // return data;
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ success: true, message: 'Calificaciones registradas correctamente.' });
-      }, 800);
-    });
+    try {
+      /* Producción Axios:
+      const { data } = await api.post('/calificaciones/batch', payload);
+      return data;
+      */
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({ success: true, message: 'Calificaciones registradas correctamente en el SIGE.' });
+        }, 800);
+      });
+    } catch (error) {
+      throw new Error('Error al registrar las calificaciones en el servidor.');
+    }
   },
 
   /**
-   * Descarga el Acta Oficial de Calificaciones mediante Jaspersoft REST API v2 (Binary Blob).
+   * Descarga de Acta PDF desde Jaspersoft REST API v2
    */
   descargarActaCalificacionesPDF: async (iddetalle_plan_de_estudio, idperiodo_evaluativo) => {
     try {
-      /* Código de producción con Axios:
+      /* Producción Axios (Binary Blob):
       const response = await api.get('/reportes/acta-calificaciones', {
         params: { id_detalle_plan: iddetalle_plan_de_estudio, id_periodo: idperiodo_evaluativo, format: 'pdf' },
         responseType: 'blob'
@@ -53,8 +72,9 @@ export const calificacionesService = {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       */
 
-      // Simulación de descarga de Blob PDF
-      const blobSimulado = new Blob(['%PDF-1.4 ... Contenido de Acta de Calificaciones MINED SIGE'], { type: 'application/pdf' });
+      const blobSimulado = new Blob(['%PDF-1.4 ... Contenido del Acta de Calificaciones MINED SIGE'], {
+        type: 'application/pdf'
+      });
       const url = window.URL.createObjectURL(blobSimulado);
       const link = document.createElement('a');
       link.href = url;
@@ -62,7 +82,6 @@ export const calificacionesService = {
       document.body.appendChild(link);
       link.click();
 
-      // Limpieza inmediata de memoria
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
