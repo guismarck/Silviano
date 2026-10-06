@@ -9,7 +9,8 @@ import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 
 import { catalogosService } from '../../../Servicios/catalogoServicios/catalogosService';
-import { calificacionesService } from '../../../Servicios/calificacionesServicios/calificacionesService';
+import { calificacionesService } from '../../../Servicios/calificacionesServicios/calificacionesService2';
+
 
 export const GestionCalificaciones = () => {
   const toastRef = useRef(null);
