@@ -179,7 +179,7 @@ export default function Estudiantes() {
         >
           <Column field="idpersona" header="ID" sortable style={{ minWidth: '5rem' }} />
           <Column field="cod_estudiante" header="Código" sortable style={{ minWidth: '8rem' }} />
-          <Column field="codigoMined" header="Código MINED" sortable style={{ minWidth: '9rem' }} />
+          <Column field="codigo_MINED" header="Código MINED" sortable style={{ minWidth: '9rem' }} />
           <Column field="nombre_completo" header="Nombres" sortable style={{ minWidth: '12rem' }} />
           <Column field="apellido_completo" header="Apellidos" sortable style={{ minWidth: '12rem' }} />
           <Column field="estado" header="Estado" body={statusBodyTemplate} sortable style={{ minWidth: '8rem' }} />

@@ -77,6 +77,7 @@ export default function VerEstudiante({ idPersona }) {
           <div className="col-12 col-md-6 mb-3"><Skeleton height="3rem" /></div>
           <div className="col-12 col-md-6 mb-3"><Skeleton height="3rem" /></div>
           <div className="col-12 col-md-6 mb-3"><Skeleton height="3rem" /></div>
+          
         </div>
       </div>
     );
@@ -171,7 +172,7 @@ export default function VerEstudiante({ idPersona }) {
 
           <div className="col-12 col-md-6 mb-3">
             <span className="text-500 block font-medium mb-1">Código Interno de Estudiante</span>
-            <span className="text-900 font-semibold">{estudiante.cod_estudiante || 'N/A'}</span>
+            <span className="text-900 font-semibold">{estudiante.codEstudiante || 'N/A'}</span>
           </div>
 
           <div className="col-12 col-md-6 mb-3">

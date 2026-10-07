@@ -18,8 +18,7 @@ function AddEstudiante(props) {
         fecha_nacimiento: '',
         cedula: '',
         cod_estudiante: '',
-        codigoMined: '',
-        partida_nacimiento: '',
+        codigo_MINED: '',
         nombre_tutor: '',
         estado: '',
         sexo: ''
@@ -151,7 +150,7 @@ function AddEstudiante(props) {
                             <span>Codigo Estudiante : </span>
                             <InputText className='form-control' placeholder='Codigo Estudiante'
                                 value={estudianteInfo.cod_estudiante}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, cod_estudiante: e.target.value })}
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, codEstudiante: e.target.value })}
                             />
                         </p>
                     </div>
@@ -160,7 +159,7 @@ function AddEstudiante(props) {
                     <p>
                         <span>Codigo MINED : </span>
                         <InputText className='form-control' placeholder='Codigo MINED'
-                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, codigoMined: e.target.value })}
+                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, codigo_MINED: e.target.value })}
                         />
                     </p>
                 </div>
@@ -181,4 +180,4 @@ function AddEstudiante(props) {
         </div>
     )
 }
-export default AddEstudiante
+export default AddEstudiante;
