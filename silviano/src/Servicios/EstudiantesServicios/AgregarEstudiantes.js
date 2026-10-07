@@ -19,8 +19,9 @@ function AddEstudiante(props) {
         direccion: '',
         fecha_nacimiento: '',
         cedula: '',
-        cod_estudiante: '',
-        codigo_MINED: '',
+        partida_nacimiento: '',
+        codEstudiante: '',
+        codigoMined: '',
         nombre_tutor: '',
         estado: '',
         sexo: ''
@@ -42,7 +43,7 @@ function AddEstudiante(props) {
             console.log(estudianteInfo)
             const toSent = estudianteInfo
             toSent['sexo'] = toSent['sexo'].value
-            toSent['partidad_nacimiento'] = toSent['partidad_nacimiento'].value
+            toSent['partida_nacimiento'] = toSent['partida_nacimiento'].value
             console.log(toSent)
 
             const respuesta = await api.post('/estudiante-app/estudiantes/create',toSent).catch(function(error){
@@ -101,8 +102,8 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Partida de Nacimiento : </span>
-                            <Dropdown value={estudianteInfo.partidad_nacimiento}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partidad_nacimiento: e.target.value })}
+                            <Dropdown value={estudianteInfo.partida_nacimiento}
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partida_nacimiento: e.target.value })}
                                 options={optionsAdd} optionLabel="label"
                                 className="w-full md:w-14rem" />
                         </p>
@@ -155,7 +156,7 @@ function AddEstudiante(props) {
                         <p>
                             <span>Codigo Estudiante : </span>
                             <InputText className='form-control' placeholder='Codigo Estudiante'
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, cod_estudiante: e.target.value })}
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, codEstudiante: e.target.value })}
                             />
                         </p>
                     </div>
@@ -164,7 +165,7 @@ function AddEstudiante(props) {
                     <p>
                         <span>Codigo MINED : </span>
                         <InputText className='form-control' placeholder='Codigo MINED'
-                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, codigo_MINED: e.target.value })}
+                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, codigoMined: e.target.value })}
                         />
                     </p>
                 </div>
