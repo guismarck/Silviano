@@ -282,24 +282,24 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate }) => {
                 <InputText
                   id="cod_estudiante"
                   placeholder="Código interno"
-                  value={formValues.cod_estudiante}
-                  onChange={(e) => handleChange('cod_estudiante', e.target.value)}
-                  disabled={fetching}
+                  value={formValues.codEstudiante}
+                  //onChange={(e) => handleChange('cod_estudiante', e.target.value)}
+                  disabled//={fetching}/
                 />
               </div>
             </div>
 
             <div className="col-12 col-md-6">
               <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="codigo_MINED" className="font-semibold text-700">
+                <label htmlFor="codigoMined" className="font-semibold text-700">
                   Código MINED
                 </label>
                 <InputText
-                  id="codigo_MINED"
+                  id="codigoMined"
                   placeholder="Código oficial MINED"
-                  value={formValues.codigo_MINED}
-                  onChange={(e) => handleChange('codigo_MINED', e.target.value)}
-                  disabled={fetching}
+                  value={formValues.codigoMined}
+                 // onChange={(e) => handleChange('codigo_MINED', e.target.value)}
+                  disabled//={fetching}
                 />
               </div>
             </div>
