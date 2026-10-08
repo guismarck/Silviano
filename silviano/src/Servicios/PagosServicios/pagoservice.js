@@ -98,3 +98,35 @@ export const registrarTransaccionCobro = async (payload) => {
   const response = await api.post('/pago/create', payload);
   return response.data;
 };
+
+const pagosService = {
+  // Obtiene las cuentas por pagar de un estudiante
+  obtenerCuentasPorPagar: async (idEstudiante) => {
+    try {
+      const response = await api.get(`/pagos/cuentas-por-pagar`, {
+        params: {
+          idEstudiante,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      // Manejar error al obtener cuentas por pagar (ej. registrar error, mostrar mensaje al usuario)
+      console.error('Error al obtener cuentas por pagar:', error);
+      throw error;
+    }
+  },
+
+  // Registra un nuevo pago
+  registrarPago: async (datosPago) => {
+    try {
+      const response = await api.post('/pagos/registrar', datosPago);
+      return response.data;
+    } catch (error) {
+      // Manejar error al registrar pago (ej. registrar error, mostrar mensaje al usuario)
+      console.error('Error al registrar pago:', error);
+      throw error;
+    }
+  },
+};
+
+export default pagosService;

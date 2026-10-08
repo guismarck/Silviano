@@ -117,7 +117,7 @@ export const GestionCalificaciones = () => {
   }, [asignaturaSeleccionada, periodoSeleccionado]);
 
   /**
-   * Actualizador genérico inmutable para componentes de nota (Acumulado o Examen)
+   * Actualizador genérico inmutable para Componentes de nota (Acumulado o Examen)
    */
   const handleNotaFieldChange = useCallback((idEstudiante, campo, nuevoValor) => {
     const valSanitizado = nuevoValor === null || nuevoValor === undefined ? 0 : nuevoValor;

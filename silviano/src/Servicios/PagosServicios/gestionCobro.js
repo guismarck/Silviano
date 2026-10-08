@@ -1,4 +1,4 @@
-// src/components/GestionPagosMatricula.jsx
+// src/Componentes/GestionPagosMatricula.jsx
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
