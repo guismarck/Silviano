@@ -8,7 +8,8 @@ import "./estilosCSS/flags.css"
 import "./index.css"
 import ListMatriculas from "./Servicios/MatriculasServicios/ListMatriculas";
 import ListarCatalogoSalon from "./Componentes/Academico/controllers/ListarCatalogoSalon";
-import GestionCobroForm from "./Servicios/PagosServicios/gestionCobro";
+//import GestionCobroForm from "./Servicios/PagosServicios/gestionCobro";
+import GestionCobroForm from "./Componentes/ReciboPago";
 import RegistroMatricula from "./Servicios/MatriculasServicios/RegistroMatricula";
 import Calificaciones from "./Componentes/Academico/controllers/RegistroCalificaciones"
 // import AgregarSalon from "./Componetes/Academico/controllers/AgregarSalon";

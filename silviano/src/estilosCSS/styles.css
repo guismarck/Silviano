@@ -1,0 +1,74 @@
+/* Color Institucional Colegio: #32B5B4 */
+:root {
+  --colegio-primary: #32B5B4;
+  --colegio-primary-hover: #299998;
+  --colegio-primary-active: #217D7C;
+}
+
+/* Contenedor Principal al 80% del ancho de pantalla */
+.recibo-wrapper-80 {
+  width: 70vw !important;
+  max-width: 70vw !important;
+  margin: 0 auto !important;
+  box-sizing: border-box;
+}
+
+/* Forzar expansión completa de la tarjeta PrimeReact */
+.recibo-card-full {
+  width: 100% !important;
+}
+
+.recibo-card-full .p-card-body {
+  width: 100% !important;
+  padding: 1.5rem !important;
+}
+
+.recibo-card-full .p-card-content {
+  padding: 0 !important;
+}
+
+/* Responsividad para móviles y tablets */
+@media screen and (max-width: 991px) {
+  .recibo-wrapper-80 {
+    width: 90vw !important;
+    max-width: 90vw !important;
+  }
+}
+
+/* Botón Institucional Sólido */
+.btn-institucional {
+  background-color: var(--colegio-primary) !important;
+  border-color: var(--colegio-primary) !important;
+  color: #ffffff !important;
+}
+
+.btn-institucional:hover {
+  background-color: var(--colegio-primary-hover) !important;
+  border-color: var(--colegio-primary-hover) !important;
+}
+
+.btn-institucional:focus, .btn-institucional:active {
+  background-color: var(--colegio-primary-active) !important;
+  border-color: var(--colegio-primary-active) !important;
+  box-shadow: 0 0 0 0.2rem rgba(50, 181, 180, 0.4) !important;
+}
+
+/* Botón Cancelar Unificado (Outlined) */
+.btn-institucional-outlined {
+  background-color: transparent !important;
+  border: 1px solid var(--colegio-primary) !important;
+  color: var(--colegio-primary) !important;
+}
+
+.btn-institucional-outlined:hover {
+  background-color: rgba(50, 181, 180, 0.08) !important;
+  color: var(--colegio-primary-hover) !important;
+  border-color: var(--colegio-primary-hover) !important;
+}
+
+/* Personalización SelectButton de PrimeReact */
+.p-selectbutton .p-button.p-highlight {
+  background-color: var(--colegio-primary) !important;
+  border-color: var(--colegio-primary) !important;
+  color: #ffffff !important;
+}
