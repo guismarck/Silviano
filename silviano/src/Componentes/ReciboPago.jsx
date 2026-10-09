@@ -4,103 +4,163 @@ import { AutoComplete } from 'primereact/autocomplete';
 import { Calendar } from 'primereact/calendar';
 import { InputNumber } from 'primereact/inputnumber';
 import { Dropdown } from 'primereact/dropdown';
-import { SelectButton } from 'primereact/selectbutton';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-import { ProgressSpinner } from 'primereact/progressspinner';
 import moment from 'moment';
+
+import { searchEstudiantes } from '../Servicios/estudianteService';
+import  tarifaService from '../Servicios/TarifaService/tarifaService';
 import pagosService from '../Servicios/PagosServicios/pagoservice';
 import '../estilosCSS/styles.css';
 
-// Reglas de negocio para límites de caja según divisa
-const LIMITES_MONEDA = {
-  USD: { min: 0.01, max: 1000, simbolo: 'US$', label: 'Dólares' },
-  NIO: { min: 0.01, max: 15000, simbolo: 'C$', label: 'Córdobas' }
-};
-
-const CONCEPTOS_PAGO = [
-  { label: 'Cancelación de mensualidad', value: 'Cancelación de mensualidad' },
-  { label: 'Matrícula', value: 'Matrícula' },
-  { label: 'Aguinaldo', value: 'Aguinaldo' },
-  { label: 'Traje Deportivo', value: 'Traje Deportivo' },
-  { label: 'Examen Extratemporal', value: 'Examen Extratemporal' },
-  { label: 'Derecho de Graduación', value: 'Derecho de Graduación' },
-  { label: 'Otros / Varios', value: 'Otros / Varios' }
-];
-
-const OPCIONES_MONEDA = [
-  { label: 'US$', value: 'USD' },
-  { label: 'C$', value: 'NIO' }
-];
+// Límite fijado en Córdobas (C$15,000.00)
+const LIMITE_MAXIMO_CORDOBAS = 15000;
 
 const ESTADO_INICIAL = {
   num_recibo: 'Cargando...',
   estudiante: null,
   fecha_pago: new Date(),
   monto_total: 0,
-  concepto: 'Cancelación de mensualidad',
-  moneda: 'NIO'
+  monto_tarifa_oficial: 0,
+  id_tarifa: null,
+  concepto: ''
 };
 
 const ReciboPago = () => {
   const [formData, setFormData] = useState(ESTADO_INICIAL);
   const [errors, setErrors] = useState({});
   const [sugerencias, setSugerencias] = useState([]);
-  const [cuentasPorPagar, setCuentasPorPagar] = useState([]);
-  const [cargandoCuentas, setCargandoCuentas] = useState(false);
+  const [conceptosCatalogo, setConceptosCatalogo] = useState([]);
+  const [cargandoTarifas, setCargandoTarifas] = useState(false);
   const [registrandoPago, setRegistrandoPago] = useState(false);
 
   const toast = useRef(null);
   const hoy = useMemo(() => new Date(), []);
 
-  // Configuración del límite según la moneda seleccionada
-  const limiteActual = useMemo(() => {
-    return LIMITES_MONEDA[formData.moneda] || LIMITES_MONEDA.NIO;
-  }, [formData.moneda]);
-
-  const cargarConsecutivoRecibo = useCallback(async () => {
-    try {
-      const res = await pagosService.obtenerSiguienteNumRecibo();
-      setFormData((prev) => ({
-        ...prev,
-        num_recibo: res?.num_recibo || 'AUTO-GENERADO'
-      }));
-    } catch (error) {
-      setFormData((prev) => ({ ...prev, num_recibo: 'AUTO-GENERADO' }));
-    }
-  }, []);
-
+  // Carga inicial aislada (Solución técnica al congelamiento del Dropdown)
   useEffect(() => {
-    cargarConsecutivoRecibo();
-  }, [cargarConsecutivoRecibo]);
+    let isMounted = true;
+
+    const inicializarPantalla = async () => {
+      setCargandoTarifas(true);
+      try {
+        const anioLectivoActual = new Date().getFullYear();
+
+        const [resRecibo, dataTarifas] = await Promise.all([
+          pagosService.obtenerSiguienteNumRecibo().catch(() => ({ num_recibo: 'AUTO-GENERADO' })),
+          tarifaService.listarTarifas(anioLectivoActual).catch(() => [])
+        ]);
+
+        if (!isMounted) return;
+
+        if (Array.isArray(dataTarifas) && dataTarifas.length > 0) {
+          const opciones = dataTarifas.map((t) => ({
+            label: `${t.concepto} (C$${Number(t.monto).toFixed(2)})`,
+            value: t.concepto,
+            rawTarifa: t
+          }));
+
+          setConceptosCatalogo(opciones);
+
+          // Establecer la primera opción solo en el montaje inicial
+          const primeraTarifa = opciones[0].rawTarifa;
+          const montoBase = Number(primeraTarifa.monto) || 0;
+
+          setFormData((prev) => ({
+            ...prev,
+            num_recibo: resRecibo?.num_recibo || 'AUTO-GENERADO',
+            concepto: primeraTarifa.concepto,
+            monto_total: montoBase,
+            monto_tarifa_oficial: montoBase,
+            id_tarifa: primeraTarifa.idTarifa || primeraTarifa.id_tarifa || null
+          }));
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            num_recibo: resRecibo?.num_recibo || 'AUTO-GENERADO'
+          }));
+        }
+      } catch (error) {
+        if (isMounted) {
+          toast.current?.show({
+            severity: 'error',
+            summary: 'Error de Conexión',
+            detail: 'No se logró obtener el catálogo de tarifas desde el servidor.'
+          });
+        }
+      } finally {
+        if (isMounted) setCargandoTarifas(false);
+      }
+    };
+
+    inicializarPantalla();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Sin dependencias para garantizar ejecución única
 
   const handleInputChange = useCallback((field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   }, []);
 
-  // Manejador del cambio de monto con reestablecimiento a 0 en caso de sobrepasar el límite
+  // Handler del Dropdown (Permite seleccionar libremente el 2do, 3ro o cualquier ítem)
+  const handleConceptoChange = (e) => {
+    const valorSeleccionado = e.value;
+    if (!valorSeleccionado) return;
+
+    // Búsqueda sincrónica sobre la lista ya cargada en memoria
+    const opcionEncontrada = conceptosCatalogo.find((c) => c.value === valorSeleccionado);
+
+    if (opcionEncontrada?.rawTarifa) {
+      const tarifaBD = opcionEncontrada.rawTarifa;
+      const montoBase = Number(tarifaBD.monto) || 0;
+
+      if (montoBase > LIMITE_MAXIMO_CORDOBAS) {
+        setFormData((prev) => ({
+          ...prev,
+          concepto: valorSeleccionado,
+          monto_total: 0,
+          monto_tarifa_oficial: montoBase,
+          id_tarifa: tarifaBD.idTarifa || tarifaBD.id_tarifa || null
+        }));
+
+        toast.current?.show({
+          severity: 'warn',
+          summary: 'Excede Límite de Caja',
+          detail: `La tarifa de ${valorSeleccionado} (C$${montoBase.toFixed(2)}) supera C$15,000.00. Se restableció el monto a 0.`,
+          life: 4000
+        });
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          concepto: valorSeleccionado,
+          monto_total: montoBase,
+          monto_tarifa_oficial: montoBase,
+          id_tarifa: tarifaBD.idTarifa || tarifaBD.id_tarifa || null
+        }));
+      }
+    } else {
+      handleInputChange('concepto', valorSeleccionado);
+    }
+  };
+
   const handleMontoChange = (nuevoMonto) => {
     const valor = Number(nuevoMonto) || 0;
 
-    if (valor > limiteActual.max) {
-      // 1. Reestablece el valor a 0 inmediatamente
+    if (valor > LIMITE_MAXIMO_CORDOBAS) {
       handleInputChange('monto_total', 0);
-
-      // 2. Notifica mediante Toast
       toast.current?.show({
         severity: 'warn',
         summary: 'Límite Excedido',
-        detail: `El monto ingresado excede el límite permitido para ${limiteActual.label} (${limiteActual.simbolo}${limiteActual.max.toLocaleString('es-NI')}). Se ha reestablecido el monto a 0.`,
-        life: 5000
+        detail: 'El monto ingresado excede el límite de C$15,000.00. Se ha restablecido a 0.',
+        life: 4000
       });
 
-      // 3. Marca el error en el input
       setErrors((prev) => ({
         ...prev,
-        monto_total: `Monto máximo permitido: ${limiteActual.simbolo}${limiteActual.max.toLocaleString('es-NI')}.`
+        monto_total: 'Monto máximo permitido: C$15,000.00'
       }));
       return;
     }
@@ -108,73 +168,50 @@ const ReciboPago = () => {
     handleInputChange('monto_total', valor);
   };
 
-  // Manejador del cambio de divisa con re-verificación del monto existente
-  const handleMonedaChange = (nuevaMoneda) => {
-    handleInputChange('moneda', nuevaMoneda);
-    const nuevoLimite = LIMITES_MONEDA[nuevaMoneda];
-
-    if (formData.monto_total > nuevoLimite.max) {
-      handleInputChange('monto_total', 0);
-      toast.current?.show({
-        severity: 'warn',
-        summary: 'Límite Excedido',
-        detail: `El monto rebasaba el límite permitido de la nueva moneda (${nuevoLimite.simbolo}${nuevoLimite.max.toLocaleString('es-NI')}). Se reestableció a 0.`,
-        life: 5000
-      });
-      setErrors((prev) => ({
-        ...prev,
-        monto_total: `Monto máximo permitido: ${nuevoLimite.simbolo}${nuevoLimite.max.toLocaleString('es-NI')}.`
-      }));
+  const handleBuscarEstudiantes = async (event) => {
+    if (!event.query || event.query.trim().length === 0) {
+      setSugerencias([]);
+      return;
     }
-  };
 
-  const totalAPagar = useMemo(() => {
-    return cuentasPorPagar.reduce((acc, curr) => acc + (Number(curr.monto) || 0), 0);
-  }, [cuentasPorPagar]);
-
-  const diferencia = useMemo(() => {
-    return (Number(formData.monto_total) || 0) - totalAPagar;
-  }, [formData.monto_total, totalAPagar]);
-
-  const buscarEstudiantes = async (event) => {
     try {
-      const data = await pagosService.buscarEstudiantes(event.query);
-      setSugerencias(
-        data.map((est) => ({
-          idpersona_estudiante: est.idpersona,
-          codigo_MINED: est.codigo_MINED,
-          cod_estudiante: est.cod_estudiante,
-          displayLabel: `[${est.cod_estudiante}] ${est.nombre_completo} ${est.apellido_completo}`,
-          raw: est
-        }))
-      );
+      const data = await searchEstudiantes(event.query.trim());
+      if (Array.isArray(data)) {
+        setSugerencias(
+          data.map((est) => {
+            const idPersona = est.idpersona || est.idPersona || est.id;
+            const codEst = est.cod_estudiante || est.codigo || 'S/C';
+            const mined = est.codigo_MINED ? ` - MINED: ${est.codigo_MINED}` : '';
+            const nombre = est.nombre_completo 
+              ? `${est.nombre_completo} ${est.apellido_completo || ''}` 
+              : `${est.nombres || ''} ${est.apellidos || ''}`;
+
+            return {
+              idpersona: idPersona,
+              codigo_MINED: est.codigo_MINED,
+              cod_estudiante: codEst,
+              displayLabel: `[${codEst}] ${nombre}${mined}`.trim(),
+              raw: est
+            };
+          })
+        );
+      }
     } catch (error) {
       toast.current?.show({
         severity: 'error',
-        summary: 'Error',
+        summary: 'Error de Búsqueda',
         detail: 'No se logró consultar la base de datos de estudiantes.'
       });
     }
   };
 
-  const handleSelectEstudiante = async (e) => {
-    const selec = e.value;
-    handleInputChange('estudiante', selec);
-    setCargandoCuentas(true);
-
-    try {
-      const cuentas = await pagosService.obtenerCuentasPorPagar(selec.idpersona_estudiante);
-      setCuentasPorPagar(cuentas);
-    } catch (error) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Ocurrió un error al consultar las cuentas por pagar.'
-      });
-    } finally {
-      setCargandoCuentas(false);
-    }
+  const handleSelectEstudiante = (e) => {
+    handleInputChange('estudiante', e.value);
   };
+
+  const diferencia = useMemo(() => {
+    return (Number(formData.monto_total) || 0) - (Number(formData.monto_tarifa_oficial) || 0);
+  }, [formData.monto_total, formData.monto_tarifa_oficial]);
 
   const validarFormulario = () => {
     const nuevosErrores = {};
@@ -183,11 +220,15 @@ const ReciboPago = () => {
       nuevosErrores.estudiante = 'Debe seleccionar un estudiante de la lista.';
     }
 
+    if (!formData.concepto) {
+      nuevosErrores.concepto = 'Debe seleccionar un concepto de pago.';
+    }
+
     const monto = Number(formData.monto_total) || 0;
     if (monto <= 0) {
       nuevosErrores.monto_total = 'El monto a pagar debe ser mayor a cero (0).';
-    } else if (monto > limiteActual.max) {
-      nuevosErrores.monto_total = `El monto máximo permitido en ${limiteActual.label} es ${limiteActual.simbolo}${limiteActual.max.toLocaleString('es-NI')}.`;
+    } else if (monto > LIMITE_MAXIMO_CORDOBAS) {
+      nuevosErrores.monto_total = 'El monto máximo en Córdobas es C$15,000.00';
     }
 
     if (!formData.fecha_pago) {
@@ -205,10 +246,12 @@ const ReciboPago = () => {
   };
 
   const handleCancelar = () => {
-    setFormData({ ...ESTADO_INICIAL, fecha_pago: new Date() });
-    setCuentasPorPagar([]);
+    setFormData((prev) => ({
+      ...ESTADO_INICIAL,
+      num_recibo: prev.num_recibo,
+      fecha_pago: new Date()
+    }));
     setErrors({});
-    cargarConsecutivoRecibo();
   };
 
   const handleSubmit = async () => {
@@ -224,19 +267,19 @@ const ReciboPago = () => {
     setRegistrandoPago(true);
 
     const payload = {
-      idpersona_estudiante: formData.estudiante.idpersona_estudiante,
+      idpersona_estudiante: formData.estudiante.idpersona,
       idmatricula: formData.estudiante.raw?.idmatricula || null,
       num_recibo: formData.num_recibo !== 'AUTO-GENERADO' ? formData.num_recibo : null,
       anio_lectivo: new Date(formData.fecha_pago).getFullYear(),
       fecha_pago: moment(formData.fecha_pago).format('YYYY-MM-DD HH:mm:ss'),
       tipo_pago: 'Efectivo',
       monto_total: formData.monto_total,
-      moneda: formData.moneda,
+      moneda: 'NIO',
       creado_por: 'Cajero_Sistema',
       detalles: [
         {
-          id_tarifa: null,
-          concepto: typeof formData.concepto === 'object' ? formData.concepto.value : formData.concepto,
+          id_tarifa: formData.id_tarifa,
+          concepto: formData.concepto,
           monto: formData.monto_total
         }
       ]
@@ -249,7 +292,7 @@ const ReciboPago = () => {
       toast.current?.show({
         severity: 'success',
         summary: 'Pago Registrado',
-        detail: `Recibo N° ${numeroAsignado} procesado exitosamente.`
+        detail: `Recibo N° ${numeroAsignado} (C$${formData.monto_total.toFixed(2)}) procesado exitosamente.`
       });
 
       if (res?.idpago) {
@@ -274,7 +317,7 @@ const ReciboPago = () => {
       <Card title="Recibo de Pago de Colegiaturas" className="recibo-card-full shadow-2">
         <div className="grid p-fluid">
           {/* SECCIÓN IZQUIERDA: FORMULARIO */}
-          <div className="col-12 md:col-6 p-3">
+          <div className="col-12 col-md-6 p-3">
             <div className="mb-3">
               <label htmlFor="num_recibo" className="font-bold block mb-1">
                 No Recibo (Sistema)
@@ -293,7 +336,7 @@ const ReciboPago = () => {
                 id="estudiante"
                 value={formData.estudiante}
                 suggestions={sugerencias}
-                completeMethod={buscarEstudiantes}
+                completeMethod={handleBuscarEstudiantes}
                 field="displayLabel"
                 onSelect={handleSelectEstudiante}
                 onChange={(e) => handleInputChange('estudiante', e.value)}
@@ -321,29 +364,15 @@ const ReciboPago = () => {
             </div>
 
             <div className="mb-3">
-              <label className="font-bold block mb-1">Tipo de Moneda</label>
-              <SelectButton
-                value={formData.moneda}
-                options={OPCIONES_MONEDA}
-                onChange={(e) => e.value && handleMonedaChange(e.value)}
-              />
-            </div>
-
-            <div className="mb-3">
-              <div className="flex justify-content-between align-items-center mb-1">
-                <label htmlFor="monto_total" className="font-bold block">
-                  Monto a Pagar
-                </label>
-                <span className="text-xs text-500 font-semibold">
-                  Máx: {limiteActual.simbolo}{limiteActual.max.toLocaleString('es-NI')}
-                </span>
-              </div>
+              <label htmlFor="monto_total" className="font-bold block mb-1">
+                Monto a Pagar (Córdobas C$)
+              </label>
               <InputNumber
                 id="monto_total"
                 value={formData.monto_total}
                 onValueChange={(e) => handleMontoChange(e.value)}
                 mode="currency"
-                currency={formData.moneda}
+                currency="NIO"
                 locale="es-NI"
                 min={0}
                 minFractionDigits={2}
@@ -354,74 +383,60 @@ const ReciboPago = () => {
 
             <div className="mb-3">
               <label htmlFor="concepto" className="font-bold block mb-1">
-                Concepto de Pago
+                Concepto de Pago (Catálogo BD)
               </label>
               <Dropdown
                 id="concepto"
                 value={formData.concepto}
-                options={CONCEPTOS_PAGO}
+                options={conceptosCatalogo}
                 optionLabel="label"
                 optionValue="value"
-                onChange={(e) => handleInputChange('concepto', e.value)}
-                placeholder="Seleccione un concepto"
+                onChange={handleConceptoChange}
+                placeholder={cargandoTarifas ? 'Cargando conceptos...' : 'Seleccione un concepto de la BD'}
+                className={errors.concepto ? 'p-invalid' : ''}
+                disabled={cargandoTarifas}
               />
+              {errors.concepto && <small className="p-error block mt-1">{errors.concepto}</small>}
             </div>
           </div>
 
-          {/* SECCIÓN DERECHA: TABLA Y TOTALES */}
-          <div className="col-12 md:col-6 p-3">
-            <Card title="Información de cuentas por pagar" className="surface-100 mb-3 w-full">
-              {cargandoCuentas ? (
-                <div className="flex justify-content-center p-4">
-                  <ProgressSpinner style={{ width: '35px', height: '35px' }} />
+          {/* SECCIÓN DERECHA: RESUMEN Y BALANCES */}
+          <div className="col-12 col-md-6 p-3">
+            <Card title="Resumen del Arancel (Tabla catalogo_tarifa)" className="surface-100 mb-3 w-full">
+              <div className="flex flex-column gap-3 p-2">
+                <div className="flex justify-content-between border-bottom-1 surface-border pb-2">
+                  <span className="font-bold text-600">Arancel Oficial en BD:</span>
+                  <span className="font-bold text-900">
+                    C${formData.monto_tarifa_oficial.toFixed(2)}
+                  </span>
                 </div>
-              ) : (
-                <DataTable
-                  value={cuentasPorPagar}
-                  rows={3}
-                  paginator
-                  size="small"
-                  emptyMessage="No hay cuentas por pagar para este estudiante"
-                  className="w-full"
-                >
-                  <Column field="concepto" header="Concepto" />
-                  <Column
-                    field="fechaVencimiento"
-                    header="Fecha Vencimiento"
-                    body={(r) => moment(r.fechaVencimiento).format('DD/MM/YYYY')}
-                  />
-                  <Column
-                    field="monto"
-                    header="Monto"
-                    body={(r) =>
-                      r.monto?.toLocaleString('es-NI', {
-                        style: 'currency',
-                        currency: formData.moneda
-                      })
-                    }
-                  />
-                </DataTable>
-              )}
+                <div className="flex justify-content-between border-bottom-1 surface-border pb-2">
+                  <span className="font-bold text-600">ID Tarifa Vinculada:</span>
+                  <span className="font-bold text-primary">
+                    {formData.id_tarifa ? `#${formData.id_tarifa}` : 'Sin ID'}
+                  </span>
+                </div>
+              </div>
             </Card>
 
             <div className="grid p-fluid">
-              <div className="col-12 md:col-6 mb-3">
-                <label className="font-bold block mb-1">Total a Pagar:</label>
+              <div className="col-12 col-md-6 mb-3">
+                <label className="font-bold block mb-1">Monto Oficial Estipulado:</label>
                 <InputNumber
-                  value={totalAPagar}
+                  value={formData.monto_tarifa_oficial}
                   mode="currency"
-                  currency={formData.moneda}
+                  currency="NIO"
                   locale="es-NI"
                   disabled
                 />
               </div>
 
-              <div className="col-12 md:col-6 mb-3">
-                <label className="font-bold block mb-1">Diferencia:</label>
+              <div className="col-12 col-md-6 mb-3">
+                <label className="font-bold block mb-1">Diferencia (Saldo / Abono):</label>
                 <InputNumber
                   value={diferencia}
                   mode="currency"
-                  currency={formData.moneda}
+                  currency="NIO"
                   locale="es-NI"
                   disabled
                 />
