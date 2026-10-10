@@ -17,7 +17,7 @@ import BuscarEstudiantes from '../../../Servicios/EstudiantesServicios/BuscarEst
 
 export default function Estudiantes() {
   const toast = useRef(null);
-  
+
   const [estudiantes, setEstudiantes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [downloadingReport, setDownloadingReport] = useState(false);
@@ -118,7 +118,7 @@ export default function Estudiantes() {
           severity="info"
           rounded
           outlined
-          tooltip="Ver Expediente"
+          //tooltip="Ver Expediente"
           tooltipOptions={{ position: 'top' }}
           onClick={() => {
             setSelectedEstudianteId(rowData.idpersona);
@@ -130,7 +130,7 @@ export default function Estudiantes() {
           severity="warning"
           rounded
           outlined
-          tooltip="Editar Estudiante"
+          //tooltip="Editar Estudiante"
           tooltipOptions={{ position: 'top' }}
           onClick={() => {
             setSelectedEstudianteId(rowData.idpersona);
@@ -142,7 +142,7 @@ export default function Estudiantes() {
           severity="danger"
           rounded
           outlined
-          tooltip="Eliminar"
+          //tooltip="Eliminar"
           tooltipOptions={{ position: 'top' }}
           onClick={() => handleConfirmDelete(rowData.idpersona)}
         />
