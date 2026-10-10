@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 //import '../App.css';
 import ListarGrados from "./Componentes/Academico/controllers/ListarGrados";
 import Estudiantes from "./Componentes/Academico/controllers/Estudiantes"
+import Docentes from "./Componentes/Academico/controllers/Docentes";
 import AgregarGrados from "./Componentes/Academico/controllers/AgregarGrados";
 import "./estilosCSS/flags.css"
 import "./index.css"
@@ -31,7 +32,7 @@ function App() {
         <Route path="/gestionCobro" element={<GestionCobroForm/>}/>
         <Route path="/registroMatricula" element={<RegistroMatricula/>}/>
         <Route path="/calificaciones" element={<Calificaciones/>}/>
-
+        <Route path="/docentes" element={<Docentes/>}/>
       </Routes>
     </BrowserRouter>
 
