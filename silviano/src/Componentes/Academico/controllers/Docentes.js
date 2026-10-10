@@ -8,14 +8,13 @@ import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Fieldset } from 'primereact/fieldset';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 
-import { getDocentes } from '../../../Servicios/DocenteServicios/docenteService';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { getDocentes, deleteDocente } from '../../../Servicios/DocenteServicios/docenteService';
 import AddDocente from '../../../Servicios/DocenteServicios/agregarDocente';
 import VerDocente from '../../../Servicios/DocenteServicios/VerDocentes';
 import UpdateDocente from '../../../Servicios/DocenteServicios/EditarDocentes';
-
-//import BuscarDocentes from '../../../Servicios/DocenteServicios/BuscarDocentes';
+//import BuscarDocente from '../../../Servicios/DocenteServicios/BuscarDocentes';
 
 
 
@@ -30,7 +29,6 @@ export default function Docentes() {
 
     const [docentes, setDocentes] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [downloadingReport, setDownloadingReport] = useState(false);
     const [selectedDocenteId, setSelectedDocenteId] = useState(null);
 
 
@@ -55,7 +53,35 @@ export default function Docentes() {
         cargarDocentes();
     }, [cargarDocentes]);
 
-    
+     const handleConfirmDelete = (idPersona) => {
+        confirmDialog({
+          message: '¿Está seguro de eliminar este expediente de docente?',
+          header: 'Confirmar Eliminación',
+          icon: 'pi pi-exclamation-triangle',
+          acceptClassName: 'p-button-danger',
+          acceptLabel: 'Sí, Eliminar',
+          rejectLabel: 'Cancelar',
+          accept: async () => {
+            try {
+              await deleteDocente(idPersona);
+              toast.current?.show({
+                severity: 'success',
+                summary: 'Registro Eliminado',
+                detail: 'El docente ha sido removido del sistema.',
+                life: 3000
+              });
+              cargarDocentes();
+            } catch (error) {
+              toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se logró eliminar el registro seleccionado.',
+                life: 4000
+              });
+            }
+          }
+        });
+      };
 
     const statusBodyTemplate = (rowData) => {
         const isActivo = Boolean(rowData.estado);
@@ -94,6 +120,15 @@ export default function Docentes() {
                         setShowEditMode(true);
                     }}
                 />
+                 <Button
+                          icon="pi pi-trash"
+                          severity="danger"
+                          rounded
+                          outlined
+                          //tooltip="Eliminar"
+                          tooltipOptions={{ position: 'top' }}
+                          onClick={() => handleConfirmDelete(rowData.idpersona)}
+                        />
 
             </div>
         );
