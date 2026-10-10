@@ -9,6 +9,18 @@ export const getDocentes = async () => {
   const response = await api.get('/estudiante-app/docentes');
   return response.data;
 };
+
+/**
+ * Realiza la búsqueda filtrada de estudiantes por término.
+ * @param {string} query - Término de búsqueda.
+ */
+export const searchDocente = async (query) => {
+  const response = await api.get('/estudiante-app/docentes', {
+    params: { search: query }
+  });
+  return response.data;
+};
+
 /**
  * Obtiene la información académica y personal del docente por su ID.
  */
@@ -26,6 +38,14 @@ export const getDocentes = async () => {
  };
 
 
+
+ /**
+ * Elimina un registro de docente por su ID.
+ */
+export const deleteDocente = async (idPersona) => {
+  const response = await api.delete(`/estudiante-app/docentes/${idPersona}`);
+  return response.data;
+};
 
 export const ServicioValidado = async (docenteData) => {
      //Invoca el helper independiente de validación async (docenteData)

@@ -76,6 +76,11 @@ const UpdateDocente = ({ idPersona, onDocenteUpdate }) => {
         }
       }, [idPersona]);
 
+       useEffect(() => {
+          fetchDocenteData();
+        }, [fetchDocenteData]);
+      
+
     const handleChange = (field, value) => {
     setFormValues((prev) => ({
       ...prev,
@@ -89,7 +94,7 @@ const UpdateDocente = ({ idPersona, onDocenteUpdate }) => {
       setLoading(true);
   
       try {
-        const payload = {
+        const payload = { 
           ...formValues,
           fecha_nacimiento: formatDateToDB(formValues.fecha_nacimiento)
         };
