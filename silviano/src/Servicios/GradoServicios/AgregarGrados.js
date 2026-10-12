@@ -1,166 +1,268 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { Message } from 'primereact/message';
 import { Dropdown } from 'primereact/dropdown';
 import { getNivelEducativo } from './gradoService';
+import { validarNivelEducativo,validarNombreGrado} from '../../Util/validaciones/ValidacionGenericas.js';
+
 
 import { ServicioValidado } from '../../Servicios/GradoServicios/gradoService.js';
 
 
 function Addgrado(props) {
-
-   const toast = useRef(null);
-   const [loading, setLoading] = useState(false);
-   const [errorMessage, setErrorMessage] = useState(null);
-
-   const [gradoInfo, setgradoInfo] = useState({
-      idGrado: "",
-      nombre: "",
-      nivelEducativo: { idnivel: "" }
-   })
    const [niveles, setNiveles] = useState([]);
+   const [cargandoNiveles, setCargandoNiveles] = useState(false);
+   const [guardando, setGuardando] = useState(false);
 
+   const [errorMessage, setErrorMessage] = useState('');
+   const [successMessage, setSuccessMessage] = useState('');
 
-   /// aqui me obtiene los niveles primaria segundaria
+   const {
+      register,
+      handleSubmit,
+      control,
+      reset,
+      formState: { errors }
+   } = useForm({
+      defaultValues: {
+         idGrado: '',
+         nombre: '',
+         nivelEducativo: {
+            idnivel: ''
+         }
+      }
+   });
+
+   // Cargar niveles educativos desde la API mediante Axios.
    const cargarNivel = useCallback(async () => {
-      setLoading(true);
+      setCargandoNiveles(true);
+
       try {
          const data = await getNivelEducativo();
+
          setNiveles(Array.isArray(data) ? data : []);
-         console.log(data)
       } catch (error) {
-         toast.current?.show({
-            severity: 'error',
-            summary: 'Error de Red',
-            detail: 'No se pudo cargar Niveles.',
-            life: 4000
-         });
-         console.log(error)
-      } finally {
-         setLoading(false);
-      }
+         console.error('Error al cargar niveles:', error);
 
+         setErrorMessage(
+            'No fue posible cargar los niveles educativos.'
+         );
+      } finally {
+         setCargandoNiveles(false);
+      }
    }, []);
-
-
-
-   const { register, handleSubmit, formState: { errors } } = useForm()//Validando campos 
-   const customSubmit = (gradoInfo) => {
-      // console.log(gradoInfo)
-   }
-
-
-   const AddGradoData = async (e) => {
-      if (e) e.preventDefault();
-      setErrorMessage(null);
-      setLoading(true);
-
-      try {
-
-         console.log(gradoInfo)
-         // Se delega la validación y el envío HTTP al servicio
-         await ServicioValidado(gradoInfo);
-
-         toast.current?.show({
-            severity: 'success',
-            summary: 'Registro Exitoso',
-            detail: 'El grado se ha guardado correctamente en la base de datos.',
-            life: 3000
-         });
-
-         // Reiniciar estado o ejecutar callbacks del padre
-         setTimeout(() => {
-            if (props.cargarGrado) props.cargarGrado();
-            if (props.setGradoAdd) props.setGradoAdd(false);
-         }, 1200);
-
-      } catch (error) {
-         console.error("Error al registrar estudiante:", error);
-         const mensajeError = error.response?.data?.mensaje || error.message || "Error al procesar el registro.";
-         setErrorMessage(mensajeError);
-
-         toast.current?.show({
-            severity: 'error',
-            summary: 'Error en Guardado',
-            detail: mensajeError,
-            life: 4000
-         });
-      } finally {
-         setLoading(false);
-      }
-   };
-
 
    useEffect(() => {
       cargarNivel();
    }, [cargarNivel]);
 
+   // Ejecutar después de que react-hook-form valide el formulario.
+   const AddGradoData = async (data) => {
+      setGuardando(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
+      const gradoInfo = {
+         idGrado: data.idGrado,
+         nombre: data.nombre.trim(),
+         nivelEducativo: {
+            idnivel: data.nivelEducativo.idnivel
+         }
+      };
+
+      try {
+         // Enviar el grado al backend utilizando Axios.
+         await ServicioValidado(gradoInfo);
+
+         // Mostrar confirmación del servidor.
+         setSuccessMessage(
+            '¡Registro exitoso! El grado se guardó correctamente.'
+         );
+
+         // Limpiar el formulario después del guardado.
+         reset();
+
+         // Actualizar el listado sin invalidar el guardado
+         // si ocurre un error al consultar nuevamente.
+         if (props.cargarGrado) {
+            try {
+               await props.cargarGrado();
+            } catch (error) {
+               console.error(
+                  'El grado se guardó, pero no se pudo actualizar el listado:',
+                  error
+               );
+
+               setErrorMessage(
+                  'El grado se guardó, pero no se pudo actualizar el listado.'
+               );
+            }
+         }
+      } catch (error) {
+         console.error('Error al guardar el grado:', error);
+
+         const mensaje =
+            error.response?.data?.mensaje ||
+            error.response?.data?.message ||
+            'No se pudo guardar el grado. exite considencias con el nombre';
+
+         setErrorMessage(mensaje);
+      } finally {
+         setGuardando(false);
+      }
+   };
+
    return (
-      <div className='grado-gradoInfo input'>
+      <div className="grado-gradoInfo input">
          <h1>Nuevo Grado</h1>
-         <div className='box'>
 
-            <form onSubmit={handleSubmit(customSubmit)}>
-               <div className='row'>
-                  <div className='col-sm-12 col-md-6'>
-                     <p>
-                        <span>ID: </span>
-                        <InputText className='form-control' placeholder='Id'
-                           onChange={(e) => setgradoInfo({ ...gradoInfo, idGrado: e.target.value })}
+         <div className="box">
 
+            {/* Mensaje de éxito */}
+            {successMessage && (
+               <Message
+                  severity="success"
+                  text={successMessage}
+                  className="mb-3"
+               />
+            )}
+
+            {/* Mensaje de error */}
+            {errorMessage && (
+               <Message
+                  severity="error"
+                  text={errorMessage}
+                  className="mb-3"
+               />
+            )}
+
+            <form
+               onSubmit={handleSubmit(AddGradoData)}
+               noValidate
+            >
+               <div className="row">
+
+                  {/* Identificador del grado */}
+                  <div className="col-sm-12 col-md-6">
+                     <div className="field">
+                        <label htmlFor="idGrado">
+                           ID del grado
+                        </label>
+
+                        <InputText
+                           id="idGrado"
+                           className="form-control"
+                           placeholder="ID"
+                           {...register('idGrado')}
                         />
-                     </p>
+                     </div>
                   </div>
-                  <div className='col-sm-12 col-md-6 mb-3'>
-                     <p>
-                        <span>Nivel * : </span>
-                        <Dropdown
-                           value={gradoInfo.nivelEducativo.idnivel}
-                           onChange={(e) => setgradoInfo({
-                              ...gradoInfo,
-                              nivelEducativo: {
-                                 ...gradoInfo.nivelEducativo, // Copia las otras propiedades de nivelEducativo si las hay
-                                 idnivel: e.value // Actualiza únicamente el id
+
+                  {/* Nivel educativo obligatorio */}
+                  <div className="col-sm-12 col-md-6 mb-3">
+                     <div className="field">
+                        <label htmlFor="nivelEducativo">
+                           Nivel educativo *
+                        </label>
+
+                        <Controller
+                           name="nivelEducativo.idnivel"
+                           control={control}
+                           rules={{
+                              validate: validarNivelEducativo
+                           }}
+                           render={({ field }) => (
+                              <Dropdown
+                                 inputId="nivelEducativo"
+                                 value={field.value}
+                                 onChange={(e) =>
+                                    field.onChange(e.value)
+                                 }
+                                 options={niveles}
+                                 optionLabel="nombre"
+                                 optionValue="idnivel"
+                                 placeholder={
+                                    cargandoNiveles
+                                       ? 'Cargando niveles...'
+                                       : 'Seleccione Primaria o Secundaria'
+                                 }
+                                 className={`w-full ${errors.nivelEducativo?.idnivel
+                                       ? 'p-invalid'
+                                       : ''
+                                    }`}
+                                 loading={cargandoNiveles}
+                                 disabled={
+                                    cargandoNiveles ||
+                                    guardando
+                                 }
+                                 showClear
+                              />
+                           )}
+                        />
+
+                        {errors.nivelEducativo?.idnivel && (
+                           <small className="p-error">
+                              {
+                                 errors.nivelEducativo.idnivel
+                                    .message
                               }
+                           </small>
+                        )}
+                     </div>
+                  </div>
+
+                  {/* Nombre del grado obligatorio */}
+                  <div className="col-sm-12 col-md-6">
+                     <div className="field">
+                        <label htmlFor="nombre">
+                           Nombre del grado *
+                        </label>
+
+                        <InputText
+                           id="nombre"
+                           className={`form-control ${errors.nombre ? 'p-invalid' : ''
+                              }`}
+                           placeholder="Ej. Quinto grado"
+                           disabled={guardando}
+                           {...register('nombre', {
+                              validate: validarNombreGrado
                            })}
-                           options={niveles.map(e => ({ label: e.nombre, value: e.idnivel }))}
-                           optionLabel="label"
-                           optionValue="value"
-                           className="w-full md:w-14rem"
-                           placeholder="Seleccione Nivel"
                         />
-                     </p>
-                  </div>
-                  <div className='col-sm-12 col-md-6'>
-                     <p>
-                        <span>Nombre: </span>
-                        <InputText className='form-control' placeholder='Nombre'
-                           onChange={(e) => setgradoInfo({ ...gradoInfo, nombre: e.target.value })}
 
-                        />
-                        {errors.nombre && <span>Este campo es requerido</span>}
-                     </p>
-
+                        {errors.nombre && (
+                           <small className="p-error">
+                              {errors.nombre.message}
+                           </small>
+                        )}
+                     </div>
                   </div>
+
+               </div>
+
+               {/* Botón dentro del formulario */}
+               <div className="btn-guardar">
+                  <Button
+                     type="submit"
+                     label={
+                        guardando
+                           ? 'Guardando...'
+                           : 'Guardar grado'
+                     }
+                     icon="pi pi-save"
+                     severity="success"
+                     raised
+                     loading={guardando}
+                     disabled={
+                        guardando || cargandoNiveles
+                     }
+                  />
                </div>
             </form>
-
          </div>
-
-         <div className='btn-guardar'>
-            <Button className='btn-guardar-save'
-               label="Guardar"
-               severity="success"
-               raised onClick={AddGradoData}
-
-            />
-
-         </div>
-
       </div>
-
    );
 }
-export default Addgrado
+
+export default Addgrado;
