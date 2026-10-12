@@ -144,8 +144,6 @@ export const validarGrado = (datos) => {
 
 
 //javascript
-
-
 /**
  * Normaliza el nombre para comparar grados.
  * Ignora mayúsculas, minúsculas, tildes y espacios externos.
@@ -194,4 +192,97 @@ export const validarGradoDuplicado = async (nombre) => {
       'No se pudo verificar si el grado ya existe. Intente nuevamente.'
     );
   }
+};
+
+/**
+ * Validaciones independientes para actualizar un grado académico.
+ */
+
+/**
+ * Valida el nombre del grado.
+ */
+export const validarNombreActualizacion = (nombre) => {
+  if (typeof nombre !== 'string' || !nombre.trim()) {
+    return 'El nombre del grado es obligatorio.';
+  }
+
+  const nombreLimpio = nombre.trim();
+
+  if (nombreLimpio.length < 2) {
+    return 'El nombre debe tener al menos 2 caracteres.';
+  }
+
+  if (nombreLimpio.length > 50) {
+    return 'El nombre no puede superar los 50 caracteres.';
+  }
+
+  return true;
+};
+
+/**
+ * Valida que se seleccione un nivel educativo.
+ */
+export const validarNivelActualizacion = (idnivel) => {
+  if (
+    idnivel === '' ||
+    idnivel === null ||
+    idnivel === undefined ||
+    !Number.isInteger(Number(idnivel)) ||
+    Number(idnivel) <= 0
+  ) {
+    return 'Debe seleccionar un nivel educativo válido.';
+  }
+
+  return true;
+};
+
+/**
+ * Valida el identificador del grado.
+ */
+export const validarIdGrado = (id) => {
+  if (
+    id === '' ||
+    id === null ||
+    id === undefined ||
+    !Number.isInteger(Number(id)) ||
+    Number(id) <= 0
+  ) {
+    return 'El identificador del grado no es válido.';
+  }
+
+  return true;
+};
+
+/**
+ * Valida todos los datos antes de actualizar.
+ *
+ * Estructura esperada:
+ * {
+ *   nombre: "Primer Grado",
+ *   nivelEducativo: { idnivel: 1 }
+ * }
+ */
+export const validardatosGrados = (datos) => {
+  const errores = {};
+
+  const resultadoNombre = validarNombreActualizacion(
+    datos?.nombre
+  );
+
+  const resultadoNivel = validarNivelActualizacion(
+    datos?.nivelEducativo?.idnivel
+  );
+
+  if (resultadoNombre !== true) {
+    errores.nombre = resultadoNombre;
+  }
+
+  if (resultadoNivel !== true) {
+    errores.nivelEducativo = resultadoNivel;
+  }
+
+  return {
+    valido: Object.keys(errores).length === 0,
+    errores
+  };
 };
