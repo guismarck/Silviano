@@ -24,7 +24,7 @@ function Addgrado(props) {
    const [gradoInfo, setgradoInfo] = useState({
       idGrado: "",
       nombre: "",
-      nivelEducativo: {idnivel:""}
+      nivelEducativo: { idnivel: "" }
    })
    
    const cargarNivel = useCallback(async () => {
