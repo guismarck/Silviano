@@ -127,7 +127,7 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate }) => {
   return (
     <div className="surface-ground p-3 md:p-4 border-round shadow-1">
       <Toast ref={toast} />
-      
+
       <form onSubmit={handleSubmit} className="p-fluid">
         <Card title="Actualizar Datos Personales" className="mb-4 shadow-1">
           <div className="row g-3">
@@ -298,7 +298,7 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate }) => {
                   id="codigoMined"
                   placeholder="Código oficial MINED"
                   value={formValues.codigoMined}
-                 // onChange={(e) => handleChange('codigo_MINED', e.target.value)}
+                  // onChange={(e) => handleChange('codigo_MINED', e.target.value)}
                   disabled//={fetching}
                 />
               </div>

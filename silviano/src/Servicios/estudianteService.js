@@ -1,4 +1,26 @@
 import api from '../Servicios/api/api';
+import { ValidarEstudiante } from '../Util/validaciones/validacionEstudiante.js';
+
+
+export const ServicioValidado = async (estudianteData) => {
+    // Invoca el helper independiente de validación
+    const validacion = ValidarEstudiante(estudianteData);
+
+    if (!validacion.esValido) {
+        // Lanza un error estructurado si no pasa las validaciones de cliente
+        throw new Error(validacion.error);
+    }
+
+    // Envía el payload previamente sanitizado a la API REST de Spring Boot
+    const respuesta = await api.post('/estudiante-app/estudiantes/create', validacion.payloadFormateado);
+    return respuesta.data;
+};
+
+/**
+ * Valida los datos e invoca el endpoint POST para registrar un nuevo estudiante.
+ * @param {Object} estudianteData - Datos capturados en el formulario.
+ * @returns {Promise<Object>} Respuesta del servidor.
+ */
 
 /**
  * Obtiene la información académica y personal del estudiante por su ID.

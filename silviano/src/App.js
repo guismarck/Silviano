@@ -1,9 +1,10 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 //import '../App.css';
-import ListarGrados from "./Componentes/Academico/controllers/ListarGrados";
+//import ListarGrados from "./Componentes/Academico/controllers/ListarGrados";
 import Estudiantes from "./Componentes/Academico/controllers/Estudiantes"
-import AgregarGrados from "./Componentes/Academico/controllers/AgregarGrados";
+import Docentes from "./Componentes/Academico/controllers/Docentes";
+import Grados from "./Componentes/Academico/controllers/Grados";
 import "./estilosCSS/flags.css"
 import "./index.css"
 import ListMatriculas from "./Servicios/MatriculasServicios/ListMatriculas";
@@ -21,8 +22,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<h1></h1>}/>
-        <Route path="/grados" element={<ListarGrados/>}/>
-        <Route path="/agregargrados" element={<AgregarGrados/>}/>
+         <Route path="/grados" element={<Grados/>}/>
         <Route path="/salon" element={<ListarCatalogoSalon/>}/>
         {/*<Route path="/catalogo/salon" element={<Estudiantes/>}/>*/}
         {/*<Route path="/catalogo/salon/create" element={<AgregarSalon/>}/>*/}
@@ -31,7 +31,7 @@ function App() {
         <Route path="/gestionCobro" element={<GestionCobroForm/>}/>
         <Route path="/registroMatricula" element={<RegistroMatricula/>}/>
         <Route path="/calificaciones" element={<Calificaciones/>}/>
-
+        <Route path="/docentes" element={<Docentes/>}/>
       </Routes>
     </BrowserRouter>
 
