@@ -1,6 +1,6 @@
 {
     "api":{
-        "baseUrl" : "https://legendary-cod-pw6grw7p7rgcr654-8080.app.github.dev/estudiante-app",
+        "baseUrl" : "http://localhost:8080",
         "port" : 8080,
         "context" : "estudiante-app"
     }

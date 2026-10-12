@@ -51,7 +51,7 @@ export const getEstudiantes = async () => {
  * @param {string} query - Término de búsqueda.
  */
 export const searchEstudiantes = async (query) => {
-  const response = await api.get('/estudiante-app/estudiantes', {
+  const response = await api.get('/estudiante-app/estudiantes/buscar', {
     params: { search: query }
   });
   return response.data;
