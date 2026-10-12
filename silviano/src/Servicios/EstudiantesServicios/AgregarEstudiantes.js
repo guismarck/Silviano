@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import settings from '../../settings.json'
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
@@ -20,7 +18,8 @@ function AddEstudiante(props) {
         fecha_nacimiento: '',
         cedula: '',
         cod_estudiante: '',
-        codigo_MINED: '',
+        codigoMined: '',
+        partida_nacimiento: '',
         nombre_tutor: '',
         estado: '',
         sexo: ''
@@ -37,22 +36,18 @@ function AddEstudiante(props) {
     ]
 
     const AddEstudianteData = async (e) => {
+        e.preventDefault();
 
         try {
-            console.log(estudianteInfo)
-            const toSent = estudianteInfo
-            toSent['sexo'] = toSent['sexo'].value
-            toSent['partidad_nacimiento'] = toSent['partidad_nacimiento'].value
-            console.log(toSent)
-
-            const respuesta = await api.post('/estudiante-app/estudiantes/create',toSent).catch(function(error){
-                console.log(error);
-            });
-
-           /* const respuesta = await axios
-                .post(urlBase, toSent).catch(function (error) {
-                    console.log(error)
-                })*/
+            const { cod_estudiante, ...datosEstudiante } = estudianteInfo;
+            const payload = {
+                ...datosEstudiante,
+                sexo: datosEstudiante.sexo?.value ?? datosEstudiante.sexo,
+                partida_nacimiento:
+                    datosEstudiante.partida_nacimiento?.value ?? datosEstudiante.partida_nacimiento,
+                codEstudiante: cod_estudiante
+            };
+            const respuesta = await api.post('/estudiante-app/estudiantes/create', payload);
 
             if (respuesta) {
                 console.log(respuesta.data)
@@ -92,7 +87,7 @@ function AddEstudiante(props) {
                         <p>
                             <span>Sexo : </span>
                             <Dropdown value={estudianteInfo.sexo}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value })}
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.value })}
                                 options={options} optionLabel="label"
                                 className="w-full md:w-14rem"    placeholder=""  />
 
@@ -101,8 +96,8 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <p>
                             <span>Partida de Nacimiento : </span>
-                            <Dropdown value={estudianteInfo.partidad_nacimiento}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partidad_nacimiento: e.target.value })}
+                            <Dropdown value={estudianteInfo.partida_nacimiento}
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, partida_nacimiento: e.value })}
                                 options={optionsAdd} optionLabel="label"
                                 className="w-full md:w-14rem" />
                         </p>
@@ -118,7 +113,7 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <span>Fecha de Nacimiento : </span>
                         <Calendar className='control-form' value={estudianteInfo.fecha_nacimiento}
-                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, fecha_nacimiento: e.target.value })} />
+                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, fecha_nacimiento: e.value })} />
                     </div>
 
                     <div className='col-sm-12 col-md-6'>
@@ -155,6 +150,7 @@ function AddEstudiante(props) {
                         <p>
                             <span>Codigo Estudiante : </span>
                             <InputText className='form-control' placeholder='Codigo Estudiante'
+                                value={estudianteInfo.cod_estudiante}
                                 onChange={(e) => setEstudianteInfo({ ...estudianteInfo, cod_estudiante: e.target.value })}
                             />
                         </p>
@@ -164,14 +160,14 @@ function AddEstudiante(props) {
                     <p>
                         <span>Codigo MINED : </span>
                         <InputText className='form-control' placeholder='Codigo MINED'
-                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, codigo_MINED: e.target.value })}
+                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, codigoMined: e.target.value })}
                         />
                     </p>
                 </div>
                 <div className='col-sm-12 col-md-6'>
                     <span>Estado  : </span>
                     <InputSwitch checked={estudianteInfo.estado}
-                        onChange={e => setEstudianteInfo({ ...estudianteInfo, estado: e.target.value })} />
+                        onChange={e => setEstudianteInfo({ ...estudianteInfo, estado: e.value })} />
 
                 </div>
             </div>

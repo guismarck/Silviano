@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // URL base orientada al puerto 8080 de Spring Boot en GitHub Codespaces o Localhost
-const BASE_URL = process.env.REACT_APP_API_URL || 'https://legendary-cod-pw6grw7p7rgcr654-8080.app.github.dev';
+const BASE_URL = process.env.REACT_APP_API_URL ;
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -15,7 +15,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('sige_token');
-    if (token) {
+    if (token && !config.skipAuth) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -27,11 +27,22 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const mensaje =
+    const mensajeServidor =
       error.response?.data?.message ||
-      error.response?.data?.mensaje ||
-      'Ocurrió un error en la comunicación con el servidor SIGE.';
-    return Promise.reject(new Error(mensaje));
+      error.response?.data?.mensaje;
+
+    if (error.response) {
+      error.message = mensajeServidor
+        ? `Error HTTP ${error.response.status}: ${mensajeServidor}`
+        : `Error HTTP ${error.response.status} al comunicarse con el servidor SIGE.`;
+    } else if (error.request) {
+      error.message =
+        'No se recibió respuesta del servidor. Verifique la URL de la API y que CORS permita el origen del frontend.';
+    } else if (!error.message) {
+      error.message = 'Ocurrió un error al preparar la solicitud al servidor SIGE.';
+    }
+
+    return Promise.reject(error);
   }
 );
 

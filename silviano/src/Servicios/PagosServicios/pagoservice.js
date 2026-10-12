@@ -100,21 +100,77 @@ export const registrarTransaccionCobro = async (payload) => {
 };
 
 const pagosService = {
-  // Obtiene las cuentas por pagar de un estudiante
-  obtenerCuentasPorPagar: async (idEstudiante) => {
+  /**
+   * Emite un recibo enviando el contrato esperado por EmisionReciboRequestDTO.
+   */
+  emitirRecibo: async (datosEmision) => {
     try {
-      const response = await api.get(`/pagos/cuentas-por-pagar`, {
-        params: {
-          idEstudiante,
-        },
-      });
+      const requestDTO = {
+        idPersona: datosEmision.idPersona,
+        idSalon: datosEmision.idSalon ?? null,
+        anioLectivo: datosEmision.anioLectivo,
+        concepto: datosEmision.concepto,
+        tipoPago: datosEmision.tipoPago,
+        monto: datosEmision.monto,
+        idTarifa: datosEmision.idTarifa,
+        fechaTransaccion: datosEmision.fechaTransaccion,
+        usuario: datosEmision.usuario,
+      };
+      const response = await api.post('/estudiante-app/procesar-emision', requestDTO);
       return response.data;
     } catch (error) {
-      // Manejar error al obtener cuentas por pagar (ej. registrar error, mostrar mensaje al usuario)
-      console.error('Error al obtener cuentas por pagar:', error);
-      throw error;
+      const respuestaBackend = error.response?.data;
+      const mensajeBackend =
+        typeof respuestaBackend === 'string'
+          ? respuestaBackend
+          : respuestaBackend?.message || respuestaBackend?.mensaje;
+
+      throw new Error(mensajeBackend || error.message || 'No se pudo procesar la emisión del recibo.');
     }
   },
+
+  descargarComprobante: async (numeroRecibo, usuario = 'ADMIN') => {
+    try {
+      const response = await api.post(
+        '/reportes/descargar',
+        {
+          nombrePlantilla: 'Comprobante_silviano',
+          formato: 'PDF',
+          parametros: {
+            P_RECIBO_NUM: numeroRecibo,
+            P_USUARIO: usuario
+          }
+        },
+        {
+          baseURL: process.env.NODE_ENV === 'development' ? '' : undefined,
+          responseType: 'blob'
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      const responseData = error.response?.data;
+      let mensajeBackend;
+
+      if (responseData instanceof Blob) {
+        const responseText = await responseData.text();
+        try {
+          const errorData = JSON.parse(responseText);
+          mensajeBackend = errorData.message || errorData.mensaje;
+        } catch {
+          mensajeBackend = responseText;
+        }
+      } else if (typeof responseData === 'string') {
+        mensajeBackend = responseData;
+      } else {
+        mensajeBackend = responseData?.message || responseData?.mensaje;
+      }
+
+      throw new Error(mensajeBackend || error.message || 'No se pudo generar el PDF del recibo.');
+    }
+  },
+
+
 
   // Registra un nuevo pago
   registrarPago: async (datosPago) => {

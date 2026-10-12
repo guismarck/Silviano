@@ -1,4 +1,4 @@
-import api from '../Servicios/api/api';
+import api from './api/api';
 
 /**
  * Obtiene la información académica y personal del estudiante por su ID.
@@ -29,7 +29,7 @@ export const getEstudiantes = async () => {
  * @param {string} query - Término de búsqueda.
  */
 export const searchEstudiantes = async (query) => {
-  const response = await api.get('/estudiante-app/estudiantes', {
+  const response = await api.get('/estudiante-app/estudiantes/buscar', {
     params: { search: query }
   });
   return response.data;

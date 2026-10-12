@@ -10,7 +10,7 @@ import ListMatriculas from "./Servicios/MatriculasServicios/ListMatriculas";
 import ListarCatalogoSalon from "./Componentes/Academico/controllers/ListarCatalogoSalon";
 //import GestionCobroForm from "./Servicios/PagosServicios/gestionCobro";
 import GestionCobroForm from "./Componentes/ReciboPago";
-import RegistroMatricula from "./Servicios/MatriculasServicios/RegistroMatricula";
+import RegistroMatricula from "./Componentes/matriculas/MatriculaPantallaUnica";
 import Calificaciones from "./Componentes/Academico/controllers/RegistroCalificaciones"
 // import AgregarSalon from "./Componetes/Academico/controllers/AgregarSalon";
 

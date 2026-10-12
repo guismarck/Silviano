@@ -144,7 +144,7 @@ export default function VerEstudiante({ idPersona }) {
 
           <div className="col-12 col-md-6 mb-3">
             <span className="text-500 block font-medium mb-1">Partida de Nacimiento / Folio</span>
-            <span className="text-900 font-semibold">{estudiante.partidad_nacimiento || estudiante.partida_nacimiento || 'N/A'}</span>
+            <span className="text-900 font-semibold">{estudiante.partida_nacimiento || estudiante.partida_nacimiento || 'N/A'}</span>
           </div>
 
           <div className="col-12 col-md-6 mb-3">
@@ -176,7 +176,7 @@ export default function VerEstudiante({ idPersona }) {
 
           <div className="col-12 col-md-6 mb-3">
             <span className="text-500 block font-medium mb-1">Código Único MINED</span>
-            <span className="text-900 font-semibold">{estudiante.codigo_MINED || 'N/A'}</span>
+            <span className="text-900 font-semibold">{estudiante.codigoMined || 'N/A'}</span>
           </div>
 
           <div className="col-12 col-md-6 mb-3">

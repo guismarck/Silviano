@@ -1,12 +1,12 @@
 import api from '../api/api';
 
 const estudiantesService = {
-  // Busca estudiantes que coincidan con la consulta (nombre o código)
+  // Busca por código de estudiante, nombre o apellido.
   buscarEstudiantes: async (consulta) => {
     try {
-      const response = await api.get('/estudiantes/buscar', {
+      const response = await api.get('/estudiante-app/estudiantes/buscar', {
         params: {
-          consulta,
+          search: consulta,
         },
       });
       return response.data;
