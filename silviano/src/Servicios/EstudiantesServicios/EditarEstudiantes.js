@@ -33,7 +33,7 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate }) => {
     fecha_nacimiento: null,
     cedula: '',
     cod_estudiante: '',
-    codigo_MINED: '',
+    codigoMined: '',
     nombre_tutor: '',
     partida_nacimiento: true,
     estado: true,

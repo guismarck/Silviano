@@ -6,8 +6,19 @@ export const tarifaService = {
    */
   listarTarifas: async (anioLectivo) => {
     const response = await api.get('/estudiante-app/catalogo/tarifa', {
-      params: anioLectivo ? { anioLectivo } : {}
+      params: anioLectivo ? { anioLectivo } : {},
+      headers: {
+        Accept: 'application/json'
+      },
+      skipAuth: true
     });
+
+    if (!Array.isArray(response.data)) {
+      throw new Error(
+        'El catálogo de tarifas no devolvió una lista JSON. Verifique la respuesta del endpoint en Network.'
+      );
+    }
+
     return response.data;
   },
 
@@ -18,6 +29,17 @@ export const tarifaService = {
   obtenerTarifaPorGradoYConcepto: async (idGrado, anioLectivo, concepto) => {
     const response = await api.get('/estudiante-app/buscar', {
       params: { idGrado, anioLectivo, concepto }
+    });
+    return response.data;
+  },
+
+  /**
+   * Consulta el saldo pendiente de una persona para una tarifa específica.
+   * Endpoint: GET /pago/saldo?idPersona=...&idTarifa=...
+   */
+  buscarSaldoPorPersonaYTarifa: async (idPersona, idTarifa) => {
+    const response = await api.get('estudiante-app/pago/saldo', {
+      params: { idPersona, idTarifa }
     });
     return response.data;
   }
