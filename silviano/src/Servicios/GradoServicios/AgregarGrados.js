@@ -18,30 +18,32 @@ function Addgrado(props) {
    const [gradoInfo, setgradoInfo] = useState({
       idGrado: "",
       nombre: "",
-      nivelEducativo: {idnivel:""}
+      nivelEducativo: { idnivel: "" }
    })
-       const [niveles, setNiveles] = useState([]);
-   
+   const [niveles, setNiveles] = useState([]);
+
+
+   /// aqui me obtiene los niveles primaria segundaria
    const cargarNivel = useCallback(async () => {
-           setLoading(true);
-           try {
-               const data = await getNivelEducativo();
-               setNiveles(Array.isArray(data) ? data : []);
-               console.log(data)
-           } catch (error) {
-               toast.current?.show({
-                   severity: 'error',
-                   summary: 'Error de Red',
-                   detail: 'No se pudo cargar Niveles.',
-                   life: 4000
-               });
-               console.log(error)
-           } finally {
-               setLoading(false);
-           }
-           
-       }, []);
-   
+      setLoading(true);
+      try {
+         const data = await getNivelEducativo();
+         setNiveles(Array.isArray(data) ? data : []);
+         console.log(data)
+      } catch (error) {
+         toast.current?.show({
+            severity: 'error',
+            summary: 'Error de Red',
+            detail: 'No se pudo cargar Niveles.',
+            life: 4000
+         });
+         console.log(error)
+      } finally {
+         setLoading(false);
+      }
+
+   }, []);
+
 
 
    const { register, handleSubmit, formState: { errors } } = useForm()//Validando campos 
@@ -56,7 +58,7 @@ function Addgrado(props) {
       setLoading(true);
 
       try {
-         
+
          console.log(gradoInfo)
          // Se delega la validación y el envío HTTP al servicio
          await ServicioValidado(gradoInfo);
@@ -90,10 +92,10 @@ function Addgrado(props) {
       }
    };
 
-   
-       useEffect(() => {
-           cargarNivel();
-       }, [cargarNivel]);
+
+   useEffect(() => {
+      cargarNivel();
+   }, [cargarNivel]);
 
    return (
       <div className='grado-gradoInfo input'>
@@ -119,8 +121,8 @@ function Addgrado(props) {
                            onChange={(e) => setgradoInfo({
                               ...gradoInfo,
                               nivelEducativo: {
-                                    ...gradoInfo.nivelEducativo, // Copia las otras propiedades de nivelEducativo si las hay
-                                    idnivel: e.value // Actualiza únicamente el id
+                                 ...gradoInfo.nivelEducativo, // Copia las otras propiedades de nivelEducativo si las hay
+                                 idnivel: e.value // Actualiza únicamente el id
                               }
                            })}
                            options={niveles.map(e => ({ label: e.nombre, value: e.idnivel }))}
