@@ -20,6 +20,15 @@ function Addgrado(props) {
 
    const [errorMessage, setErrorMessage] = useState('');
    const [successMessage, setSuccessMessage] = useState('');
+   const toast = useRef(null);
+   const [loading, setLoading] = useState(false);
+
+   const [gradoInfo, setgradoInfo] = useState({
+      idGrado: "",
+      nombre: "",
+      nivelEducativo: {idnivel:""}
+   })
+   
 
    const {
       register,
