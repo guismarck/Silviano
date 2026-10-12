@@ -69,7 +69,7 @@ export default function ListarGrados() {
                     icon="pi pi-pencil"
                     severity="warning"
                     rounded
-                    outlined
+                    outlined 
                     //tooltip="Editar Docente"
                     tooltipOptions={{ position: 'top' }}
                     onClick={() => {
