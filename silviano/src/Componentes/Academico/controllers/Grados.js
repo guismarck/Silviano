@@ -85,7 +85,6 @@ export default function ListarGrados() {
     }, []);
 
     const nivelBodyTemplate = (rowData) => {
-
         return rowData.nivelEducativo.nombre;
     };
 

@@ -18,8 +18,34 @@ function Addgrado(props) {
 
    const [errorMessage, setErrorMessage] = useState('');
    const [successMessage, setSuccessMessage] = useState('');
+   const toast = useRef(null);
+   const [loading, setLoading] = useState(false);
 
-  
+   const [gradoInfo, setgradoInfo] = useState({
+      idGrado: "",
+      nombre: "",
+      nivelEducativo: {idnivel:""}
+   })
+   
+   const cargarNivel = useCallback(async () => {
+           setLoading(true);
+           try {
+               const data = await getNivelEducativo();
+               setNiveles(Array.isArray(data) ? data : []);
+               console.log(data)
+           } catch (error) {
+               toast.current?.show({
+                   severity: 'error',
+                   summary: 'Error de Red',
+                   detail: 'No se pudo cargar Niveles.',
+                   life: 4000
+               });
+               console.log(error)
+           } finally {
+               setLoading(false);
+           }
+           
+       }, []);
 
    const {
       register,
@@ -36,27 +62,6 @@ function Addgrado(props) {
          }
       }
    });
-
-   // Cargar niveles educativos desde la API mediante Axios.
-   const cargarNivel = useCallback(async () => {
-      setCargandoNiveles(true);
-
-      try {
-         const data = await getNivelEducativo();
-
-         setNiveles(Array.isArray(data) ? data : []);
-      } catch (error) {
-         console.error('Error al cargar niveles:', error);
-
-         setErrorMessage(
-            'No fue posible cargar los niveles educativos.'
-         );
-      } finally {
-         setCargandoNiveles(false);
-      }
-   }, []);
-
-
 
    useEffect(() => {
       cargarNivel();
