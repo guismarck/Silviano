@@ -8,10 +8,11 @@ import { Dialog } from 'primereact/dialog';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { Toast } from 'primereact/toast';
 //import Vergrado from '../../../Servicios/GradoServicios/VerGrados';
-//import Updategrado from '../../../Servicios/GradoServicios/EditarGrado';
+
 //import settings from '../../settings.json';
 import { getGrados, getNivelEducativo } from '../../../Servicios/GradoServicios/gradoService';
 import Addgrado from '../../../Servicios/GradoServicios/AgregarGrados';
+import Updategrado from '../../../Servicios/GradoServicios/EditarGrado';
 import { Fieldset } from 'primereact/fieldset';
 
 export default function ListarGrados() {
@@ -76,7 +77,7 @@ export default function ListarGrados() {
     }, []);
 
     const nivelBodyTemplate = (rowData) => {
-        
+
         return rowData.nivelEducativo.nombre;
     };
 
@@ -107,11 +108,10 @@ export default function ListarGrados() {
                     severity="warning"
                     rounded
                     outlined
-                    //tooltip="Editar Docente"
                     tooltipOptions={{ position: 'top' }}
                     onClick={() => {
-                        setSelectedGradoId(rowData.idpersona);
-                        // setShowEditMode(true);
+                        setSelectedGradoId(rowData.idGrado);
+                        setShowEditMode(true);
                     }}
                 />
                 <Button
@@ -170,22 +170,32 @@ export default function ListarGrados() {
                 />
             </Dialog>
 
-            <Dialog header="" visible={showViewMode}
-                style={{ width: '50vw' }}
-                onHide={() => setShowViewMode(false)} >
-                {/* <Vergrado idGrado={selectedGradoId} /> */}
+           
+
+            {/* Modal Editar Grado */}
+            <Dialog
+                header="Editar Grado"
+                visible={showEditMode}
+                style={{ width: '90vw', maxWidth: '850px' }}
+                onHide={() => {
+                    setShowEditMode(false);
+                    setSelectedGradoId(null);
+                }}
+                
+            >
+           {selectedGradoId && (
+                    <Updategrado
+                        idPersona={selectedGradoId}
+                        onEstudianteUpdate={() => {
+                            setShowEditMode(false);
+                            setSelectedGradoId(null);
+                            cargarGrados();
+                        }}
+                    />
+                )}
             </Dialog>
-            {/* <Dialog header="" visible={showAddMode}
-                style={{ width: '50vw' }}
-                onHide={() => setShowAddMode(false)} >
 
-            </Dialog> */}
-
-            <Dialog header="" visible={showEditMode}
-                style={{ width: '50vw' }}
-                onHide={() => setShowEditMode(false)} >
-
-            </Dialog>
+           
         </div>
 
     );
