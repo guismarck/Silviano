@@ -3,15 +3,16 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Card } from 'primereact/card';
-import { Dialog } from 'primereact/dialog';
-import axios from 'axios';
 import { Button } from 'primereact/button';
+import { Dialog } from 'primereact/dialog';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { Toast } from 'primereact/toast';
 //import Vergrado from '../../../Servicios/GradoServicios/VerGrados';
-//import Addgrado from '../../../Servicios/GradoServicios/AgregarGrados';
 //import Updategrado from '../../../Servicios/GradoServicios/EditarGrado';
 //import settings from '../../settings.json';
-import { getGrados } from '../../../Servicios/GradoServicios/gradoService';
-
+import { getGrados, getNivelEducativo } from '../../../Servicios/GradoServicios/gradoService';
+import Addgrado from '../../../Servicios/GradoServicios/AgregarGrados';
+import { Fieldset } from 'primereact/fieldset';
 
 export default function ListarGrados() {
     /**
@@ -19,12 +20,13 @@ export default function ListarGrados() {
      */
     const toast = useRef(null);
     const [grados, setGrados] = useState([]);
-    const [showViewMode, setshowViewMode] = useState(false);
-    const [showAddMode, setshowAddMode,] = useState(false);
-    const [showEditMode, setshowEditMode,] = useState(false);
+    const [niveles, setNiveles] = useState([]);
+
+    const [showViewMode, setShowViewMode] = useState(false);
+    const [showAddMode, setShowAddMode,] = useState(false);
+    const [showEditMode, setShowEditMode,] = useState(false);
     //const [selectGradoID, setSelectGradoID] = useState(null);
 
-    const [docentes, setDocentes] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedGradoId, setSelectedGradoId] = useState(null);
 
@@ -43,12 +45,47 @@ export default function ListarGrados() {
         } finally {
             setLoading(false);
         }
+
+
+        const data = await getGrados();
+        console.log("Grados recibidos:", data);
+        setGrados(Array.isArray(data) ? data : []);
+
     }, []);
+
+    const cargarNivel = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await getNivelEducativo();
+            setNiveles(Array.isArray(data) ? data : []);
+            console.log(data)
+        } catch (error) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error de Red',
+                detail: 'No se pudo cargar Niveles.',
+                life: 4000
+            });
+            console.log(error)
+        } finally {
+            setLoading(false);
+        }
+        const data = await getGrados();
+        console.log("Grados recibidos:", data);
+        setGrados(Array.isArray(data) ? data : []);
+    }, []);
+
+    const nivelBodyTemplate = (rowData) => {
+        
+        return rowData.nivelEducativo.nombre;
+    };
+
 
 
     useEffect(() => {
         cargarGrados();
-    }, [cargarGrados]);
+        // cargarNivel();
+    }, [cargarGrados, cargarNivel]);
 
     const actionsBodyTemplate = (rowData) => {
         return (
@@ -92,40 +129,61 @@ export default function ListarGrados() {
     };
 
     return (
-        <div className="card">
+        <div className="p-3 md:p-4">
+            <Toast ref={toast} />
+            <ConfirmDialog />
 
             <Card title="Grados">
 
-                <div className='addGrado'>
-                    <Button className='btnAgregar'
-                        label="Nuevo Grado" text raised onClick={() => setshowAddMode(true)} />
-                </div>
+                <DataTable value={grados} stripedRows tableStyle={{ minWidth: '50rem' }}>
+                    <Column field="idGrado" header="ID-Grado" style={{ width: '25%' }}></Column>
+                    <Column header="Nivel educativo" body={nivelBodyTemplate} style={{ width: '25%' }} />
+                    <Column field="nombre" header="Nombre" style={{ width: '25%' }}></Column>
+                    <Column header="Accion" body={actionsBodyTemplate} ></Column>
+                </DataTable>
 
-                <div className='listarGrados' >
 
-                    <DataTable value={grados} stripedRows tableStyle={{ minWidth: '50rem' }}>
-                        <Column field="idGrado" header="ID-Grado" style={{ width: '25%' }}></Column>
-                        <Column field="idnivel" header="Nivel" style={{ width: '25%' }} ></Column>
-                        <Column field="nombre" header="Nombre" style={{ width: '25%' }}></Column>
-                        <Column header="Accion" body={actionsBodyTemplate} ></Column>
-                    </DataTable>
-                </div>
+                {/* Sección de acciones inferior dentro del Fieldset */}
+                <Fieldset legend="Acciones" className="mt-4">
+                    <div className="flex flex-wrap gap-3 align-items-center">
+                        <Button
+                            label="Nuevo Grado"
+                            icon="pi pi-plus"
+                            severity="primary"
+                            onClick={() => setShowAddMode(true)}
+                        />
+
+                    </div>
+                </Fieldset>
+
             </Card>
+            {/* Modal Agregar Grado */}
+            <Dialog
+                header="Registrar Nuevo Grado"
+                visible={showAddMode}
+                style={{ width: '90vw', maxWidth: '850px' }}
+                onHide={() => setShowAddMode(false)}
+            >
+                <Addgrado
+                    cargarGrado={cargarGrados}
+                    setGradoAdd={() => setShowAddMode(true)}
+                />
+            </Dialog>
+
             <Dialog header="" visible={showViewMode}
                 style={{ width: '50vw' }}
-                onHide={() => setshowViewMode(false)} >
+                onHide={() => setShowViewMode(false)} >
                 {/* <Vergrado idGrado={selectedGradoId} /> */}
             </Dialog>
-            <Dialog header="" visible={showAddMode}
+            {/* <Dialog header="" visible={showAddMode}
                 style={{ width: '50vw' }}
-                onHide={() => setshowAddMode(false)} >
+                onHide={() => setShowAddMode(false)} >
 
-
-            </Dialog>
+            </Dialog> */}
 
             <Dialog header="" visible={showEditMode}
                 style={{ width: '50vw' }}
-                onHide={() => setshowEditMode(false)} >
+                onHide={() => setShowEditMode(false)} >
 
             </Dialog>
         </div>
