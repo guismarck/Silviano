@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { Message } from 'primereact/message';
 import { Dropdown } from 'primereact/dropdown';
 import { getNivelEducativo } from './gradoService';
-import { validarNivelEducativo,validarNombreGrado} from '../../Util/validaciones/ValidacionGenericas.js';
+import { validarNivelEducativo, validarNombreGrado } from '../../Util/validaciones/ValidacionGenericas.js';
 
 
 import { ServicioValidado } from '../../Servicios/GradoServicios/gradoService.js';
@@ -18,6 +18,8 @@ function Addgrado(props) {
 
    const [errorMessage, setErrorMessage] = useState('');
    const [successMessage, setSuccessMessage] = useState('');
+
+  
 
    const {
       register,
@@ -54,9 +56,14 @@ function Addgrado(props) {
       }
    }, []);
 
+
+
    useEffect(() => {
       cargarNivel();
+
    }, [cargarNivel]);
+
+
 
    // Ejecutar después de que react-hook-form valide el formulario.
    const AddGradoData = async (data) => {
@@ -189,8 +196,8 @@ function Addgrado(props) {
                                        : 'Seleccione Primaria o Secundaria'
                                  }
                                  className={`w-full ${errors.nivelEducativo?.idnivel
-                                       ? 'p-invalid'
-                                       : ''
+                                    ? 'p-invalid'
+                                    : ''
                                     }`}
                                  loading={cargandoNiveles}
                                  disabled={
