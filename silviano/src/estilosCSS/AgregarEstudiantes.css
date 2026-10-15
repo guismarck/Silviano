@@ -1,0 +1,369 @@
+
+/* =========================================
+   SIGE - Registro de estudiante y tutor
+   Tema claro inspirado en la interfaz original
+   ========================================= */
+
+.registro-estudiante {
+    --sige-texto: #343a40;
+    --sige-secundario: #6c757d;
+    --sige-borde: #d7dce0;
+    --sige-primario: #087f8c;
+    --sige-primario-hover: #066b76;
+    --sige-azul: #2864e8;
+    --sige-verde: #25b85a;
+
+    width: 100%;
+    background: #ffffff;
+    color: var(--sige-texto);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+}
+
+.registro-estudiante *,
+.registro-estudiante *::before,
+.registro-estudiante *::after {
+    box-sizing: border-box;
+}
+
+.registro-estudiante .registro-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.registro-estudiante .registro-logo {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 7px;
+    background: #155e75;
+    color: #ffffff;
+    font-size: 21px;
+}
+
+.registro-estudiante .registro-colegio {
+    margin: 0 0 4px;
+    color: #343a40;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.registro-estudiante .registro-subtitulo {
+    margin: 0;
+    color: #6c757d;
+    font-size: 11px;
+}
+
+.registro-estudiante .registro-migas {
+    margin: 10px 0 16px;
+    color: #6c757d;
+    font-size: 11px;
+}
+
+.registro-estudiante .registro-separador {
+    margin: 14px 0 20px;
+    border: 0;
+    border-top: 1px solid #dee2e6;
+}
+
+.registro-estudiante .registro-titulo {
+    margin: 0 0 10px;
+    color: #343a40;
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.registro-estudiante .registro-descripcion {
+    margin: 0 0 16px;
+    color: #6c757d;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.registro-estudiante .registro-steps {
+    margin-bottom: 20px;
+}
+
+.registro-estudiante .registro-steps .p-steps {
+    width: 100%;
+}
+
+.registro-estudiante .registro-steps .p-steps-item {
+    flex: 1 1 0;
+}
+
+.registro-estudiante .registro-steps .p-menuitem-link {
+    background: transparent;
+    padding: 0.6rem 0.4rem;
+}
+
+.registro-estudiante .registro-steps .p-steps-number {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+    border: 0;
+    background: #e9ecef;
+    color: #495057;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.registro-estudiante .registro-steps .p-steps-title {
+    color: #495057;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.registro-estudiante .registro-steps .p-highlight .p-steps-number {
+    background: var(--sige-azul);
+    color: #ffffff;
+}
+
+.registro-estudiante .registro-steps .p-highlight .p-steps-title {
+    color: var(--sige-azul);
+}
+
+.registro-estudiante .registro-paso-titulo {
+    margin: 0 0 10px;
+    color: #343a40;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.registro-estudiante .registro-paso-descripcion {
+    margin: 0 0 16px;
+    color: #6c757d;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.registro-estudiante .formgrid.grid {
+    margin: 0 -7px;
+}
+
+.registro-estudiante .formgrid.grid > [class*="col-"] {
+    padding: 0 7px;
+}
+
+.registro-estudiante .registro-campo {
+    min-width: 0;
+    margin-bottom: 13px;
+}
+
+.registro-estudiante .registro-campo label {
+    display: block;
+    margin-bottom: 7px;
+    color: #343a40;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.registro-estudiante .registro-obligatorio {
+    color: #343a40;
+}
+
+.registro-estudiante .registro-campo > .p-inputtext,
+.registro-estudiante .registro-campo > .p-dropdown,
+.registro-estudiante .registro-campo > .p-calendar,
+.registro-estudiante .registro-campo > .p-inputtextarea {
+    width: 100%;
+}
+
+.registro-estudiante .p-inputtext,
+.registro-estudiante .p-dropdown,
+.registro-estudiante .p-inputtextarea,
+.registro-estudiante .p-calendar .p-inputtext {
+    min-height: 37px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #495057;
+    font-size: 12px;
+    box-shadow: none;
+}
+
+.registro-estudiante .p-inputtext,
+.registro-estudiante .p-inputtextarea {
+    padding: 9px 10px;
+}
+
+.registro-estudiante .p-inputtext::placeholder,
+.registro-estudiante .p-inputtextarea::placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+.registro-estudiante .p-dropdown .p-dropdown-label {
+    padding: 9px 10px;
+    color: #495057;
+    font-size: 12px;
+}
+
+.registro-estudiante .p-dropdown .p-dropdown-trigger {
+    width: 2.4rem;
+    color: #6c757d;
+}
+
+.registro-estudiante .p-calendar {
+    display: flex;
+    width: 100%;
+}
+
+.registro-estudiante .p-calendar .p-inputtext {
+    flex: 1;
+    min-width: 0;
+}
+
+.registro-estudiante .p-calendar .p-datepicker-trigger {
+    background: var(--sige-primario);
+    color: #ffffff;
+    border: 1px solid var(--sige-primario);
+    border-radius: 0 4px 4px 0;
+}
+
+.registro-estudiante .p-inputtext:enabled:focus,
+.registro-estudiante .p-dropdown:not(.p-disabled).p-focus,
+.registro-estudiante .p-inputtextarea:enabled:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.15);
+}
+
+.registro-estudiante .registro-estado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 38px;
+    margin-bottom: 12px;
+}
+
+.registro-estudiante .registro-estado-texto {
+    color: #343a40;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.registro-estudiante .registro-estado-activo {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--sige-verde);
+    font-size: 12px;
+}
+
+.registro-estudiante .p-inputswitch {
+    transform: scale(0.85);
+    transform-origin: center;
+}
+
+.registro-estudiante
+    .p-inputswitch.p-inputswitch-checked
+    .p-inputswitch-slider {
+    background: var(--sige-verde);
+}
+
+.registro-estudiante .registro-acciones {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #dee2e6;
+}
+
+.registro-estudiante .registro-btn {
+    border-radius: 4px;
+    padding: 8px 13px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.registro-estudiante .registro-btn-cancelar {
+    border: 1px solid #ced4da;
+    background: #ffffff;
+    color: #495057;
+}
+
+.registro-estudiante .registro-btn-cancelar:hover {
+    border-color: #adb5bd;
+    background: #f1f3f5;
+    color: #343a40;
+}
+
+.registro-estudiante .registro-btn-siguiente {
+    border: 1px solid var(--sige-azul);
+    background: var(--sige-azul);
+    color: #ffffff;
+}
+
+.registro-estudiante .registro-btn-siguiente:hover {
+    border-color: #1d4ed8;
+    background: #1d4ed8;
+}
+
+.registro-estudiante .registro-btn-guardar {
+    border: 1px solid var(--sige-verde);
+    background: var(--sige-verde);
+    color: #ffffff;
+}
+
+.registro-estudiante .registro-btn-guardar:hover {
+    border-color: #1f9d4b;
+    background: #1f9d4b;
+}
+
+.registro-estudiante .registro-error {
+    margin-bottom: 12px;
+}
+
+.registro-estudiante .p-message {
+    font-size: 12px;
+}
+
+.registro-estudiante .p-dropdown-panel,
+.registro-estudiante .p-datepicker {
+    border: 1px solid #ced4da;
+    background: #ffffff;
+    color: #343a40;
+}
+
+.registro-estudiante .p-dropdown-panel .p-dropdown-item {
+    color: #343a40;
+}
+
+.registro-estudiante
+    .p-dropdown-panel
+    .p-dropdown-item.p-highlight {
+    background: #e7f1ff;
+    color: #174ea6;
+}
+
+@media (max-width: 575px) {
+    .registro-estudiante .registro-titulo {
+        font-size: 17px;
+    }
+
+    .registro-estudiante .registro-acciones {
+        flex-wrap: wrap;
+    }
+
+    .registro-estudiante .registro-btn {
+        justify-content: center;
+    }
+
+    .registro-estudiante .registro-steps .p-steps-title {
+        font-size: 10px;
+        white-space: normal;
+    }
+
+    .registro-estudiante .registro-steps .p-menuitem-link {
+        padding: 0.4rem 0.1rem;
+    }
+}
