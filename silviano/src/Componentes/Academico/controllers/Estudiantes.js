@@ -11,9 +11,11 @@ import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 
 import { getEstudiantes, deleteEstudiante, exportarNominaEstudiantesPDF } from '../../../Servicios/estudianteService';
 import VerEstudiante from '../../../Servicios/EstudiantesServicios/VerEstudiantes';
-import AddEstudiante from '../../../Servicios/EstudiantesServicios/AgregarEstudiantes';
+//import AddEstudiante from '../../../Servicios/EstudiantesServicios/AgregarEstudiantes';
 import UpdateEstudiante from '../../../Servicios/EstudiantesServicios/EditarEstudiantes';
 import BuscarEstudiantes from '../../../Servicios/EstudiantesServicios/BuscarEstudiantes';
+import AddEstudianteTutor from '../../../Servicios/EstudiantesServicios/estudiante';
+
 
 export default function Estudiantes() {
   const toast = useRef(null);
@@ -220,14 +222,18 @@ export default function Estudiantes() {
         {selectedEstudianteId && <VerEstudiante idPersona={selectedEstudianteId} />}
       </Dialog>
 
-      {/* Modal Agregar Estudiante */}
+      {/* Modal Registrar Estudiante y Tutor */}
       <Dialog
-        header="Registrar Nuevo Estudiante"
+        header={null}
         visible={showAddMode}
-        style={{ width: '90vw', maxWidth: '850px' }}
+        style={{ width: '90vw', maxWidth: '750px' }}
+        breakpoints={{ '768px': '95vw', '480px': '100vw' }}
+        modal
+        draggable={false}
+        resizable={false}
         onHide={() => setShowAddMode(false)}
       >
-        <AddEstudiante
+        <AddEstudianteTutor
           cargarEstudiante={cargarEstudiantes}
           setEstudiantedoAdd={() => setShowAddMode(false)}
         />
