@@ -100,7 +100,7 @@ export default function ListarGrados() {
                     tooltipOptions={{ position: 'top' }}
                     onClick={() => {
                         setSelectedGradoId(rowData.idpersona);
-                        //setShowViewMode(true);
+                        setShowViewMode(true);
                     }}
                 />
                 <Button
