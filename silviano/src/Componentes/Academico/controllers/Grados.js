@@ -7,15 +7,6 @@ import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { Toast } from 'primereact/toast';
-<<<<<<< HEAD
-=======
-//import Vergrado from '../../../Servicios/GradoServicios/VerGrados';
-
-//import settings from '../../settings.json';
-import { getGrados, getNivelEducativo } from '../../../Servicios/GradoServicios/gradoService';
-import Addgrado from '../../../Servicios/GradoServicios/AgregarGrados';
-import Updategrado from '../../../Servicios/GradoServicios/EditarGrado';
->>>>>>> dd46db8 ( ya se puede actulizar los grados)
 import { Fieldset } from 'primereact/fieldset';
 import { InputText } from 'primereact/inputtext';
 
