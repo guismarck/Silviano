@@ -18,7 +18,7 @@ import {
   buscarSolvenciaMatricula,
   obtenerGradosPorNivel,
   obtenerSalonesDisponibles,
-  registrarMatriculaOficial,
+  registrarMatriculaCompleta,
   descargarFichaMatriculaPDF
 } from '../../Servicios/MatriculasServicios/matriculasService';
 
@@ -123,6 +123,8 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
     
     estudiante: {
       id: '',
+      idPersona: '',
+      idPersonaEstudiante: '',
       nombres: '',
       apellidos: '',
       codEstudiante: '',
@@ -130,6 +132,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
     },
 
     tutor: {
+      idPersonaTutor: '',
       nombreCompleto: '',
       cedulaDni: '',
       parentesco: 'PADRE',
@@ -151,6 +154,49 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
   });
 
   const [matriculaCreada, setMatriculaCreada] = useState(null);
+
+  const handleLimpiarMatricula = () => {
+    setFormData({
+      tipoIngreso: 'NUEVO',
+      estudiante: {
+        id: '',
+        idPersona: '',
+        idPersonaEstudiante: '',
+        nombres: '',
+        apellidos: '',
+        codEstudiante: '',
+        alergiasEnfermedades: ''
+      },
+      tutor: {
+        idPersonaTutor: '',
+        nombreCompleto: '',
+        cedulaDni: '',
+        parentesco: 'PADRE',
+        telefono: '',
+        correo: '',
+        esResponsableFinanciero: true
+      },
+      idNivel: null,
+      idGrado: null,
+      idSalon: null,
+      anioLectivo: ANIO_ACTUAL,
+      requisitos: { ...INITIAL_REQUISITOS },
+      pagoVerificado: false,
+      numRecibo: '',
+      montoMatricula: 350.00
+    });
+    setActiveIndex(0);
+    setMatriculaCreada(null);
+    setListGrados([]);
+    setListSalones([]);
+    setBusquedaEstudianteInput('');
+    setBusquedaTutorInput('');
+    setSugerenciasEstudiantes([]);
+    setSugerenciasTutores([]);
+    setEstadoSolvencia('idle');
+    setPagosMatricula([]);
+    setErrorSolvencia('');
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -186,12 +232,15 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
       ...prev,
       estudiante: {
         id: rawEst.id ?? '',
+        idPersona: rawEst.idPersona ?? rawEst.id ?? '',
+        idPersonaEstudiante: rawEst.idPersonaEstudiante ?? rawEst.id ?? '',
         nombres: rawEst.nombres ?? '',
         apellidos: rawEst.apellidos ?? '',
         codEstudiante: rawEst.codEstudiante ?? '',
         alergiasEnfermedades: rawEst.alergiasEnfermedades ?? 'Ninguna'
       },
       tutor: {
+        idPersonaTutor: rawTut.idPersonaTutor ?? '',
         nombreCompleto: rawTut.nombreCompleto ?? '',
         cedulaDni: formatearCedulaDinamica(rawTut.cedulaDni ?? ''),
         parentesco: typeof rawTut.parentesco === 'object'
@@ -478,7 +527,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
 
     setLoadingGuardado(true);
     try {
-      const respuesta = await registrarMatriculaOficial(formData);
+      const respuesta = await registrarMatriculaCompleta(formData);
       setMatriculaCreada(respuesta);
 
       toast.current?.show({
@@ -500,7 +549,16 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
   };
 
   const handleDescargarPDF = async () => {
-    const id = matriculaCreada?.idMatricula || matriculaCreada?.id || 'MAT-2026';
+    const id = matriculaCreada?.idMatricula;
+    if (!id) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'No se pudo imprimir',
+        detail: 'La respuesta de matrícula no contiene el número de matrícula.'
+      });
+      return;
+    }
+
     try {
       await descargarFichaMatriculaPDF(id);
     } catch (error) {
@@ -533,7 +591,14 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
           className="mb-5"
         />
 
-        {activeIndex === 0 && (
+        <div style={{ display: 'grid' }}>
+          <div
+            aria-hidden={activeIndex !== 0}
+            style={{
+              gridArea: '1 / 1',
+              visibility: activeIndex === 0 ? 'visible' : 'hidden'
+            }}
+          >
           <div className="p-fluid grid">
             
             <div className="col-12 mt-2">
@@ -603,16 +668,6 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
                 value={formData.estudiante.codEstudiante}
                 onChange={handleEstudianteChange}
                 placeholder="Ej: EST-1024"
-              />
-            </div>
-
-            <div className="col-12 mb-3">
-              <label htmlFor="alergiasEnfermedades" className="font-bold block mb-1">Condiciones Médicas / Alergias</label>
-              <InputText
-                id="alergiasEnfermedades"
-                name="alergiasEnfermedades"
-                value={formData.estudiante.alergiasEnfermedades}
-                onChange={handleEstudianteChange}
               />
             </div>
 
@@ -743,9 +798,15 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
               />
             </div>
           </div>
-        )}
+          </div>
 
-        {activeIndex === 1 && (
+          <div
+            aria-hidden={activeIndex !== 1}
+            style={{
+              gridArea: '1 / 1',
+              visibility: activeIndex === 1 ? 'visible' : 'hidden'
+            }}
+          >
           <div className="p-fluid grid">
             <div className="col-12 mb-3">
               <h5 className="font-bold text-700">Paso 2: Ubicación Académica y Salón</h5>
@@ -808,9 +869,15 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
               />
             </div>
           </div>
-        )}
+          </div>
 
-        {activeIndex === 2 && (
+          <div
+            aria-hidden={activeIndex !== 2}
+            style={{
+              gridArea: '1 / 1',
+              visibility: activeIndex === 2 ? 'visible' : 'hidden'
+            }}
+          >
           <div className="p-fluid">
             <h5 className="font-bold text-700 mb-3">Paso 3: Recepción de Requisitos Físicos</h5>
 
@@ -940,9 +1007,15 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
               />
             </div>
           </div>
-        )}
+          </div>
 
-        {activeIndex === 3 && (
+          <div
+            aria-hidden={activeIndex !== 3}
+            style={{
+              gridArea: '1 / 1',
+              visibility: activeIndex === 3 ? 'visible' : 'hidden'
+            }}
+          >
           <div className="p-fluid">
             <h5 className="font-bold text-700 mb-3">Paso 4: Solvencia de Matrícula y Finalización del Expediente</h5>
 
@@ -1040,13 +1113,15 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
                 <h3 className="font-bold text-900 mb-2">¡Matrícula Inscrita Exitosamente!</h3>
                 <p className="text-700 mb-4">El expediente ha quedado procesado. Puede obtener la Ficha Oficial de Matrícula.</p>
                 <div className="flex flex-column sm:flex-row justify-content-center gap-3">
-                  <Button label="Descargar Ficha PDF (Jaspersoft)" icon="pi pi-file-pdf" severity="danger" onClick={handleDescargarPDF} />
+                  <Button label="Imprimir Hoja Matrícula" icon="pi pi-print" onClick={handleDescargarPDF} />
+                  <Button label="Limpiar" icon="pi pi-eraser" onClick={handleLimpiarMatricula} />
                   {onCancel && <Button label="Finalizar y Salir" icon="pi pi-times" severity="secondary" outlined onClick={onCancel} />}
                 </div>
               </div>
             )}
+              </div>
+            </div>
           </div>
-        )}
 
       </Card>
     </div>

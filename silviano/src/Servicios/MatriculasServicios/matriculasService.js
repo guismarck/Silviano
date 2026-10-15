@@ -282,12 +282,15 @@ export const buscarEstudiantesAuto = async (criterio) => {
         value: est.id || est.idPersona || est.idpersona,
         rawEstudiante: {
           id: est.id || est.idPersona || est.idpersona || '',
+          idPersona: est.idPersona ?? est.idpersona ?? est.id,
+          idPersonaEstudiante: est.idPersonaEstudiante ?? est.idEstudiante ?? est.idestudiante ?? est.id,
           nombres: est.nombres || est.nombre_completo || '',
           apellidos: est.apellidos || est.apellido_completo || '',
           cedulaDni: est.cedulaDni || est.codEstudiante || '',
           alergiasEnfermedades: est.alergiasEnfermedades || 'Ninguna'
         },
         rawTutor: {
+          idPersonaTutor: tut.idPersonaTutor ?? tut.idPersona ?? tut.idpersona ?? tut.id,
           nombreCompleto: tut.nombreCompleto || tut.nombre || '',
           cedulaDni: tut.cedulaDni || tut.cedula || '',
           parentesco: tut.parentesco || 'PADRE',
@@ -372,12 +375,15 @@ const mapearRespuestaBuscador = (lista) => {
       value: est.id || est.idPersona || est.idpersona || Math.floor(Math.random() * 10000),
       rawEstudiante: {
         id: est.id || est.idPersona || est.idpersona || '',
+        idPersona: est.idPersona ?? est.idpersona ?? est.id,
+        idPersonaEstudiante: est.idPersonaEstudiante ?? est.idEstudiante ?? est.idestudiante ?? est.id,
         nombres: nombresEst,
         apellidos: apellidosEst,
         codEstudiante: codMined,
         alergiasEnfermedades: String(est.alergiasEnfermedades || 'Ninguna').trim()
       },
       rawTutor: {
+        idPersonaTutor: tut.idPersonaTutor ?? tut.idPersona ?? tut.idpersona ?? tut.id,
         nombreCompleto: nombreTutor,
         cedulaDni: cedulaTutor,
         parentesco: typeof tut.parentesco === 'object' ? (tut.parentesco?.value || 'PADRE') : String(tut.parentesco || 'PADRE').trim(),
@@ -452,19 +458,74 @@ export const registrarMatriculaOficial = async (payload) => {
 };
 
 /**
- * Descarga de Ficha en PDF (Jaspersoft REST API v2 mediante Blob)
+ * Registra una matrícula con el DTO completo del endpoint de matrículas.
+ */
+export const registrarMatriculaCompleta = async (payload) => {
+  const estudiante = payload.estudiante || {};
+  const tutor = payload.tutor || {};
+  const requisitosId = {
+    partidaNacimiento: 1,
+    fotoCarnet: 2,
+    boletinCalificaciones: 3,
+    hojaTraslado: 4,
+    constanciaConducta: 5,
+    dniTutores: 6
+  };
+
+  const payloadDTO = {
+    idPersona: Number(estudiante.idPersona ?? estudiante.id),
+    idPersonaEstudiante: Number(estudiante.idPersonaEstudiante ?? estudiante.id),
+    nombresEstudiante: estudiante.nombres,
+    apellidosEstudiante: estudiante.apellidos,
+    codigoMined: estudiante.codEstudiante,
+    idPersonaTutor: tutor.idPersonaTutor ? Number(tutor.idPersonaTutor) : null,
+    nombreCompletoTutor: tutor.nombreCompleto,
+    cedulaTutor: tutor.cedulaDni,
+    telefonoTutor: tutor.telefono,
+    correoTutor: tutor.correo,
+    parentesco: tutor.parentesco,
+    representanteLegalFinanciero: Number(Boolean(tutor.esResponsableFinanciero)),
+    idSalon: Number(payload.idSalon),
+    anioLectivo: String(payload.anioLectivo),
+    tipoIngreso: payload.tipoIngreso,
+    costoMatricula: Number(payload.montoMatricula),
+    estado: 'ACTIVA',
+    requisitosPresentados: Object.entries(requisitosId)
+      .filter(([requisito]) => Boolean(payload.requisitos?.[requisito]))
+      .map(([, id]) => id),
+    fechaInscripcion: new Date().toISOString().split('T')[0],
+    usuario: 'ADMIN'
+  };
+
+  const { data } = await api.post('estudiante-app/matriculas/completa', payloadDTO);
+  return data;
+};
+
+/**
+ * Descarga la hoja de matrícula desde la plantilla PDF de Jaspersoft.
  */
 export const descargarFichaMatriculaPDF = async (idMatricula) => {
-  const response = await api.get(`/reportes/ficha-matricula/${idMatricula}`, {
-    responseType: 'blob'
-  });
+  const response = await api.post(
+    '/reportes/descargar',
+    {
+      nombrePlantilla: 'HojaMatricula_silviano',
+      formato: 'PDF',
+      parametros: {
+        P_IDMATRICULA: Number(idMatricula)
+      }
+    },
+    {
+      baseURL: process.env.NODE_ENV === 'development' ? '' : undefined,
+      responseType: 'blob'
+    }
+  );
 
   const blob = new Blob([response.data], { type: 'application/pdf' });
   const downloadUrl = window.URL.createObjectURL(blob);
 
   const link = document.createElement('a');
   link.href = downloadUrl;
-  link.setAttribute('download', `Ficha_Matricula_${idMatricula}.pdf`);
+  link.setAttribute('download', 'HojaMatricula_silviano.pdf');
   document.body.appendChild(link);
   link.click();
 
