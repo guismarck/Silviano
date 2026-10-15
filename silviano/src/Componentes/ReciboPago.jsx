@@ -559,7 +559,7 @@ const ReciboPago = () => {
 
               <div className="col-12 col-md-6 mb-3">
                 <label className="font-bold block mb-1">
-                  {saldoConsulta ? 'Saldo pendiente del concepto:' : saldoRestante === null ? 'Diferencia (Saldo / Abono):' : 'Saldo restante:'}
+                  {saldoConsulta ? 'Saldo pendiente:' : saldoRestante === null ? 'Diferencia (Saldo / Abono):' : 'Saldo restante:'}
                 </label>
                 <InputNumber
                   value={
