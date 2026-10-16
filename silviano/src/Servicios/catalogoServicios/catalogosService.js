@@ -4,61 +4,24 @@ export const catalogosService = {
   /**
    * Obtiene la oferta académica asignada al docente autenticado.
    */
-  getAsignacionesDocente: async () => {
-    try {
-      // En producción:
-      // const { data } = await api.get('/docentes/mis-asignaciones');
-      // return data;
+  getAsignacionesDocente: async (idDocente) => {
+    const { data } = await api.get('estudiante-app/docentes/mis-asignaciones', {
+      params: { idDocente }
+    });
 
-      // Datos simulados estructurados según la consulta SQL proveída:
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve([
-            {
-              id_docente: 10,
-              idAsignatura: 101,
-              asignatura_nombre: 'Matemáticas',
-              asignatura_codigo: 'MAT-7',
-              idGrado: 1,
-              grado_nombre: 'Séptimo Grado',
-              idSalon: 5,
-              seccion: 'A',
-              turno: 'Mañana',
-              idPlan_de_estudio: 20,
-              iddetalle_plan_de_estudio: 501
-            },
-            {
-              id_docente: 10,
-              idAsignatura: 102,
-              asignatura_nombre: 'Lengua y Literatura',
-              asignatura_codigo: 'LEN-7',
-              idGrado: 1,
-              grado_nombre: 'Séptimo Grado',
-              idSalon: 5,
-              seccion: 'A',
-              turno: 'Mañana',
-              idPlan_de_estudio: 20,
-              iddetalle_plan_de_estudio: 502
-            },
-            {
-              id_docente: 10,
-              idAsignatura: 103,
-              asignatura_nombre: 'Ciencias Naturales',
-              asignatura_codigo: 'CNT-8',
-              idGrado: 2,
-              grado_nombre: 'Octavo Grado',
-              idSalon: 8,
-              seccion: 'B',
-              turno: 'Mañana',
-              idPlan_de_estudio: 21,
-              iddetalle_plan_de_estudio: 503
-            }
-          ]);
-        }, 400);
-      });
-    } catch (error) {
-      throw new Error('Error al obtener el catálogo de asignaciones docentes.');
-    }
+    return data.map((asignacion) => ({
+      id_docente: idDocente,
+      iddetalle_plan_de_estudio: asignacion.idDetallePlanDeEstudio,
+      idPlan_de_estudio: asignacion.idPlanDeEstudio,
+      idAsignatura: asignacion.idAsignatura,
+      asignatura_nombre: asignacion.asignatura,
+      idGrado: asignacion.idGrado,
+      grado_nombre: asignacion.grado,
+      anio_lectivo: asignacion.anioLectivo,
+      idSalon: asignacion.idSalon,
+      seccion: asignacion.seccion,
+      turno: asignacion.turno
+    }));
   },
 
   /**

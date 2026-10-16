@@ -34,7 +34,7 @@ export const GestionCalificaciones = () => {
       setLoadingCatalogos(true);
       try {
         const [dataAsignaciones, dataPeriodos] = await Promise.all([
-          catalogosService.getAsignacionesDocente(),
+          catalogosService.getAsignacionesDocente(1),
           catalogosService.getPeriodosEvaluativos()
         ]);
         setAsignacionesRaw(dataAsignaciones);
@@ -75,6 +75,8 @@ export const GestionCalificaciones = () => {
       .filter((item) => item.idGrado === gradoSeleccionado.idGrado)
       .map((item) => ({
         iddetalle_plan_de_estudio: item.iddetalle_plan_de_estudio,
+        id_docente: item.id_docente,
+        idSalon: item.idSalon,
         label: `${item.asignatura_nombre} - Sec "${item.seccion}" (${item.turno})`,
         codigo: item.asignatura_codigo
       }));
@@ -101,7 +103,9 @@ export const GestionCalificaciones = () => {
     try {
       const data = await calificacionesService.getEstudiantesTabla(
         asignaturaSeleccionada.iddetalle_plan_de_estudio,
-        periodoSeleccionado.idperiodo_evaluativo
+        periodoSeleccionado.idperiodo_evaluativo,
+        asignaturaSeleccionada.id_docente,
+        asignaturaSeleccionada.idSalon
       );
       setEstudiantes(data);
     } catch (error) {
@@ -199,7 +203,7 @@ export const GestionCalificaciones = () => {
       toastRef.current?.show({
         severity: 'success',
         summary: 'Reporte Generado',
-        detail: 'El acta oficial en PDF se ha descargado correctamente.',
+        detail: 'El acta oficial en PDF se generó correctamente.',
         life: 3000
       });
     } catch (error) {
@@ -322,7 +326,7 @@ export const GestionCalificaciones = () => {
           <Button
             label="Guardar Calificaciones"
             icon="pi pi-save"
-            className="p-button-success"
+            className="p-button-primary"
             onClick={handleGuardarBatch}
             loading={guardando}
             disabled={estudiantes.length === 0}
@@ -330,7 +334,7 @@ export const GestionCalificaciones = () => {
           <Button
             label="Descargar Acta (PDF)"
             icon="pi pi-file-pdf"
-            className="p-button-help"
+            className="p-button-primary"
             onClick={handleDescargarActa}
             loading={descargandoPDF}
             disabled={estudiantes.length === 0}
