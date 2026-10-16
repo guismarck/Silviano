@@ -190,18 +190,10 @@ export default function ListarCatalogoSalon() {
                     emptyMessage="No se encontraron salones registrados."
                     responsiveLayout="scroll"
                 >
-                    <Column
-                        field="nombreGrado"
-                        header="Grado"
-                        sortable
-                        style={{ minWidth: '10rem' }}
+                    <Column field="nombreGrado" header="Grado"  sortable style={{ minWidth: '10rem' }}
                     />
 
-                    <Column
-                        field="nombreCatalogo"
-                        header="Pabellón"
-                        sortable
-                        style={{ minWidth: '12rem' }}
+                    <Column field="nombreCatalogo" header="Pabellón" sortable  style={{ minWidth: '12rem' }}
                     />
 
                     <Column
