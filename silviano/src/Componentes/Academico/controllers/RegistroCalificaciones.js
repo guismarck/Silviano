@@ -75,6 +75,8 @@ export const GestionCalificaciones = () => {
       .filter((item) => item.idGrado === gradoSeleccionado.idGrado)
       .map((item) => ({
         iddetalle_plan_de_estudio: item.iddetalle_plan_de_estudio,
+        id_docente: item.id_docente,
+        idSalon: item.idSalon,
         label: `${item.asignatura_nombre} - Sec "${item.seccion}" (${item.turno})`,
         codigo: item.asignatura_codigo
       }));
@@ -101,7 +103,9 @@ export const GestionCalificaciones = () => {
     try {
       const data = await calificacionesService.getEstudiantesTabla(
         asignaturaSeleccionada.iddetalle_plan_de_estudio,
-        periodoSeleccionado.idperiodo_evaluativo
+        periodoSeleccionado.idperiodo_evaluativo,
+        asignaturaSeleccionada.id_docente,
+        asignaturaSeleccionada.idSalon
       );
       setEstudiantes(data);
     } catch (error) {
