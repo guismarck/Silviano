@@ -1,91 +1,99 @@
 import api from '../api/api';
-import nominaCalificacionesMock from '../data/nominaCalificacionesMock.json';
 
 export const calificacionesService = {
-  /**
-   * Carga la nómina de estudiantes calculando dinámicamente la nota final.
-   */
-  getEstudiantesTabla: async (iddetalle_plan_de_estudio, idperiodo_evaluativo) => {
-    try {
-      /* Producción Axios:
-      const { data } = await api.get('/calificaciones/nomina', { 
-        params: { iddetalle_plan_de_estudio, idperiodo_evaluativo } 
-      });
-      return data.map(est => ({
-        ...est,
-        notaFinal: (Number(est.acumulado) || 0) + (Number(est.examen) || 0),
-        dirty: false
-      }));
-      */
+  getNivelesCombo: async () => {
+    const { data } = await api.get('/estudiante-app/niveles');
+    return data;
+  },
 
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          // Clonación inmutable + cálculo derivado de Nota Final
-          const dataClonada = JSON.parse(JSON.stringify(nominaCalificacionesMock)).map((est) => {
-            const acum = Number(est.acumulado) || 0;
-            const exa = Number(est.examen) || 0;
-            return {
-              ...est,
-              acumulado: acum,
-              examen: exa,
-              notaFinal: acum + exa,
-              dirty: false
-            };
-          });
-          resolve(dataClonada);
-        }, 500);
-      });
-    } catch (error) {
-      throw new Error('No se pudo cargar la nómina de estudiantes.');
-    }
+  getGradosCombo: async (idNivel) => {
+    const { data } = await api.get('/estudiante-app/calificaciones/grados', {
+      params: { idNivel }
+    });
+    return data;
+  },
+
+  getSalonesCombo: async (idGrado, anioLectivo = new Date().getFullYear()) => {
+    const { data } = await api.get('/estudiante-app/salones', {
+      params: { idGrado, anioLectivo }
+    });
+    return data;
+  },
+
+  getAsignaturasSeccionesCombo: async (idGrado, idDocente, idSalon) => {
+    const { data } = await api.get('/estudiante-app/asignaturas', {
+      params: { idGrado, idDocente, idSalon }
+    });
+    return data;
+  },
+
+  getPeriodosEvaluativosCombo: async (anioLectivo = new Date().getFullYear()) => {
+    const { data } = await api.get('/estudiante-app/periodos', {
+      params: { anioLectivo }
+    });
+    return data;
   },
 
   /**
-   * Guardado masivo (Bulk Upsert) enviando acumulado, examen y total.
+   * Obtiene la nómina de estudiantes con sus notas actuales
+   */
+  getEstudiantesTabla: async (iddetallePlanDeEstudio, idPeriodoEvaluativo, idDocente, idSalon) => {
+    const { data } = await api.get('/estudiante-app/nomina', {
+      params: { iddetallePlanDeEstudio, idPeriodoEvaluativo, idDocente, idSalon }
+    });
+    return data;
+  },
+
+  /**
+   * Guarda de forma masiva (batch) la nómina de calificaciones
    */
   guardarCalificacionesBatch: async (payload) => {
-    try {
-      /* Producción Axios:
-      const { data } = await api.post('/calificaciones/batch', payload);
-      return data;
-      */
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ success: true, message: 'Calificaciones registradas correctamente en el SIGE.' });
-        }, 800);
-      });
-    } catch (error) {
-      throw new Error('Error al registrar las calificaciones en el servidor.');
-    }
+    const { data } = await api.post('/estudiante-app/batch', payload);
+    return data;
   },
 
   /**
-   * Descarga de Acta PDF desde Jaspersoft REST API v2
+   * Genera el acta oficial en PDF desde la plantilla de Jaspersoft.
    */
-  descargarActaCalificacionesPDF: async (iddetalle_plan_de_estudio, idperiodo_evaluativo) => {
+  descargarActaCalificacionesPDF: async (iddetallePlanDeEstudio, idPeriodoEvaluativo) => {
+    const reportWindow = window.open('', '_blank');
+    if (reportWindow) reportWindow.opener = null;
+
     try {
-      /* Producción Axios (Binary Blob):
-      const response = await api.get('/reportes/acta-calificaciones', {
-        params: { id_detalle_plan: iddetalle_plan_de_estudio, id_periodo: idperiodo_evaluativo, format: 'pdf' },
-        responseType: 'blob'
-      });
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      */
+      const response = await api.post(
+        '/reportes/descargar',
+        {
+          nombrePlantilla: 'Acta_estudiante_asignatura',
+          formato: 'PDF',
+          parametros: {
+            P_ID_DETALLE_PLAN: Number(iddetallePlanDeEstudio),
+            P_ID_PERIODO: Number(idPeriodoEvaluativo)
+          }
+        },
+        {
+          baseURL: process.env.NODE_ENV === 'development' ? '' : undefined,
+          responseType: 'blob'
+        }
+      );
 
-      const blobSimulado = new Blob(['%PDF-1.4 ... Contenido del Acta de Calificaciones MINED SIGE'], {
-        type: 'application/pdf'
-      });
-      const url = window.URL.createObjectURL(blobSimulado);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `Acta_Calificaciones_Plan_${iddetalle_plan_de_estudio}_P${idperiodo_evaluativo}.pdf`);
-      document.body.appendChild(link);
-      link.click();
+      const pdfBlob = new Blob([response.data], { type: 'application/pdf' });
+      const pdfUrl = window.URL.createObjectURL(pdfBlob);
 
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      if (reportWindow) {
+        reportWindow.location.href = pdfUrl;
+      } else {
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = 'Acta_estudiante_asignatura.pdf';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+
+      window.setTimeout(() => window.URL.revokeObjectURL(pdfUrl), 60000);
     } catch (error) {
-      throw new Error('No se pudo generar el acta desde Jaspersoft Reports.');
+      reportWindow?.close();
+      throw error;
     }
   }
 };

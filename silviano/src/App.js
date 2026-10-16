@@ -11,7 +11,7 @@ import ListarCatalogoSalon from "./Componentes/Academico/controllers/ListarCatal
 //import GestionCobroForm from "./Servicios/PagosServicios/gestionCobro";
 import GestionCobroForm from "./Componentes/ReciboPago";
 import RegistroMatricula from "./Componentes/matriculas/MatriculaPantallaUnica";
-import Calificaciones from "./Componentes/Academico/controllers/RegistroCalificaciones"
+import Calificaciones from "./Componentes/Academico/controllers/GestionCalificaciones"
 // import AgregarSalon from "./Componetes/Academico/controllers/AgregarSalon";
 
 
