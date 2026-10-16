@@ -11,6 +11,7 @@ export const ServicioValidado = async (estudianteData) => {
         throw new Error(validacion.error);
     }
 
+    console.log(validacion.payloadFormateado)
     // Envía el payload previamente sanitizado a la API REST de Spring Boot
     const respuesta = await api.post('/estudiante-app/estudiantes/create', validacion.payloadFormateado);
     return respuesta.data;
