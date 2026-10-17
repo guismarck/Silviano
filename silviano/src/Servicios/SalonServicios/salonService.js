@@ -2,30 +2,38 @@
 import api from '../../Servicios/api/api';
 
 
-export const ServicioValidado = async () => {
-    // Invoca el helper independiente de validación salonInfo
-    /*const validacion = ValidarEstudiante(salonInfo);
-
-    if (!validacion.esValido) {
-        // Lanza un error estructurado si no pasa las validaciones de cliente
-        throw new Error(validacion.error);
-    }
-
-    // Envía el payload previamente sanitizado a la API REST de Spring Boot , validacion.payloadFormateado*/
-    const respuesta = await api.post('/estudiante-app/salones/create');
-    return respuesta.data;
+// Obtener los grados existentes
+export const getGrados = async () => {
+  const response = await api.get('/estudiante-app/grados');
+  return response.data;
 };
 
+// Obtener los salones del catálogo
+export const getCatalogoSalon = async () => {
+  const response = await api.get('/estudiante-app/catalogo/salon');
+  return response.data;
+};
 
+// Obtener los salones registrados
 export const getSalones = async () => {
   const response = await api.get('/estudiante-app/salones');
   return response.data;
 };
 
-export const getGrados = async () => {
-  const response = await api.get('/estudiante-app/grados');
+// Insertar un salón enviando los datos al backend
+export const ServicioValidado = async (salonInfo) => {
+  const response = await api.post(
+    '/estudiante-app/salones/create',
+    salonInfo
+  );
+
   return response.data;
 };
+
+
+
+
+
 
 export const getCattalogoSalon = async () => {
   const response = await api.get('/estudiante-app/grados');
