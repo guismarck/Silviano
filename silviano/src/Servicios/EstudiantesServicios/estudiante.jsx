@@ -17,7 +17,8 @@ import { ServicioValidado } from '../../Servicios/estudianteService.js';
 
 import {
     registrarTutor,
-    registrarEstudianteTutor
+    registrarEstudianteTutor,
+    obtenerIdPersonaTutor
 } from '../../Servicios/tutorService.js';
 
 import '../../estilosCSS/AgregarEstudiantes.css';
@@ -277,22 +278,18 @@ function AddEstudianteTutor(props) {
     // Ajustar según el DTO que devuelvan tus controladores.
     // =========================================================
 
-    const obtenerId = respuesta => {
+    const  obtenerIdPersonaTutor= respuesta => {
         const datos = respuesta?.data ?? respuesta;
 
-        return (
-            datos?.idtutor ??
-            datos?.idTutor ??
-            datos?.idpersona ??
-            datos?.idPersona ??
-            datos?.id ??
-            datos?.estudiante?.idpersona ??
-            datos?.tutor?.idtutor ??
-            null
-        );
+       return (
+        datos?.idpersona ??
+        datos?.idPersona ??
+        datos?.tutor?.idpersona ??
+        null
+    );
     };
 
-    // =========================================================
+    // ====== ===================================================
     // CONSTRUIR JSON COMPUESTO
     // =========================================================
 
@@ -371,7 +368,7 @@ function AddEstudianteTutor(props) {
                 payload.estudiante
             );
 
-            const idEstudiante = obtenerId(respuestaEstudiante);
+            const idEstudiante = obtenerIdPersonaTutor(respuestaEstudiante);
 
             if (!idEstudiante) {
                 throw new Error(
@@ -387,7 +384,7 @@ function AddEstudianteTutor(props) {
                 payload.tutores[0].tutor
             );
 
-            const idTutor = obtenerId(respuestaTutor);
+            const idTutor = obtenerIdPersonaTutor(respuestaTutor);
 
             if (!idTutor) {
                 throw new Error(
@@ -403,8 +400,7 @@ function AddEstudianteTutor(props) {
                 idEstudiante,
                 idTutor,
                 parentesco: payload.tutores[0].parentesco,
-                activo:
-                    payload.tutores[0].activo
+                esRepresentanteLegal: payload.tutores[0].activo
             });
 
             // -------------------------------------------------
