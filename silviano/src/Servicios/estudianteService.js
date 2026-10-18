@@ -51,6 +51,54 @@ export const ServicioValidado = async (estudianteData) => {
 };
 
 
+
+export const registrarEstudianteConTutor = async (payload) => {
+    try {
+        // Comprobar que el JSON tenga la estructura esperada.
+        if (!payload?.estudiante || !Array.isArray(payload?.tutores)) {
+            throw new Error(
+                'El registro debe contener estudiante y una lista de tutores.'
+            );
+        }
+
+        console.log(
+            'JSON completo enviado al backend:',
+            JSON.stringify(payload, null, 2)
+        );
+
+        const respuesta = await api.post(
+            '/estudiante-app/estudiantes/create',
+            payload
+        );
+
+        console.log(
+            'Respuesta del registro completo:',
+            respuesta.data
+        );
+
+        return respuesta.data;
+
+    } catch (error) {
+        console.error(
+            'Estado HTTP:',
+            error.response?.status
+        );
+
+        console.error(
+            'Respuesta del backend:',
+            error.response?.data
+        );
+
+        console.error(
+            'Mensaje:',
+            error.message
+        );
+
+        throw error;
+    }
+};
+
+
 /**
  * Valida los datos e invoca el endpoint POST para registrar un nuevo estudiante.
  * @param {Object} estudianteData - Datos capturados en el formulario.
