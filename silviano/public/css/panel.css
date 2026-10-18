@@ -1,106 +1,339 @@
+/* ==========================================================================
+   Configuración Base del Sidebar y Tipografía
+   ========================================================================== */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 260px;
+  background: #33363b;
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.sidebar.close {
+  width: 78px;
+}
+
+.sidebar .logo-details {
+  height: 60px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  color: #ffffff;
+}
+
+.sidebar .logo-details i {
+  font-size: 28px;
+  min-width: 40px;
+}
+
+.sidebar .logo-details .logo_name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  transition: opacity 0.3s ease;
+}
+
+/* ==========================================================================
+   Enlaces del Sidebar (CORRECCIÓN DE COLOR DE TEXTOS)
+   ========================================================================== */
+.sidebar .nav-links {
+  height: 100%;
+  padding: 20px 0 150px 0;
+  overflow: auto;
+}
+
+.sidebar .nav-links::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar .nav-links li {
+  position: relative;
+  list-style: none;
+  transition: all 0.4s ease;
+}
+
+.sidebar .nav-links li:hover {
+  background: #2b2d31;
+}
+
+.sidebar .nav-links li .icon-link,
+.sidebar .nav-links li > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-decoration: none;
+  padding: 12px 18px;
+  color: #ffffff !important; /* Fuerza color blanco siempre visible */
+  transition: color 0.3s ease;
+}
+
+.sidebar .nav-links li i {
+  height: 24px;
+  min-width: 40px;
+  text-align: center;
+  line-height: 24px;
+  color: #ffffff;
+  font-size: 20px;
+}
+
+.sidebar .nav-links li .link_name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #ffffff !important; /* Garantiza visibilidad en todos los módulos */
+  white-space: nowrap;
+  transition: opacity 0.3s ease;
+}
+
+/* Submenús */
+.sidebar .nav-links li .sub-menu {
+  padding: 6px 6px 14px 60px;
+  background: #212327;
+  display: none;
+}
+
+.sidebar:not(.close) .nav-links li.showMenu .sub-menu {
+  display: block !important;
+}
+
+.sidebar .nav-links li .sub-menu a {
+  color: #cbd5e1 !important;
+  font-size: 14px;
+  padding: 8px 0;
+  display: block;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.sidebar .nav-links li .sub-menu a:hover,
+.sidebar .nav-links li .sub-menu a.active-sublink {
+  color: #22c55e !important; /* Destacado verde para submenú activo */
+  font-weight: 600;
+}
+
+/* Ocultar elementos cuando el sidebar se colapsa */
+.sidebar.close .logo_name,
+.sidebar.close .nav-links li .link_name,
+.sidebar.close .nav-links li .arrow,
+.sidebar.close .profile-details .profile_name,
+.sidebar.close .profile-details .job {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.sidebar.close .nav-links li .sub-menu {
+  display: none !important;
+}
+
+/* Perfil Inferior */
+.sidebar .profile-details {
+  position: fixed;
+  bottom: 0;
+  width: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #232528;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+}
+
+.sidebar.close .profile-details {
+  width: 78px;
+  justify-content: center;
+}
+
+.sidebar .profile-details .profile-content img {
+  height: 40px;
+  width: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.sidebar .profile-details .profile_name {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sidebar .profile-details .job {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+/* ==========================================================================
+   Área de Contenido Principal (CORRECCIÓN DE HEADER E ICONO HAMBURGUESA)
+   ========================================================================== */
+.home-section {
+  position: relative;
+  background: #f8fafc;
+  min-height: 100vh;
+  left: 260px;
+  width: calc(100% - 260px);
+  transition: all 0.3s ease;
+}
+
+.sidebar.close ~ .home-section {
+  left: 78px;
+  width: calc(100% - 78px);
+}
+
+.home-section .home-content {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  background: #0d9488; /* Verde azulado institucional con contraste */
+  padding: 0 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.home-section .home-content .bx-menu {
+  color: #ffffff !important; /* Icono blanco destacado */
+  font-size: 28px;
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+.home-section .home-content .text {
+  color: #ffffff !important; /* Texto del encabezado blanco en alto contraste */
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   Estilos de Tarjetas de Panel Metrico
+   ========================================================================== */
 .home-panel {
-    left: 220px;
-    width: calc(100% - 220px);
-    background: rgba(246, 248, 249, 0.954);
-    height: 800px;
-    border-radius: 10px;
-    margin-top: 20px;
-    gap: 20px;
-    position: absolute;
-    display: flex;
-    flex-flow: row wrap;
-    transition: all 0.5s ease;
-
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px 0;
 }
 
-.home-panel-1{
-
-    background:white;
-    width: 300px;
-    height: 200px;
-    position: relative;
-    display: flex;
-    text-align: center;
-    border-radius: 8px;
+.home-panel-1, .home-panel-2, .home-panel-3, .home-panel-4, .home-panel-5 {
+  background: #ffffff;
+  width: 280px;
+  height: 140px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  position: relative;
+  padding: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.home-panel-2 {
-    background:white;
-    width: 300px;
-    height: 200px;
-    position: relative;
-    display: flex;
-    border-radius: 8px;
-
-}
-
-.home-panel-3 {
-    background:white;
-    width: 300px;
-    height: 200px;
-    position: relative;
-    display: flex;
-    border-radius: 8px;
-
-}
-
-.home-panel-4 {
-
-    background:white;
-    width: 300px;
-    height: 200px;
-    position: relative;
-    display: flex;
-    border-radius: 8px;
-}
-
-.home-panel-5 {
-
-    background:white;
-    width: 300px;
-    height: 200px;
-    position: relative;
-    display: flex;
-    border-radius: 8px;
-}
-
-/*iconos del panle */
-
-.icons {
-    position: absolute;
-    display: inline-block;
-    margin-top: 30px;
-    margin-left: 30px;
-    border-radius: 8px;
-    display: flex;
- 
-}
-.icon-2{
-    position: absolute;
-    display: inline-block;
-    margin-top: 10px;
-    margin-left: 10px;
-    border-radius: 8px;
-    width: 60px;
-    height: 60px;
-    display: flex;
+.home-panel-1:hover, .home-panel-2:hover, .home-panel-3:hover, .home-panel-4:hover, .home-panel-5:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .estd {
-    position: absolute;
-    margin-top: 100px;
-    margin-left: 30px;
-    text-decoration: none;
-    display: flex;
-    font-size: 20px;
-    color: #868988;
-    
+  position: absolute;
+  top: 20px;
+  left: 85px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
 }
-.std-1{
-    position: absolute;
-    margin-top: 130px;
-    margin-left: 30px;
-    text-decoration: none;
-    font-size: 15px;
-    color: #c5c5c5;
+
+.std-1 {
+  position: absolute;
+  top: 50px;
+  left: 85px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* ==========================================================================
+   Estructura Unificada de Enlaces del Sidebar (FIX DE ALINEACIÓN "AISLADOS")
+   ========================================================================== */
+.sidebar .nav-links li .icon-link,
+.sidebar .nav-links li > a {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important; /* Alineación uniforme a la izquierda */
+  gap: 12px !important;                   /* Espaciado constante entre icono y texto */
+  padding: 12px 18px !important;
+  text-decoration: none !important;
+  color: #ffffff !important;
+  transition: background 0.2s ease, color 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Ícono lateral unificado */
+.sidebar .nav-links li i {
+  height: 24px;
+  min-width: 28px;
+  text-align: center;
+  line-height: 24px;
+  color: #ffffff !important;
+  font-size: 20px;
+}
+
+/* Texto del menú */
+.sidebar .nav-links li .link_name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #ffffff !important;
+  white-space: nowrap;
+  flex-grow: 1; /* Ocupa el espacio disponible antes de la flecha */
+  transition: opacity 0.3s ease;
+}
+
+/* Flecha desplegable posicionada al extremo derecho */
+.sidebar .nav-links li .arrow {
+  min-width: 20px !important;
+  font-size: 18px !important;
+  transition: transform 0.3s ease;
+}
+
+.sidebar .nav-links li.showMenu .arrow {
+  transform: rotate(-180deg);
+}
+
+/* ==========================================================================
+   Submenús Integrados
+   ========================================================================== */
+.sidebar .nav-links li .sub-menu {
+  padding: 6px 12px 12px 58px;
+  background: #212327;
+  display: none;
+  list-style: none;
+}
+
+.sidebar:not(.close) .nav-links li.showMenu .sub-menu {
+  display: block !important;
+}
+
+.sidebar .nav-links li .sub-menu a {
+  color: #cbd5e1 !important;
+  font-size: 14px;
+  padding: 8px 0;
+  display: block;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.sidebar .nav-links li .sub-menu a:hover,
+.sidebar .nav-links li .sub-menu a.active-sublink {
+  color: #22c55e !important;
+  font-weight: 600;
+}
+
+/* Ocultar textos cuando el sidebar está colapsado */
+.sidebar.close .logo_name,
+.sidebar.close .nav-links li .link_name,
+.sidebar.close .nav-links li .arrow,
+.sidebar.close .profile-details .profile_name,
+.sidebar.close .profile-details .job {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.sidebar.close .nav-links li .sub-menu {
+  display: none !important;
 }
