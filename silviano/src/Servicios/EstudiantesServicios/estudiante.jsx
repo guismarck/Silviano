@@ -18,7 +18,7 @@ import { ServicioValidado } from '../../Servicios/estudianteService.js';
 import {
     registrarTutor,
     registrarEstudianteTutor,
-    obtenerIdPersonaTutor
+    obtenerIdPersonaTutor,registrarEstudianteConTutor
 } from '../../Servicios/tutorService.js';
 
 import '../../estilosCSS/AgregarEstudiantes.css';
