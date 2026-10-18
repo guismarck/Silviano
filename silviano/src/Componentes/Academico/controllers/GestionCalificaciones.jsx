@@ -14,9 +14,11 @@ import { Badge } from 'primereact/badge';
 
 import { catalogosService } from '../../../Servicios/catalogoServicios/catalogosService';
 import { calificacionesService } from '../../../Servicios/calificacionesServicios/calificacionesService2';
+import { useAuth } from '../../../context/AuthContext';
 
 export const GestionCalificaciones = () => {
   const toastRef = useRef(null);
+  const { user } = useAuth();
 
   // Filtros
   const [asignacionesRaw, setAsignacionesRaw] = useState([]);
@@ -58,12 +60,22 @@ export const GestionCalificaciones = () => {
   // Cargar Catálogos Iniciales
   useEffect(() => {
     const cargarCatalogos = async () => {
+      if (user?.id == null) {
+        toastRef.current?.show({
+          severity: 'error',
+          summary: 'Error de sesión',
+          detail: 'No se encontró el ID del docente. Vuelva a iniciar sesión.',
+          life: 4000
+        });
+        return;
+      }
+
       setLoadingCatalogos(true);
       try {
         const [dataNiveles, dataPeriodos, dataAsignaciones] = await Promise.all([
           calificacionesService.getNivelesCombo(),
           calificacionesService.getPeriodosEvaluativosCombo(),
-          catalogosService.getAsignacionesDocente(1),
+          catalogosService.getAsignacionesDocente(user.id),
         ]);
         setNiveles(dataNiveles);
         setPeriodos(dataPeriodos);
@@ -81,7 +93,7 @@ export const GestionCalificaciones = () => {
     };
 
     cargarCatalogos();
-  }, []);
+  }, [user?.id]);
 
   // Manejadores de Selección
   const limpiarSeleccionAcademica = useCallback(() => {
@@ -625,7 +637,7 @@ export const GestionCalificaciones = () => {
 
         <div className="flex flex-wrap gap-2 justify-content-end mt-2">
           <Button
-            label="Cargar Nómina"
+            label="Cargar Estudiantes"
             icon="pi pi-search"
             className="p-button-primary"
             onClick={handleConsultarNomina}
