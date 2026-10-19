@@ -15,6 +15,8 @@ import GestionCobroForm from './Componentes/ReciboPago';
 import RegistroMatricula from './Componentes/matriculas/MatriculaPantallaUnica';
 import Calificaciones from './Componentes/Academico/controllers/GestionCalificaciones';
 import { ReporteBoletin } from './Componentes/Academico/controllers/ReporteBoletin';
+// Nuevo Componente de Asignación Académica
+import { AsignacionDocente } from './Componentes/Academico/controllers/AsignacionDocente';
 
 import './estilosCSS/flags.css';
 import './index.css';
@@ -48,6 +50,7 @@ function AppRoutes() {
             <Route path="/grados" element={<ListarGrados />} />
             <Route path="/agregargrados" element={<AgregarGrados />} />
             <Route path="/salon" element={<ListarCatalogoSalon />} />
+            <Route path="/asignacionDocente" element={<AsignacionDocente />} />
             <Route path="/matriculas" element={<ListMatriculas />} />
             <Route path="/registroMatricula" element={<RegistroMatricula />} />
           </Route>

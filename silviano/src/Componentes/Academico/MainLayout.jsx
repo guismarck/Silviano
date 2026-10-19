@@ -46,6 +46,7 @@ export const MainLayout = () => {
         { label: 'Salón', path: '/salon' },
         { label: 'Grados', path: '/grados' },
         { label: 'Agregar Grados', path: '/agregargrados' },
+        { label: 'Asignación Docente', path: '/asignacionDocente' },
       ],
     },
     {
