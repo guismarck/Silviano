@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Estudiantes from "./Componentes/Academico/controllers/Estudiantes"
 import Docentes from "./Componentes/Academico/controllers/Docentes";
 import Grados from "./Componentes/Academico/controllers/Grados";
+import Asignaturas from "./Componentes/Academico/controllers/Asignaturas";
 import "./estilosCSS/flags.css"
 import "./index.css"
 import ListMatriculas from "./Servicios/MatriculasServicios/ListMatriculas";
@@ -33,6 +34,7 @@ function App() {
         <Route path="/registroMatricula" element={<RegistroMatricula/>}/>
         <Route path="/calificaciones" element={<Calificaciones/>}/>
         <Route path="/docentes" element={<Docentes/>}/>
+         <Route path="/asignatura" element={<Asignaturas/>}/>
       </Routes>
     </BrowserRouter>
 

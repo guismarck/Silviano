@@ -1,0 +1,215 @@
+
+.actualizar-asignatura {
+    width: 100%;
+    padding: 1.5rem;
+    background: #ffffff;
+    border-radius: 12px;
+    color: #334155;
+    box-sizing: border-box;
+}
+
+.asignatura-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.asignatura-header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 1.4rem;
+}
+
+.asignatura-header-text {
+    min-width: 0;
+}
+
+.asignatura-eyebrow {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.asignatura-header h2 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+.asignatura-header p {
+    margin: 0.4rem 0 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.asignatura-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.25rem 0 1rem;
+    color: #334155;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.asignatura-section-title i {
+    color: #3b82f6;
+}
+
+.asignatura-id {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.asignatura-id span {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.asignatura-id strong {
+    color: #334155;
+    font-size: 0.9rem;
+}
+
+.asignatura-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.asignatura-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.asignatura-field label {
+    color: #334155;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.asignatura-field .p-inputtext {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 7px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.asignatura-field .p-inputtext:enabled:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px #dbeafe;
+}
+
+.required {
+    margin-left: 0.25rem;
+    color: #dc2626;
+}
+
+.asignatura-field-error {
+    color: #dc2626;
+    font-size: 0.78rem;
+}
+
+.asignatura-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+    padding: 0.8rem;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.asignatura-note i {
+    margin-top: 0.15rem;
+    color: #3b82f6;
+}
+
+.asignatura-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+.asignatura-actions .p-button {
+    min-width: 145px;
+    border-radius: 7px;
+}
+
+.asignatura-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 220px;
+    color: #64748b;
+}
+
+.asignatura-error {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+@media (max-width: 600px) {
+    .actualizar-asignatura {
+        padding: 1rem;
+    }
+
+    .asignatura-header {
+        align-items: flex-start;
+    }
+
+    .asignatura-header-icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    .asignatura-header h2 {
+        font-size: 1.15rem;
+    }
+
+    .asignatura-fields {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+    }
+
+    .asignatura-actions {
+        flex-direction: column-reverse;
+    }
+
+    .asignatura-actions .p-button {
+        width: 100%;
+    }
+}
