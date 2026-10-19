@@ -17,7 +17,11 @@ import UpdateAsignatura  from '../../../Servicios/AsignaturaService/EditarAsigna
 
 
 
-export default function Asignaturas() { 
+
+
+
+export default function Asignaturas() {
+
 
     const toast = useRef(null);
     //const header;

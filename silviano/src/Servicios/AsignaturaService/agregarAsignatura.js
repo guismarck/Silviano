@@ -119,8 +119,12 @@ function AddAsignatura(props) {
                     raised
                     onClick={AddAsignaturaData}
                 />
+
             </div> 
-        </div>
+
+            </div>
+
+       
     );
 }
 export default AddAsignatura

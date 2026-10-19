@@ -101,7 +101,11 @@ const UpdateAsignatura = ({
             return;
         }
 
-        setLoading(true); 
+
+        
+
+        setLoading(true);
+
 
         try {
             // Utilizar el payload saneado por ValidarAsignatura

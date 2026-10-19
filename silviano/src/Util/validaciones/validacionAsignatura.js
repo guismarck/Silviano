@@ -69,5 +69,9 @@ export const ValidarAsignatura = (asignaturaInfo) => {
         esValido: true,
         error: null,
         payloadFormateado
+
     }; 
+
+    
+
 };
