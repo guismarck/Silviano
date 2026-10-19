@@ -11,19 +11,20 @@ import { Message } from 'primereact/message';
 import {
     getAsignaturaById,
     updateAsignaturaService
-} from '../../Servicios/DocenteServicios/docenteService';
+} from '../../Servicios/AsignaturaService/asignaturasService.js';
 
 import {
     ValidarAsignatura
 } from '../../Util/validaciones/validacionAsignatura.js';
 
-import './UpdateAsignatura.css';
+import '../../estilosCSS/UpdateAsignatura.css';
 
 const UpdateAsignatura = ({
     idAsignatura,
     onAsignaturaUpdate,
     onCancel
-}) => {
+}) => 
+    {
     const toast = useRef(null);
 
     const [loading, setLoading] = useState(false);
@@ -257,12 +258,7 @@ const UpdateAsignatura = ({
                     </div>
 
                     <div className="asignatura-note">
-                        <i className="pi pi-shield" />
-
-                        <span>
-                            Los datos serán validados antes de
-                            guardar los cambios.
-                        </span>
+                       
                     </div>
 
                     <Divider />

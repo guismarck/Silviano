@@ -9,10 +9,10 @@ import { Toast } from 'primereact/toast';
 import { Fieldset } from 'primereact/fieldset';
 
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import { getAsignaturas } from '../../../Servicios/AsignaturaService/asignaturasService';
+import { getAsignaturas, deleteAsignatura } from '../../../Servicios/AsignaturaService/asignaturasService';
 import AddAsignatura from '../../../Servicios/AsignaturaService/agregarAsignatura';
 //import VerAsignatura from '../../../Servicios/DocenteServicios/VerAsignaturas';
-//import UpdateAsignatura from '../../../Servicios/DocenteServicios/EditarAsignaturas';
+import UpdateAsignatura  from '../../../Servicios/AsignaturaService/EditarAsignaturas';
 //import BuscarDocente from '../../../Servicios/DocenteServicios/BuscarAsignaturas';
 
 
@@ -52,7 +52,7 @@ export default function Asignaturas() {
         cargarAsignaturas();
     }, [cargarAsignaturas]);
 
-    /*const handleConfirmDelete = (idAsignatura) => {
+    const handleConfirmDelete = (idAsignatura) => {
        confirmDialog({
          message: '¿Está seguro de eliminar este expediente de Asignatura?',
          header: 'Confirmar Eliminación',
@@ -80,7 +80,7 @@ export default function Asignaturas() {
            }
          }
        });
-     };*/
+     };
 
 
 
@@ -95,7 +95,7 @@ export default function Asignaturas() {
                     //tooltip="Ver Expediente"
                     tooltipOptions={{ position: 'top' }}
                     onClick={() => {
-                        setSelectedAsignatturaId(rowData.idasignatura);
+                        setSelectedAsignatturaId(rowData.idAsignatura);
                         setShowViewMode(true);
                     }}
                 />
@@ -104,10 +104,10 @@ export default function Asignaturas() {
                     severity="warning"
                     rounded
                     outlined
-                    //tooltip="Editar Docente"
+                    
                     tooltipOptions={{ position: 'top' }}
                     onClick={() => {
-                        setSelectedAsignatturaId(rowData.idasignatura);
+                        setSelectedAsignatturaId(rowData.idAsignatura);
                         setShowEditMode(true);
                     }}
                 />
@@ -118,7 +118,7 @@ export default function Asignaturas() {
                     outlined
                     //tooltip="Eliminar"
                     tooltipOptions={{ position: 'top' }}
-                /*onClick={() => handleConfirmDelete(rowData.idasignatura)}*/
+                onClick={() => handleConfirmDelete(rowData.idAsignatura)}
                 />
 
             </div>
@@ -203,7 +203,7 @@ export default function Asignaturas() {
                 />
             </Dialog>
 
-            {/* Modal Editar Estudiante */}
+            {/* Modal Editar Asignatura */}
             <Dialog
                 header="Editar Expediente de Asignatura"
                 visible={showEditMode}
@@ -214,16 +214,16 @@ export default function Asignaturas() {
                 }}
 
             >
-                {/*selectedAsignaturateId && (
-                        <UpdateAsignatura
+                {selectedAsignaturateId && (
+                        <UpdateAsignatura 
                           idAsignatura={selectedAsignaturateId}
-                          onEstudianteUpdate={() => {
+                          onAsignaturaUpdate={() => {
                             setShowEditMode(false);
                             setSelectedAsignatturaId(null);
                             cargarAsignaturas();
                           }}
                         />
-                      )*/}
+                      )}
             </Dialog>
         </div>
 

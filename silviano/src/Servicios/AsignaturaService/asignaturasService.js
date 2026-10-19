@@ -79,7 +79,7 @@ export const ServicioValidado = async (asignaturaData) => {
  * Elimina un registro de la signatura por su ID.
  */
 export const deleteAsignatura = async (idAsignatura) => {
-  const response = await api.delete(`/estudiante-app/docentes/${idAsignatura}`);
+  const response = await api.delete(`/estudiante-app/asignatura/${idAsignatura}`);
   return response.data;
 };
 
