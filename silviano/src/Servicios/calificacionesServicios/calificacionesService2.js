@@ -14,7 +14,7 @@ export const calificacionesService = {
   },
 
   getSalonesCombo: async (idGrado, anioLectivo = new Date().getFullYear()) => {
-    const { data } = await api.get('/estudiante-app/salones', {
+    const { data } = await api.get('/estudiante-app/salone', {
       params: { idGrado, anioLectivo }
     });
     return data;
