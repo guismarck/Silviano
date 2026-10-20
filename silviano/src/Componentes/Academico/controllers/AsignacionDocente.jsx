@@ -30,6 +30,7 @@ export const AsignacionDocente = () => {
 
   // Loaders
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
+  const [loadingSalones, setLoadingSalones] = useState(false);
   const [loadingTabla, setLoadingTabla] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -44,19 +45,56 @@ export const AsignacionDocente = () => {
         asignacionDocenteService.obtenerDocentes(),
         asignacionDocenteService.obtenerPlanesDeEstudio(anioLectivoActual),
         asignacionDocenteService.obtenerCatalogoAsignaturas(),
-        asignacionDocenteService.obtenerSalones(),
       ]);
 
       if (resultados[0].status === 'fulfilled') setDocentes(resultados[0].value);
       if (resultados[1].status === 'fulfilled') setPlanes(resultados[1].value);
       if (resultados[2].status === 'fulfilled') setAsignaturas(resultados[2].value);
-      if (resultados[3].status === 'fulfilled') setSalones(resultados[3].value);
 
       setLoadingCatalogos(false);
     };
 
     cargarCatalogosIniciales();
   }, [anioLectivoActual]);
+
+  useEffect(() => {
+    let vigente = true;
+    setSalonSel(null);
+    setSalones([]);
+
+    const cargarSalonesDisponibles = async () => {
+      if (!planSel?.idGrado || !planSel?.anioLectivo) {
+        setLoadingSalones(false);
+        return;
+      }
+
+      setLoadingSalones(true);
+      try {
+        const salonesDisponibles = await asignacionDocenteService.obtenerSalonesDisponiblesPorGrado(
+          planSel.idGrado,
+          planSel.anioLectivo
+        );
+        if (vigente) setSalones(salonesDisponibles);
+      } catch (error) {
+        if (vigente) {
+          toast.current?.show({
+            severity: 'error',
+            summary: 'Error al cargar salones',
+            detail: error.message,
+            life: 4000,
+          });
+        }
+      } finally {
+        if (vigente) setLoadingSalones(false);
+      }
+    };
+
+    cargarSalonesDisponibles();
+
+    return () => {
+      vigente = false;
+    };
+  }, [planSel]);
 
   const cargarCargaDocente = useCallback(async (idDocente) => {
     if (!idDocente) {
@@ -137,7 +175,7 @@ export const AsignacionDocente = () => {
       toast.current?.show({
         severity: 'success',
         summary: 'Asignación Correcta',
-        detail: `Materia "${asignaturaSel.nombreAsignatura}" asignada exitosamente por ${usuarioCreacion}`,
+        detail: `Materia "${asignaturaSel.nombre}" asignada exitosamente por ${usuarioCreacion}`,
         life: 3000,
       });
 
@@ -246,7 +284,10 @@ export const AsignacionDocente = () => {
             id="plan"
             value={planSel}
             options={planes}
-            onChange={(e) => setPlanSel(e.value)}
+            onChange={(e) => {
+              setPlanSel(e.value);
+              setSalonSel(null);
+            }}
             optionLabel="labelPlan"
             placeholder="Seleccione Plan"
             filter
@@ -282,7 +323,7 @@ export const AsignacionDocente = () => {
             optionLabel="labelSalon"
             placeholder="Seleccione Salón"
             filter
-            disabled={!asignaturaSel || loadingCatalogos}
+            disabled={!asignaturaSel || loadingCatalogos || loadingSalones}
           />
         </div>
 

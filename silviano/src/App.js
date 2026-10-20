@@ -17,7 +17,7 @@ import Calificaciones from './Componentes/Academico/controllers/GestionCalificac
 import { ReporteBoletin } from './Componentes/Academico/controllers/ReporteBoletin';
 // Nuevo Componente de Asignación Académica
 import { AsignacionDocente } from './Componentes/Academico/controllers/AsignacionDocente';
-
+import { GestionPeriodos } from './Componentes/Academico/controllers/GestionPeriodos';
 import './estilosCSS/flags.css';
 import './index.css';
 
@@ -50,6 +50,7 @@ function AppRoutes() {
             <Route path="/grados" element={<ListarGrados />} />
             <Route path="/agregargrados" element={<AgregarGrados />} />
             <Route path="/salon" element={<ListarCatalogoSalon />} />
+            <Route path="/periodosEvaluativos" element={<GestionPeriodos />} />
             <Route path="/asignacionDocente" element={<AsignacionDocente />} />
             <Route path="/matriculas" element={<ListMatriculas />} />
             <Route path="/registroMatricula" element={<RegistroMatricula />} />
