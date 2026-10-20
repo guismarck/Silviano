@@ -208,3 +208,34 @@ export const registrarEstudianteTutor = async ({
 
     return respuesta.data;
 };
+
+
+export const getTutores = async () => {
+  const response = await api.get('/estudiante-app/tutores');
+  return response.data;
+};
+
+ /**
+ * Elimina un registrodel tutor por su ID.
+ */
+export const deleteTutor = async (idPersona) => {
+  const response = await api.delete(`/estudiante-app/tutores/${idPersona}`);
+  return response.data;
+};
+
+/**
+ * Obtiene la información académica y personal del tutor  por su ID.
+ */
+ export const getTutorById = async (idPersona) => {
+   const response = await api.get(`/estudiante-app/tutores/${idPersona}`);
+   return response.data;
+ };
+
+
+/**
+  * Actualiza el expediente del tutor en la base de datos centralizada.
+  */
+ export const updateTutorService = async (idPersona, payload) => {
+   const response = await api.put(`/estudiante-app/tutores/${idPersona}`, payload);
+   return response.data;
+ };
