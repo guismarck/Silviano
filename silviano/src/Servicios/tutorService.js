@@ -239,3 +239,15 @@ export const deleteTutor = async (idPersona) => {
    const response = await api.put(`/estudiante-app/tutores/${idPersona}`, payload);
    return response.data;
  };
+
+/**
+ * Realiza la búsqueda filtrada de estudiantes por término.
+ * @param {string} query - Término de búsqueda.
+ */
+
+ export const searchTutores = async (query) => {
+   const response = await api.get('/estudiante-app/tutores', {
+     params: { search: query }
+   });
+   return response.data;
+ };

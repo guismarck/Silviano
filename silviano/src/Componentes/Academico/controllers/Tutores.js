@@ -13,7 +13,7 @@ import { getTutores, deleteTutor } from '../../../Servicios/tutorService';
 import UpdateTutor from '../../../Servicios/TutoresServicios/EditarTutores';
 //import AddDocente from '../../../Servicios/DocenteServicios/agregarDocente';
 //import VerDocente from '../../../Servicios/DocenteServicios/VerDocentes';
-//import BuscarDocente from '../../../Servicios/DocenteServicios/BuscarDocentes';
+import BuscarTutor from '../../../Servicios/TutoresServicios/BuscarTutores';
 
 
 
@@ -66,7 +66,7 @@ export default function Tutores() {
                     toast.current?.show({
                         severity: 'success',
                         summary: 'Registro Eliminado',
-                        detail: 'El docente ha sido removido del sistema.',
+                        detail: 'El Tutor ha sido removido del sistema.',
                         life: 3000
                     });
                     cargarTutores();
@@ -129,7 +129,8 @@ export default function Tutores() {
     const header = (
         <div className="flex justify-content-center align-items-center w-full py-2">
             <div className="w-full md:w-8" style={{ minWidth: '320px' }}>
-
+                      <BuscarTutor onFilter={(filteredData) => setTutores(filteredData)} loadAll={cargarTutores} />
+              
             </div>
         </div>
     )
