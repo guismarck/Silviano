@@ -144,23 +144,27 @@ export const asignacionDocenteService = {
   },
 
   /**
-   * Consulta el catálogo general de Salones/Secciones
+   * Consulta los salones disponibles para el grado y año lectivo seleccionados
    */
-  obtenerSalones: async () => {
+  obtenerSalonesDisponiblesPorGrado: async (idGrado, anioLectivo) => {
+    if (!idGrado || !anioLectivo) return [];
+
     try {
-      const response = await api.get('/estudiante-app/salones');
+      const response = await api.get(
+        `/estudiante-app/disponibles/salon/${idGrado}/${anioLectivo}`
+      );
       const listaRaw = Array.isArray(response.data)
         ? response.data
-        : response.data?.item || [];
+        : response.data?.salones || response.data?.item || [];
 
       return listaRaw.map((s) => ({
         idSalon: s.idSalon || s.id,
-        seccion: s.nombreSeccion || s.seccion || '',
+        seccion: s.seccion || s.nombreSeccion || '',
         turno: s.turno || '',
-        labelSalon: `Sección: ${s.nombreSeccion || s.seccion || ''} (${s.turno || 'MATUTINO'})`,
+        labelSalon: `Sección: ${s.seccion || s.nombreSeccion || ''} (${s.turno || 'MATUTINO'})`,
       }));
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Error al cargar los salones.');
+      throw new Error(error.response?.data?.message || 'Error al cargar los salones disponibles.');
     }
   },
 /**

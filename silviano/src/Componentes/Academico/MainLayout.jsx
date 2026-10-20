@@ -47,6 +47,7 @@ export const MainLayout = () => {
         { label: 'Grados', path: '/grados' },
         { label: 'Agregar Grados', path: '/agregargrados' },
         { label: 'Asignación Docente', path: '/asignacionDocente' },
+        { label: 'Períodos Evaluativos', path: '/periodosEvaluativos' },
       ],
     },
     {
