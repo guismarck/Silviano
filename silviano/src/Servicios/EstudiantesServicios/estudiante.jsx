@@ -13,13 +13,17 @@ import { Message } from 'primereact/message';
 import { Divider } from 'primereact/divider';
 import { Card } from 'primereact/card';
 
-import { ServicioValidado } from '../../Servicios/estudianteService.js';
+import {
+    ServicioValidado,
+    registrarEstudianteConTutor,
+
+} from '../../Servicios/estudianteService.js';
 
 import {
-    registrarTutor,
-    registrarEstudianteTutor,
-    obtenerIdPersonaTutor,registrarEstudianteConTutor
-} from '../../Servicios/tutorService.js';
+    ValidarEstudiante
+
+
+} from '../../Util/validaciones/validacionEstudiante.js';
 
 import '../../estilosCSS/AgregarEstudiantes.css';
 
@@ -278,15 +282,15 @@ function AddEstudianteTutor(props) {
     // Ajustar según el DTO que devuelvan tus controladores.
     // =========================================================
 
-    const  obtenerIdPersonaTutor= respuesta => {
+    const obtenerIdPersonaTutor = respuesta => {
         const datos = respuesta?.data ?? respuesta;
 
-       return (
-        datos?.idpersona ??
-        datos?.idPersona ??
-        datos?.tutor?.idpersona ??
-        null
-    );
+        return (
+            datos?.idpersona ??
+            datos?.idPersona ??
+            datos?.tutor?.idpersona ??
+            null
+        );
     };
 
     // ====== ===================================================
@@ -304,16 +308,14 @@ function AddEstudianteTutor(props) {
         const tutor = {
             nombre_completo: tutorInfo.nombre_completo.trim(),
             apellido_completo: tutorInfo.apellido_completo.trim(),
-            sexo: tutorInfo.sexo,
-            direccion: tutorInfo.direccion.trim(),
+            sexo: tutorInfo.sexo || null,
+            direccion: tutorInfo.direccion.trim() || null,
             partida_nacimiento: tutorInfo.partida_nacimiento,
-            fecha_nacimiento: convertirFecha(
-                tutorInfo.fecha_nacimiento
-            ),
-            cedula: tutorInfo.cedula.trim(),
+            fecha_nacimiento: convertirFecha(tutorInfo.fecha_nacimiento),
+            cedula: tutorInfo.cedula.trim() || null,
             ocupacion: tutorInfo.ocupacion.trim(),
             telefonoPrincipal: tutorInfo.telefonoPrincipal.trim(),
-            telefonoSecundario: tutorInfo.telefonoSecundario.trim()
+            telefonoSecundario: tutorInfo.telefonoSecundario.trim() || null
         };
 
         return {
@@ -358,73 +360,28 @@ function AddEstudianteTutor(props) {
         try {
             const payload = construirPayload();
 
-            // -------------------------------------------------
-            // 1. REGISTRAR ESTUDIANTE
-            // ServicioValidado debe recibir el DTO de estudiante,
-            // no el objeto compuesto estudiante + tutores.
-            // -------------------------------------------------
-
-            const respuestaEstudiante = await ServicioValidado(
-                payload.estudiante
-            );
-
-            const idEstudiante = obtenerIdPersonaTutor(respuestaEstudiante);
-
-            if (!idEstudiante) {
-                throw new Error(
-                    'El servicio de estudiantes no devolvió el identificador del estudiante.'
-                );
+            // Validar y sanear el estudiante con tu validador existente
+            const validacion = ValidarEstudiante(payload.estudiante);
+            if (!validacion.esValido) {
+                throw new Error(validacion.error);
             }
 
-            // -------------------------------------------------
-            // 2. REGISTRAR TUTOR
-            // -------------------------------------------------
-
-            const respuestaTutor = await registrarTutor(
-                payload.tutores[0].tutor
-            );
-
-            const idTutor = obtenerIdPersonaTutor(respuestaTutor);
-
-            if (!idTutor) {
-                throw new Error(
-                    'El servicio de tutores no devolvió el identificador del tutor.'
-                );
-            }
-
-            // -------------------------------------------------
-            // 3. REGISTRAR RELACIÓN ESTUDIANTE-TUTOR
-            // -------------------------------------------------
-
-            await registrarEstudianteTutor({
-                idEstudiante,
-                idTutor,
-                parentesco: payload.tutores[0].parentesco,
-                esRepresentanteLegal: payload.tutores[0].activo
+            // Una sola llamada, con el mismo formato que ya te funcionó
+            await registrarEstudianteConTutor({
+                estudiante: validacion.payloadFormateado,
+                tutores: payload.tutores
             });
-
-            // -------------------------------------------------
-            // 4. NOTIFICAR ÉXITO
-            // -------------------------------------------------
 
             toast.current?.show({
                 severity: 'success',
                 summary: 'Registro completado',
-                detail:
-                    'El estudiante, el tutor y su relación fueron registrados correctamente.',
+                detail: 'El estudiante y el tutor fueron registrados correctamente.',
                 life: 4000
             });
 
-            // Recargar listado de estudiantes si el padre
-            // del componente proporciona esta función.
-            if (props.cargarEstudiante) {
-                await props.cargarEstudiante();
-            }
+            if (props.cargarEstudiante) await props.cargarEstudiante();
+            if (props.setEstudiantedoAdd) props.setEstudiantedoAdd(false);
 
-            // Cerrar el modal si se proporcionó el callback.
-            if (props.setEstudiantedoAdd) {
-                props.setEstudiantedoAdd(false);
-            }
 
         } catch (error) {
             console.error(
