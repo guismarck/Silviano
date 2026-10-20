@@ -1,0 +1,163 @@
+
+.editar-tutor {
+    padding: 0.25rem;
+    color: #334155;
+}
+
+.tutor-form-heading {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.tutor-heading-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #e8f2ff;
+    color: #2563eb;
+    font-size: 1.25rem;
+}
+
+.tutor-form-heading h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.tutor-form-heading p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.tutor-form-card {
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.tutor-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e8edf3;
+    color: #334155;
+    font-weight: 700;
+}
+
+.tutor-section-title i {
+    color: #3b82f6;
+}
+
+.tutor-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.1rem 1.25rem;
+}
+
+.tutor-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.45rem;
+}
+
+.tutor-field-full {
+    grid-column: 1 / -1;
+}
+
+.tutor-field label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.tutor-field label span,
+.tutor-required-note span {
+    color: #dc2626;
+}
+
+.tutor-field .p-inputtext,
+.tutor-field .p-dropdown,
+.tutor-field .p-calendar {
+    width: 100%;
+}
+
+.tutor-field .p-inputtext,
+.tutor-field .p-dropdown {
+    min-height: 42px;
+    border-radius: 8px;
+}
+
+.tutor-field .p-inputtext:focus,
+.tutor-field .p-dropdown.p-focus {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.tutor-field .p-calendar .p-inputtext {
+    width: 100%;
+}
+
+.tutor-error {
+    line-height: 1.35;
+}
+
+.tutor-required-note {
+    margin-top: 0.5rem;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.tutor-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding-bottom: 0.25rem;
+}
+
+.tutor-form-actions .p-button {
+    min-width: 145px;
+    border-radius: 8px;
+}
+
+.tutor-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 3rem 1rem;
+    color: #64748b;
+}
+
+@media (max-width: 600px) {
+    .tutor-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .tutor-field-full {
+        grid-column: auto;
+    }
+
+    .tutor-form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .tutor-form-actions .p-button {
+        width: 100%;
+    }
+
+    .tutor-form-heading {
+        align-items: flex-start;
+    }
+}
