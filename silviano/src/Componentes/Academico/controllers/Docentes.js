@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -14,20 +13,25 @@ import { getDocentes, deleteDocente } from '../../../Servicios/DocenteServicios/
 import AddDocente from '../../../Servicios/DocenteServicios/agregarDocente';
 import VerDocente from '../../../Servicios/DocenteServicios/VerDocentes';
 import UpdateDocente from '../../../Servicios/DocenteServicios/EditarDocentes';
-//import BuscarDocente from '../../../Servicios/DocenteServicios/BuscarDocentes';
+import BuscarDocente from '../../../Servicios/DocenteServicios/BuscarDocentes';
 
 
 
 export default function Docentes() {
 
     const toast = useRef(null);
-    //const header;
 
     const [showViewMode, setShowViewMode] = useState(false);
     const [showAddMode, setShowAddMode] = useState(false);
     const [showEditMode, setShowEditMode] = useState(false);
 
+    // Lista completa que viene del backend
     const [docentes, setDocentes] = useState([]);
+    // Lista que muestra la tabla (resultado del buscador)
+    const [filtrados, setFiltrados] = useState([]);
+    // Primera fila de la página actual de la tabla
+    const [first, setFirst] = useState(0);
+
     const [loading, setLoading] = useState(false);
     const [selectedDocenteId, setSelectedDocenteId] = useState(null);
 
@@ -53,35 +57,35 @@ export default function Docentes() {
         cargarDocentes();
     }, [cargarDocentes]);
 
-     const handleConfirmDelete = (idPersona) => {
+    const handleConfirmDelete = (idPersona) => {
         confirmDialog({
-          message: '¿Está seguro de eliminar este expediente de docente?',
-          header: 'Confirmar Eliminación',
-          icon: 'pi pi-exclamation-triangle',
-          acceptClassName: 'p-button-danger',
-          acceptLabel: 'Sí, Eliminar',
-          rejectLabel: 'Cancelar',
-          accept: async () => {
-            try {
-              await deleteDocente(idPersona);
-              toast.current?.show({
-                severity: 'success',
-                summary: 'Registro Eliminado',
-                detail: 'El docente ha sido removido del sistema.',
-                life: 3000
-              });
-              cargarDocentes();
-            } catch (error) {
-              toast.current?.show({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'No se logró eliminar el registro seleccionado.',
-                life: 4000
-              });
+            message: '¿Está seguro de eliminar este expediente de docente?',
+            header: 'Confirmar Eliminación',
+            icon: 'pi pi-exclamation-triangle',
+            acceptClassName: 'p-button-danger',
+            acceptLabel: 'Sí, Eliminar',
+            rejectLabel: 'Cancelar',
+            accept: async () => {
+                try {
+                    await deleteDocente(idPersona);
+                    toast.current?.show({
+                        severity: 'success',
+                        summary: 'Registro Eliminado',
+                        detail: 'El docente ha sido removido del sistema.',
+                        life: 3000
+                    });
+                    cargarDocentes();
+                } catch (error) {
+                    toast.current?.show({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'No se logró eliminar el registro seleccionado.',
+                        life: 4000
+                    });
+                }
             }
-          }
         });
-      };
+    };
 
     const statusBodyTemplate = (rowData) => {
         const isActivo = Boolean(rowData.estado);
@@ -120,28 +124,35 @@ export default function Docentes() {
                         setShowEditMode(true);
                     }}
                 />
-                 <Button
-                          icon="pi pi-trash"
-                          severity="danger"
-                          rounded
-                          outlined
-                          //tooltip="Eliminar"
-                          tooltipOptions={{ position: 'top' }}
-                          onClick={() => handleConfirmDelete(rowData.idpersona)}
-                        />
+                <Button
+                    icon="pi pi-trash"
+                    severity="danger"
+                    rounded
+                    outlined
+                    //tooltip="Eliminar"
+                    tooltipOptions={{ position: 'top' }}
+                    onClick={() => handleConfirmDelete(rowData.idpersona)}
+                />
 
             </div>
         );
     };
 
-    // Buscador centrado y más amplio
+    // Buscador centrado y más amplio.
+    // Recibe la lista completa y devuelve el resultado filtrado.
     const header = (
         <div className="flex justify-content-center align-items-center w-full py-2">
             <div className="w-full md:w-8" style={{ minWidth: '320px' }}>
-
+                <BuscarDocente
+                    docentes={docentes}
+                    onFilter={(datos) => {
+                        setFiltrados(datos);
+                        setFirst(0); // vuelve a la primera página al buscar
+                    }}
+                />
             </div>
         </div>
-    )
+    );
 
 
     return (
@@ -152,7 +163,9 @@ export default function Docentes() {
             <Card title="Expedientes de Docentes - SIGE">
                 <DataTable
 
-                    value={docentes}
+                    value={filtrados}
+                    first={first}
+                    onPage={(e) => setFirst(e.first)}
                     paginator
                     rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
@@ -186,7 +199,7 @@ export default function Docentes() {
                 </Fieldset>
             </Card>
 
-            {/* Modal Ver Estudiante */}
+            {/* Modal Ver Docente */}
             <Dialog
                 header="Detalle del Expediente"
                 visible={showViewMode}
@@ -196,10 +209,10 @@ export default function Docentes() {
                     setSelectedDocenteId(null);
                 }}
             >
-               {selectedDocenteId && <VerDocente idPersona={selectedDocenteId} />}
+                {selectedDocenteId && <VerDocente idPersona={selectedDocenteId} />}
             </Dialog>
 
-            {/* Modal Agregar Estudiante */}
+            {/* Modal Agregar Docente */}
             <Dialog
                 header="Registrar Nuevo Docente"
                 visible={showAddMode}
@@ -212,7 +225,7 @@ export default function Docentes() {
                 />
             </Dialog>
 
-            {/* Modal Editar Estudiante */}
+            {/* Modal Editar Docente */}
             <Dialog
                 header="Editar Expediente de Docente"
                 visible={showEditMode}
@@ -223,16 +236,16 @@ export default function Docentes() {
                 }}
 
             >
-              {selectedDocenteId && (
-                        <UpdateDocente
-                          idPersona={selectedDocenteId}
-                          onEstudianteUpdate={() => {
+                {selectedDocenteId && (
+                    <UpdateDocente
+                        idPersona={selectedDocenteId}
+                        onEstudianteUpdate={() => {
                             setShowEditMode(false);
                             setSelectedDocenteId(null);
                             cargarDocentes();
-                          }}
-                        />
-                      )}
+                        }}
+                    />
+                )}
             </Dialog>
         </div>
     );
