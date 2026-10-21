@@ -5,69 +5,184 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { InputSwitch } from 'primereact/inputswitch';
-import { Card } from 'primereact/card';
 import { Toast } from 'primereact/toast';
-import { Divider } from 'primereact/divider';
+import { Message } from 'primereact/message';
+import { Avatar } from 'primereact/avatar';
+import { Tag } from 'primereact/tag';
+import { Skeleton } from 'primereact/skeleton';
+
 import { getEstudianteById, updateEstudianteService } from '../estudianteService';
+
+import {
+  ValidarEstudiante,
+  validarSoloTexto
+} from '../../Util/validaciones/validacionEstudiante.js';
+
+import {
+  formatearCedula,
+  extraerFechaDeCedula,
+  validarFechaNacimiento,
+  validarCedula
+} from '../../Util/validaciones/Validacioncedula.js';
+
+// =========================================================
+// CONSTANTES Y UTILIDADES
+// =========================================================
 
 const SEXO_OPTIONS = [
   { label: 'Femenino', value: 'F' },
   { label: 'Masculino', value: 'M' }
 ];
 
+// La partida de nacimiento se guarda como texto 'si' / 'no',
+// igual que en el formulario de registro.
 const PARTIDA_NACIMIENTO_OPTIONS = [
-  { label: 'Sí', value: true },
-  { label: 'No', value: false }
+  { label: 'Sí', value: 'si' },
+  { label: 'No', value: 'no' }
 ];
 
-const UpdateEstudiante = ({ idPersona, onEstudianteUpdate }) => {
+const ESTADO_INICIAL = {
+  idpersona: '',
+  nombre_completo: '',
+  apellido_completo: '',
+  direccion: '',
+  fecha_nacimiento: null,
+  cedula: '',
+  codEstudiante: '',
+  codigoMined: '',
+  partida_nacimiento: 'no',
+  estado: true,
+  sexo: ''
+};
+
+// Convierte el string de la BD (YYYY-MM-DD) a Date, sin desfase de zona horaria.
+const parseDateFromDB = (dateString) => {
+  if (!dateString) return null;
+
+  const [year, month, day] = String(dateString).slice(0, 10).split('-').map(Number);
+  const fecha = new Date(year, month - 1, day);
+
+  return isNaN(fecha.getTime()) ? null : fecha;
+};
+
+// Convierte un Date a YYYY-MM-DD para enviarlo a la BD.
+const formatDateToDB = (dateObj) => {
+  if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) return null;
+
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
+const normalizarPartida = (valor) => {
+  const texto = String(valor ?? '').trim().toLowerCase();
+  return texto === 'si' || texto === 'true' ? 'si' : 'no';
+};
+
+const normalizarSexo = (valor) => {
+  const texto = String(valor ?? '').trim().toUpperCase();
+  if (texto.startsWith('F')) return 'F';
+  if (texto.startsWith('M')) return 'M';
+  return '';
+};
+
+// =========================================================
+// CAMPO AUXILIAR: etiqueta + control + ayuda o error
+// Está fuera del componente principal para no remontarse en cada render.
+// =========================================================
+
+const Campo = ({ id, label, requerido, ayuda, error, className = 'col-12 md:col-6', children }) => (
+  <div className={`${className} field`}>
+    <label htmlFor={id} className="font-semibold text-700 block mb-2">
+      {label}
+      {requerido && <span className="text-red-500"> *</span>}
+    </label>
+
+    {children}
+
+    {error ? (
+      <small className="p-error block mt-1">{error}</small>
+    ) : ayuda ? (
+      <small className="text-500 block mt-1">{ayuda}</small>
+    ) : null}
+  </div>
+);
+
+Campo.propTypes = {
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  requerido: PropTypes.bool,
+  ayuda: PropTypes.string,
+  error: PropTypes.string,
+  className: PropTypes.string,
+  children: PropTypes.node
+};
+
+const Seccion = ({ icono, titulo, children }) => (
+  <section className="surface-card border-round shadow-1 p-3 md:p-4 mb-3">
+    <div className="flex align-items-center gap-2 mb-3">
+      <i className={`pi ${icono} text-primary text-xl`} />
+      <h3 className="m-0 text-lg font-semibold text-900">{titulo}</h3>
+    </div>
+
+    {children}
+  </section>
+);
+
+Seccion.propTypes = {
+  icono: PropTypes.string.isRequired,
+  titulo: PropTypes.string.isRequired,
+  children: PropTypes.node
+};
+
+// =========================================================
+// COMPONENTE PRINCIPAL
+// =========================================================
+
+const UpdateEstudiante = ({ idPersona, onEstudianteUpdate, onCancel }) => {
   const toast = useRef(null);
+
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
-  const [formValues, setFormValues] = useState({
-    idpersona: '',
-    nombre_completo: '',
-    apellido_completo: '',
-    direccion: '',
-    fecha_nacimiento: null,
-    cedula: '',
-    cod_estudiante: '',
-    codigo_MINED: '',
-    nombre_tutor: '',
-    partida_nacimiento: true,
-    estado: true,
-    sexo: ''
-  });
+  // { campo: 'cedula' | 'nombre_completo' | ... | null, mensaje: string }
+  const [error, setError] = useState(null);
 
-  // Convierte string de BD a objeto Date de JavaScript
-  const parseDateFromDB = (dateString) => {
-    if (!dateString) return null;
-    const [year, month, day] = dateString.split('-');
-    return new Date(year, month - 1, day);
-  };
+  const [formValues, setFormValues] = useState(ESTADO_INICIAL);
 
-  // Formatea Date de JavaScript a formato ISO de BD (YYYY-MM-DD)
-  const formatDateToDB = (dateObj) => {
-    if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) return null;
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  // ---------------------------------------------------------
+  // CARGAR DATOS DEL ESTUDIANTE
+  // ---------------------------------------------------------
 
   const fetchEstudianteData = useCallback(async () => {
     if (!idPersona) return;
+
     setFetching(true);
+    setLoadError(false);
+
     try {
       const data = await getEstudianteById(idPersona);
+
       setFormValues({
+        ...ESTADO_INICIAL,
         ...data,
-        fecha_nacimiento: data.fecha_nacimiento ? parseDateFromDB(data.fecha_nacimiento) : null,
+        nombre_completo: data.nombre_completo ?? '',
+        apellido_completo: data.apellido_completo ?? '',
+        direccion: data.direccion ?? '',
+        cedula: formatearCedula(data.cedula ?? ''),
+        codEstudiante: data.codEstudiante ?? '',
+        codigoMined: data.codigoMined ?? '',
+        sexo: normalizarSexo(data.sexo),
+        fecha_nacimiento: parseDateFromDB(data.fecha_nacimiento),
         estado: Boolean(data.estado),
-        partida_nacimiento: Boolean(data.partida_nacimiento)
+        partida_nacimiento: normalizarPartida(data.partida_nacimiento)
       });
-    } catch (error) {
+    } catch (err) {
+      setLoadError(true);
+
       toast.current?.show({
         severity: 'error',
         summary: 'Error de carga',
@@ -83,28 +198,115 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate }) => {
     fetchEstudianteData();
   }, [fetchEstudianteData]);
 
+  // ---------------------------------------------------------
+  // CAMBIOS EN EL FORMULARIO
+  // ---------------------------------------------------------
+
   const handleChange = (field, value) => {
     setFormValues((prev) => ({
       ...prev,
       [field]: value
     }));
+
+    setError(null);
   };
+
+  // La cédula se formatea al escribir y, cuando está completa,
+  // su fecha pasa al campo de fecha de nacimiento.
+  const handleCedula = (valor) => {
+    const cedula = formatearCedula(valor);
+    const fecha = extraerFechaDeCedula(cedula);
+
+    setFormValues((prev) => ({
+      ...prev,
+      cedula,
+      ...(fecha ? { fecha_nacimiento: fecha } : {})
+    }));
+
+    if (cedula.length === 16 && !fecha) {
+      setError({
+        campo: 'cedula',
+        mensaje: 'La cédula no contiene una fecha de nacimiento válida.'
+      });
+    } else {
+      setError(null);
+    }
+  };
+
+  // ---------------------------------------------------------
+  // VALIDACIÓN
+  // Devuelve { campo, mensaje } con el primer problema, o null.
+  // ---------------------------------------------------------
+
+  const validarFormulario = () => {
+    const errorNombre = validarSoloTexto(formValues.nombre_completo, 'Nombres');
+    if (errorNombre) return { campo: 'nombre_completo', mensaje: errorNombre };
+
+    const errorApellido = validarSoloTexto(formValues.apellido_completo, 'Apellidos');
+    if (errorApellido) return { campo: 'apellido_completo', mensaje: errorApellido };
+
+    if (!formValues.sexo) {
+      return { campo: 'sexo', mensaje: 'Seleccione el sexo del estudiante.' };
+    }
+
+    if (!formValues.fecha_nacimiento) {
+      return { campo: 'fecha_nacimiento', mensaje: 'La fecha de nacimiento es obligatoria.' };
+    }
+
+    const errorFecha = validarFechaNacimiento(formValues.fecha_nacimiento, 'del estudiante');
+    if (errorFecha) return { campo: 'fecha_nacimiento', mensaje: errorFecha };
+
+    const errorCedula = validarCedula(
+      formValues.cedula,
+      formValues.fecha_nacimiento,
+      'del estudiante'
+    );
+    if (errorCedula) return { campo: 'cedula', mensaje: errorCedula };
+
+    return null;
+  };
+
+  // ---------------------------------------------------------
+  // GUARDAR
+  // ---------------------------------------------------------
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (loading) return;
+
+    const problema = validarFormulario();
+
+    if (problema) {
+      setError(problema);
+      return;
+    }
+
     setLoading(true);
+    setError(null);
 
     try {
-      const payload = {
+      // Valida y sanea con el mismo validador del registro.
+      const validacion = ValidarEstudiante({
         ...formValues,
         fecha_nacimiento: formatDateToDB(formValues.fecha_nacimiento)
+      });
+
+      if (!validacion.esValido) {
+        setError({ campo: null, mensaje: validacion.error });
+        return;
+      }
+
+      const payload = {
+        ...formValues,
+        ...validacion.payloadFormateado
       };
 
       await updateEstudianteService(formValues.idpersona, payload);
 
       toast.current?.show({
         severity: 'success',
-        summary: 'Operación Exitosa',
+        summary: 'Operación exitosa',
         detail: 'Expediente del estudiante actualizado correctamente.',
         life: 3000
       });
@@ -112,230 +314,310 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate }) => {
       if (typeof onEstudianteUpdate === 'function') {
         onEstudianteUpdate();
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error al actualizar estudiante:', err);
+
+      const respuestaError = err.response?.data;
+
+      const mensaje =
+        typeof respuestaError === 'string'
+          ? respuestaError
+          : respuestaError?.mensaje ||
+            respuestaError?.message ||
+            err.message ||
+            'Ocurrió un error al intentar actualizar los datos.';
+
+      setError({ campo: null, mensaje });
+
       toast.current?.show({
         severity: 'error',
-        summary: 'Error al Guardar',
-        detail: 'Ocurrió un error al intentar actualizar los datos.',
-        life: 4000
+        summary: 'Error al guardar',
+        detail: mensaje,
+        life: 5000
       });
     } finally {
       setLoading(false);
     }
   };
 
+  // ---------------------------------------------------------
+  // AYUDAS DE RENDER
+  // ---------------------------------------------------------
+
+  const errorDe = (campo) => (error?.campo === campo ? error.mensaje : undefined);
+  const claseInvalida = (campo) => (error?.campo === campo ? 'p-invalid' : '');
+
+  const iniciales =
+    `${(formValues.nombre_completo || '').trim().charAt(0)}${(formValues.apellido_completo || '')
+      .trim()
+      .charAt(0)}`.toUpperCase() || 'E';
+
+  // ---------------------------------------------------------
+  // ESTADOS DE CARGA
+  // ---------------------------------------------------------
+
+  if (fetching) {
+    return (
+      <div className="p-2 md:p-3">
+        <Toast ref={toast} />
+        <Skeleton height="5rem" className="mb-3" />
+        <Skeleton height="16rem" className="mb-3" />
+        <Skeleton height="9rem" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="p-2 md:p-3 flex flex-column align-items-center gap-3 text-center">
+        <Toast ref={toast} />
+        <Message
+          severity="error"
+          text="No se pudo cargar la información del estudiante."
+        />
+        <Button
+          type="button"
+          label="Reintentar"
+          icon="pi pi-refresh"
+          outlined
+          onClick={fetchEstudianteData}
+        />
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------
+  // RENDER
+  // ---------------------------------------------------------
+
   return (
-    <div className="surface-ground p-3 md:p-4 border-round shadow-1">
+    <div className="p-2 md:p-3">
       <Toast ref={toast} />
 
-      <form onSubmit={handleSubmit} className="p-fluid">
-        <Card title="Actualizar Datos Personales" className="mb-4 shadow-1">
-          <div className="row g-3">
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="nombre_completo" className="font-semibold text-700">
-                  Nombres
-                </label>
-                <InputText
-                  id="nombre_completo"
-                  placeholder="Ingrese los nombres"
-                  value={formValues.nombre_completo}
-                  onChange={(e) => handleChange('nombre_completo', e.target.value)}
-                  disabled={fetching}
-                  required
-                />
-              </div>
+      <form onSubmit={handleSubmit} className="p-fluid" noValidate>
+        {/* RESUMEN DEL ESTUDIANTE */}
+
+        <div className="flex align-items-center gap-3 surface-card border-round shadow-1 p-3 mb-3">
+          <Avatar
+            label={iniciales}
+            size="xlarge"
+            shape="circle"
+            className="bg-primary text-white font-bold"
+          />
+
+          <div className="flex-grow-1">
+            <div className="text-xl font-bold text-900">
+              {`${formValues.nombre_completo} ${formValues.apellido_completo}`.trim() ||
+                'Estudiante'}
             </div>
 
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="apellido_completo" className="font-semibold text-700">
-                  Apellidos
-                </label>
-                <InputText
-                  id="apellido_completo"
-                  placeholder="Ingrese los apellidos"
-                  value={formValues.apellido_completo}
-                  onChange={(e) => handleChange('apellido_completo', e.target.value)}
-                  disabled={fetching}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="sexo" className="font-semibold text-700">
-                  Sexo
-                </label>
-                <Dropdown
-                  id="sexo"
-                  options={SEXO_OPTIONS}
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="Seleccione sexo"
-                  value={formValues.sexo}
-                  onChange={(e) => handleChange('sexo', e.value)}
-                  disabled={fetching}
-                />
-              </div>
-            </div>
-
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="partida_nacimiento" className="font-semibold text-700">
-                  Partida de Nacimiento
-                </label>
-                <Dropdown
-                  id="partida_nacimiento"
-                  options={PARTIDA_NACIMIENTO_OPTIONS}
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="¿Cuenta con partida?"
-                  value={formValues.partida_nacimiento}
-                  onChange={(e) => handleChange('partida_nacimiento', e.value)}
-                  disabled={fetching}
-                />
-              </div>
-            </div>
-
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="fecha_nacimiento" className="font-semibold text-700">
-                  Fecha de Nacimiento
-                </label>
-                <Calendar
-                  id="fecha_nacimiento"
-                  value={formValues.fecha_nacimiento}
-                  onChange={(e) => handleChange('fecha_nacimiento', e.value)}
-                  dateFormat="dd/mm/yy"
-                  showIcon
-                  placeholder="dd/mm/aaaa"
-                  disabled={fetching}
-                />
-              </div>
-            </div>
-
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="cedula" className="font-semibold text-700">
-                  Cédula / Identificación
-                </label>
-                <InputText
-                  id="cedula"
-                  placeholder="000-000000-0000X"
-                  value={formValues.cedula}
-                  onChange={(e) => handleChange('cedula', e.target.value)}
-                  disabled={fetching}
-                />
-              </div>
-            </div>
-
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="nombre_tutor" className="font-semibold text-700">
-                  Nombre del Tutor / Apoderado
-                </label>
-                <InputText
-                  id="nombre_tutor"
-                  placeholder="Nombre completo del tutor"
-                  value={formValues.nombre_tutor}
-                  onChange={(e) => handleChange('nombre_tutor', e.target.value)}
-                  disabled={fetching}
-                />
-              </div>
-            </div>
-
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="direccion" className="font-semibold text-700">
-                  Dirección Domiciliar
-                </label>
-                <InputText
-                  id="direccion"
-                  placeholder="Dirección del estudiante"
-                  value={formValues.direccion}
-                  onChange={(e) => handleChange('direccion', e.target.value)}
-                  disabled={fetching}
-                />
-              </div>
+            <div className="text-600 text-sm mt-1">
+              {formValues.codEstudiante
+                ? `Código ${formValues.codEstudiante}`
+                : 'Sin código asignado'}
             </div>
           </div>
-        </Card>
 
-        <Card title="Información Académica y Registro MINED" className="mb-4 shadow-1">
-          <div className="row g-3">
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="idpersona" className="font-semibold text-700">
-                  ID Sistema (Persona)
-                </label>
-                <InputText id="idpersona" value={formValues.idpersona} disabled />
-              </div>
-            </div>
+          <Tag
+            value={formValues.estado ? 'ACTIVO' : 'INACTIVO'}
+            severity={formValues.estado ? 'success' : 'danger'}
+          />
+        </div>
 
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="cod_estudiante" className="font-semibold text-700">
-                  Código de Estudiante
-                </label>
-                <InputText
-                  id="cod_estudiante"
-                  placeholder="Código interno"
-                  value={formValues.codEstudiante}
-                  //onChange={(e) => handleChange('cod_estudiante', e.target.value)}
-                  disabled//={fetching}/
-                />
-              </div>
-            </div>
+        {/* ERROR GENERAL (los errores de campo se muestran bajo cada campo) */}
 
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="codigoMined" className="font-semibold text-700">
-                  Código MINED
-                </label>
-                <InputText
-                  id="codigoMined"
-                  placeholder="Código oficial MINED"
-                  value={formValues.codigoMined}
-                  // onChange={(e) => handleChange('codigo_MINED', e.target.value)}
-                  disabled//={fetching}
-                />
-              </div>
-            </div>
+        {error && !error.campo && (
+          <Message severity="error" text={error.mensaje} className="w-full mb-3" />
+        )}
 
-            <div className="col-12 col-md-6">
-              <div className="flex flex-column gap-2 mb-3">
-                <label htmlFor="estado" className="font-semibold text-700">
-                  Estado de Matrícula (Activo / Inactivo)
-                </label>
-                <div className="flex align-items-center gap-3 pt-2">
-                  <InputSwitch
-                    id="estado"
-                    checked={formValues.estado}
-                    onChange={(e) => handleChange('estado', e.value)}
-                    disabled={fetching}
-                  />
-                  <span className="font-medium text-600">
-                    {formValues.estado ? 'Matrícula Activa' : 'Matrícula Inactiva'}
-                  </span>
-                </div>
-              </div>
-            </div>
+        {/* DATOS PERSONALES */}
+
+        <Seccion icono="pi-user" titulo="Datos personales">
+          <div className="formgrid grid">
+            <Campo
+              id="nombre_completo"
+              label="Nombres"
+              requerido
+              error={errorDe('nombre_completo')}
+            >
+              <InputText
+                id="nombre_completo"
+                placeholder="Ingrese los nombres"
+                value={formValues.nombre_completo}
+                onChange={(e) => handleChange('nombre_completo', e.target.value)}
+                className={`w-full ${claseInvalida('nombre_completo')}`}
+                maxLength={100}
+                disabled={loading}
+              />
+            </Campo>
+
+            <Campo
+              id="apellido_completo"
+              label="Apellidos"
+              requerido
+              error={errorDe('apellido_completo')}
+            >
+              <InputText
+                id="apellido_completo"
+                placeholder="Ingrese los apellidos"
+                value={formValues.apellido_completo}
+                onChange={(e) => handleChange('apellido_completo', e.target.value)}
+                className={`w-full ${claseInvalida('apellido_completo')}`}
+                maxLength={100}
+                disabled={loading}
+              />
+            </Campo>
+
+            <Campo
+              id="cedula"
+              label="Cédula"
+              ayuda="La fecha de nacimiento se completa sola con la fecha de la cédula."
+              error={errorDe('cedula')}
+            >
+              <InputText
+                id="cedula"
+                placeholder="000-000000-0000X"
+                value={formValues.cedula}
+                onChange={(e) => handleCedula(e.target.value)}
+                className={`w-full ${claseInvalida('cedula')}`}
+                maxLength={16}
+                disabled={loading}
+              />
+            </Campo>
+
+            <Campo
+              id="fecha_nacimiento"
+              label="Fecha de nacimiento"
+              requerido
+              error={errorDe('fecha_nacimiento')}
+            >
+              <Calendar
+                inputId="fecha_nacimiento"
+                value={formValues.fecha_nacimiento}
+                onChange={(e) => handleChange('fecha_nacimiento', e.value)}
+                dateFormat="dd/mm/yy"
+                showIcon
+                maxDate={new Date()}
+                placeholder="dd/mm/aaaa"
+                className={`w-full ${claseInvalida('fecha_nacimiento')}`}
+                inputClassName="w-full"
+                disabled={loading}
+              />
+            </Campo>
+
+            <Campo id="sexo" label="Sexo" requerido error={errorDe('sexo')}>
+              <Dropdown
+                inputId="sexo"
+                options={SEXO_OPTIONS}
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Seleccione sexo"
+                value={formValues.sexo}
+                onChange={(e) => handleChange('sexo', e.value)}
+                className={`w-full ${claseInvalida('sexo')}`}
+                disabled={loading}
+              />
+            </Campo>
+
+            <Campo id="partida_nacimiento" label="Partida de nacimiento">
+              <Dropdown
+                inputId="partida_nacimiento"
+                options={PARTIDA_NACIMIENTO_OPTIONS}
+                optionLabel="label"
+                optionValue="value"
+                placeholder="¿Cuenta con partida?"
+                value={formValues.partida_nacimiento}
+                onChange={(e) => handleChange('partida_nacimiento', e.value)}
+                className="w-full"
+                disabled={loading}
+              />
+            </Campo>
+
+            <Campo id="direccion" label="Dirección domiciliar" className="col-12">
+              <InputText
+                id="direccion"
+                placeholder="Dirección del estudiante"
+                value={formValues.direccion}
+                onChange={(e) => handleChange('direccion', e.target.value)}
+                className="w-full"
+                maxLength={300}
+                disabled={loading}
+              />
+            </Campo>
           </div>
-        </Card>
+        </Seccion>
 
-        <Divider />
+        {/* INFORMACIÓN ACADÉMICA */}
+
+        <Seccion icono="pi-book" titulo="Información académica y registro MINED">
+          <div className="formgrid grid">
+            <Campo id="idpersona" label="ID del sistema">
+              <InputText id="idpersona" value={formValues.idpersona} className="w-full" disabled />
+            </Campo>
+
+            <Campo
+              id="codEstudiante"
+              label="Código de estudiante"
+              ayuda="Se genera al registrar y no se modifica."
+            >
+              <InputText
+                id="codEstudiante"
+                value={formValues.codEstudiante}
+                className="w-full"
+                disabled
+              />
+            </Campo>
+
+            <Campo id="codigoMined" label="Código MINED">
+              <InputText
+                id="codigoMined"
+                placeholder="Sin código MINED"
+                value={formValues.codigoMined}
+                className="w-full"
+                disabled
+              />
+            </Campo>
+
+            <Campo id="estado" label="Estado de matrícula">
+              <div className="flex align-items-center gap-3 pt-2">
+                <InputSwitch
+                  inputId="estado"
+                  checked={Boolean(formValues.estado)}
+                  onChange={(e) => handleChange('estado', e.value)}
+                  disabled={loading}
+                />
+
+                <span className="font-medium text-600">
+                  {formValues.estado ? 'Matrícula activa' : 'Matrícula inactiva'}
+                </span>
+              </div>
+            </Campo>
+          </div>
+        </Seccion>
+
+        {/* BOTONES */}
 
         <div className="flex justify-content-end gap-2 mt-4">
+          {typeof onCancel === 'function' && (
+            <Button
+              type="button"
+              label="Cancelar"
+              icon="pi pi-times"
+              className="p-button-outlined p-button-secondary"
+              onClick={onCancel}
+              disabled={loading}
+              style={{ width: 'auto' }}
+            />
+          )}
+
           <Button
             type="submit"
-            label="Guardar Cambios"
+            label={loading ? 'Guardando...' : 'Guardar cambios'}
             icon="pi pi-check"
             severity="success"
             loading={loading}
-            disabled={fetching}
-            className="px-4 py-2"
+            disabled={loading}
+            style={{ width: 'auto' }}
           />
         </div>
       </form>
@@ -345,7 +627,8 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate }) => {
 
 UpdateEstudiante.propTypes = {
   idPersona: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  onEstudianteUpdate: PropTypes.func
+  onEstudianteUpdate: PropTypes.func,
+  onCancel: PropTypes.func
 };
 
 export default UpdateEstudiante;

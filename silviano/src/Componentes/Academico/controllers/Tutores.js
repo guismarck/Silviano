@@ -5,7 +5,6 @@ import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
-import { Fieldset } from 'primereact/fieldset';
 
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { getTutores, deleteTutor } from '../../../Servicios/tutorService';
@@ -176,17 +175,7 @@ export default function Tutores() {
                 </DataTable>
 
                 {/* Sección de acciones inferior dentro del Fieldset */}
-                <Fieldset legend="Acciones" className="mt-4">
-                    <div className="flex flex-wrap gap-3 align-items-center">
-                        <Button
-                            label="Nuevo Docente"
-                            icon="pi pi-plus"
-                            severity="primary"
-                            onClick={() => setShowAddMode(true)}
-                        />
-
-                    </div>
-                </Fieldset>
+                
             </Card>
 
             {/* Modal Ver Estudiante */}
