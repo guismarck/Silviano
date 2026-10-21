@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -20,13 +19,18 @@ import BuscarTutor from '../../../Servicios/TutoresServicios/BuscarTutores';
 export default function Tutores() {
 
     const toast = useRef(null);
-    //const header;
 
     const [showViewMode, setShowViewMode] = useState(false);
     const [showAddMode, setShowAddMode] = useState(false);
     const [showEditMode, setShowEditMode] = useState(false);
 
+    // Lista completa que viene del backend
     const [tutores, setTutores] = useState([]);
+    // Lista que muestra la tabla (resultado del buscador)
+    const [filtrados, setFiltrados] = useState([]);
+    // Primera fila de la página actual de la tabla
+    const [first, setFirst] = useState(0);
+
     const [loading, setLoading] = useState(false);
     const [selectedTutorId, setSelectedTutorId] = useState(null);
 
@@ -125,15 +129,21 @@ export default function Tutores() {
         );
     };
 
-    // Buscador centrado y más amplio
+    // Buscador centrado y más amplio.
+    // Recibe la lista completa y devuelve el resultado filtrado.
     const header = (
         <div className="flex justify-content-center align-items-center w-full py-2">
             <div className="w-full md:w-8" style={{ minWidth: '320px' }}>
-                      <BuscarTutor onFilter={(filteredData) => setTutores(filteredData)} loadAll={cargarTutores} />
-              
+                <BuscarTutor
+                    tutores={tutores}
+                    onFilter={(datos) => {
+                        setFiltrados(datos);
+                        setFirst(0); // vuelve a la primera página al buscar
+                    }}
+                />
             </div>
         </div>
-    )
+    );
 
 
     return (
@@ -144,7 +154,9 @@ export default function Tutores() {
             <Card title="Expedientes de Tutores - SIGE">
                 <DataTable
 
-                    value={tutores}
+                    value={filtrados}
+                    first={first}
+                    onPage={(e) => setFirst(e.first)}
                     paginator
                     rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
@@ -204,8 +216,6 @@ export default function Tutores() {
                 />*/}
 
             </Dialog>
-
-            {/* Modal Editar Estudiante */}
 
             {/* Modal Editar Tutor */}
             <Dialog
