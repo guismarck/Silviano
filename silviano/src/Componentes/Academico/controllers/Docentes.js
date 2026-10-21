@@ -176,7 +176,6 @@ export default function Docentes() {
                     emptyMessage="No se encontraron registros de docentes."
                     responsiveLayout="scroll"
                 >
-                    <Column field="idpersona" header="ID" sortable style={{ minWidth: '5rem' }} />
                     <Column field="codDocente" header="Código" sortable style={{ minWidth: '8rem' }} />
                     <Column field="especialidad" header="Especialidad" sortable style={{ minWidth: '9rem' }} />
                     <Column field="nombre_completo" header="Nombres" sortable style={{ minWidth: '12rem' }} />
