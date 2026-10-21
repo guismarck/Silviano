@@ -6,9 +6,8 @@ import { MainLayout } from './Componentes/Academico/MainLayout';
 import { Login } from './Componentes/Login/Login'; // Verifica esta ruta de archivo
 
 // Controladores del Sistema SIGE
-import ListarGrados from './Componentes/Academico/controllers/ListarGrados';
+import ListarGrados from './Componentes/Academico/controllers/Grados';
 import Estudiantes from './Componentes/Academico/controllers/Estudiantes';
-import AgregarGrados from './Componentes/Academico/controllers/AgregarGrados';
 import ListarCatalogoSalon from './Componentes/Academico/controllers/ListarCatalogoSalon';
 import ListMatriculas from './Servicios/MatriculasServicios/ListMatriculas';
 import GestionCobroForm from './Componentes/ReciboPago';
@@ -48,7 +47,7 @@ function AppRoutes() {
           <Route element={<ProtectedRoute allowedRoles={['DIRECTOR', 'SECRETARIA']} />}>
             <Route path="/estudiantes" element={<Estudiantes />} />
             <Route path="/grados" element={<ListarGrados />} />
-            <Route path="/agregargrados" element={<AgregarGrados />} />
+            <Route path="/agregargrados" element={<ListarGrados />} />
             <Route path="/salon" element={<ListarCatalogoSalon />} />
             <Route path="/periodosEvaluativos" element={<GestionPeriodos />} />
             <Route path="/asignacionDocente" element={<AsignacionDocente />} />

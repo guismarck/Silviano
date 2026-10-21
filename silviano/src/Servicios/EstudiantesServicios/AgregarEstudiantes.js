@@ -96,7 +96,7 @@ function AddEstudiante(props) {
          }
      }*/
 
-    const AddEstudianteData = async (e) => {
+    /*const AddEstudianteData = async (e) => {
         if (e) e.preventDefault();
         setErrorMessage(null);
         setLoading(true);
@@ -132,7 +132,7 @@ function AddEstudiante(props) {
         } finally {
             setLoading(false);
         }
-    };
+    };*/
 
     /*return (
 
