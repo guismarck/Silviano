@@ -12,6 +12,8 @@ import { ServicioValidado } from '../../Servicios/GradoServicios/gradoService.js
 
 
 function Addgrado(props) {
+
+
    const [niveles, setNiveles] = useState([]);
    const [cargandoNiveles, setCargandoNiveles] = useState(false);
    const [guardando, setGuardando] = useState(false);
@@ -76,13 +78,7 @@ function Addgrado(props) {
          // Enviar el grado al backend utilizando Axios.
          await ServicioValidado(gradoInfo);
 
-         // Mostrar confirmación del servidor.
-         setSuccessMessage(
-            '¡Registro exitoso! El grado se guardó correctamente.'
-         );
-
-         // Limpiar el formulario después del guardado.
-         reset();
+         
 
          // Actualizar el listado sin invalidar el guardado
          // si ocurre un error al consultar nuevamente.
@@ -112,7 +108,15 @@ function Addgrado(props) {
       } finally {
          setGuardando(false);
       }
+      // Mostrar confirmación del servidor.
+         setSuccessMessage(
+            '¡Registro exitoso! El grado se guardó correctamente.'
+         );
+
+         // Limpiar el formulario después del guardado.
+         reset();
    };
+     
 
    return (
       <div className="grado-gradoInfo input">
@@ -144,21 +148,7 @@ function Addgrado(props) {
             >
                <div className="row">
 
-                  {/* Identificador del grado */}
-                  <div className="col-sm-12 col-md-6">
-                     <div className="field">
-                        <label htmlFor="idGrado">
-                           ID del grado
-                        </label>
-
-                        <InputText
-                           id="idGrado"
-                           className="form-control"
-                           placeholder="ID"
-                           {...register('idGrado')}
-                        />
-                     </div>
-                  </div>
+                  
 
                   {/* Nivel educativo obligatorio */}
                   <div className="col-sm-12 col-md-6 mb-3">

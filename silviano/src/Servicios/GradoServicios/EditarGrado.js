@@ -1,5 +1,4 @@
 
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 
@@ -9,16 +8,25 @@ import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Message } from 'primereact/message';
 
-import { getGrados, getNivelEducativo, actualizarGrado} from './gradoService.js';
+import {
+   getGrados,
+   getNivelEducativo,
+   actualizarGrado
+} from './gradoService.js';
 
+const valoresIniciales = {
+   nombre: '',
+   nivelEducativo: {
+      idnivel: null
+   }
+};
 
-const  Updategrado = () => {
+const EditarGrado = ({ idGrado, onGradoUpdate }) => {
    const toast = useRef(null);
 
-   const [grados, setGrados] = useState([]);
    const [niveles, setNiveles] = useState([]);
-   const [gradoSeleccionado, setGradoSeleccionado] = useState(null);
-   const [cargando, setCargando] = useState(false);
+   const [cargandoDatos, setCargandoDatos] = useState(true);
+   const [guardando, setGuardando] = useState(false);
 
    const {
       control,
@@ -28,131 +36,199 @@ const  Updategrado = () => {
       clearErrors,
       formState: { errors }
    } = useForm({
-      defaultValues: {
-         nombre: '',
-         nivelEducativo: {
-            idnivel: ''
-         }
-      }
+      defaultValues: valoresIniciales
    });
 
-   // Cargar grados y niveles educativos.
+   // Cargar los datos del grado y los niveles educativos.
    useEffect(() => {
+      let activo = true;
+
       const cargarDatos = async () => {
+         setCargandoDatos(true);
+         clearErrors();
+
          try {
             const [datosGrados, datosNiveles] = await Promise.all([
                getGrados(),
                getNivelEducativo()
             ]);
 
-            const gradosNormalizados = datosGrados.map((grado) => ({
-               ...grado,
-               idGrado: grado.idGrado ?? grado.id,
-               nombre: grado.nombre ?? grado.nombreGrado
-            }));
+            const grado = datosGrados.find(
+               (item) =>
+                  String(item.idGrado ?? item.id) === String(idGrado)
+            );
+
+            if (!grado) {
+               throw new Error(
+                  'No se encontró el grado que deseas editar.'
+               );
+            }
 
             const nivelesNormalizados = datosNiveles.map((nivel) => ({
-               label: nivel.nombre ?? nivel.descripcion ?? nivel.nivel,
-               value: Number(nivel.idnivel ?? nivel.idNivel ?? nivel.id)
+               label:
+                  nivel.nombre ??
+                  nivel.descripcion ??
+                  nivel.nivel ??
+                  'Nivel sin nombre',
+
+               value: Number(
+                  nivel.idnivel ??
+                  nivel.idNivel ??
+                  nivel.id
+               )
             }));
 
-            setGrados(gradosNormalizados);
-            setNiveles(nivelesNormalizados);
+            const idNivel =
+               grado.nivelEducativo?.idnivel ??
+               grado.nivelEducativo?.idNivel ??
+               grado.idnivel ??
+               grado.idNivel;
+
+            if (activo) {
+               setNiveles(nivelesNormalizados);
+
+               // Precargar los campos con los valores actuales.
+               reset({
+                  nombre: grado.nombre ?? grado.nombreGrado ?? '',
+                  nivelEducativo: {
+                     idnivel:
+                        idNivel === null ||
+                           idNivel === undefined ||
+                           idNivel === ''
+                           ? null
+                           : Number(idNivel)
+                  }
+               });
+            }
          } catch (error) {
-            toast.current?.show({
-               severity: 'error',
-               summary: 'Error',
-               detail: 'No se pudieron cargar los grados y niveles educativos.',
-               life: 4000
-            });
+            console.error(
+               'Error al cargar los datos del grado:',
+               error
+            );
+
+            if (activo) {
+               setError('root', {
+                  type: 'manual',
+                  message:
+                     error.message ||
+                     'No se pudieron cargar los datos del grado.'
+               });
+
+               toast.current?.show({
+                  severity: 'error',
+                  summary: 'Error',
+                  detail:
+                     error.message ||
+                     'No se pudieron cargar los datos.',
+                  life: 4000
+               });
+            }
+         } finally {
+            if (activo) {
+               setCargandoDatos(false);
+            }
          }
       };
 
-      cargarDatos();
-   }, []);
-
-   // Cargar los datos del grado seleccionado.
-   const seleccionarGrado = (grado) => {
-      setGradoSeleccionado(grado);
-      clearErrors();
-
-      if (!grado) {
-         reset({
-            nombre: '',
-            nivelEducativo: { idnivel: '' }
-         });
-         return;
-      }
-
-      reset({
-         nombre: grado.nombre ?? '',
-         nivelEducativo: {
-            idnivel: Number(
-               grado.nivelEducativo?.idnivel ??
-               grado.nivelEducativo?.idNivel ??
-               ''
-            )
-         }
-      });
-   };
-
-   // Guardar actualización.
-   const guardarCambios = async (datos) => {
-      if (!gradoSeleccionado) {
-         toast.current?.show({
-            severity: 'warn',
-            summary: 'Atención',
-            detail: 'Selecciona un grado para actualizar.',
-            life: 3000
-         });
-         return;
-      }
-
-      setCargando(true);
-
-      try {
-         await actualizarGrado(gradoSeleccionado.idGrado, datos);
-
-         toast.current?.show({
-            severity: 'success',
-            summary: 'Actualización exitosa',
-            detail: 'El grado se actualizó correctamente.',
-            life: 3000
-         });
-
-         // Refrescar el listado y conservar el grado actualizado.
-         const datosGrados = await getGrados();
-
-         const gradosActualizados = datosGrados.map((grado) => ({
-            ...grado,
-            idGrado: grado.idGrado ?? grado.id,
-            nombre: grado.nombre ?? grado.nombreGrado
-         }));
-
-         setGrados(gradosActualizados);
-
-         const actualizado = gradosActualizados.find(
-            (grado) =>
-               String(grado.idGrado) === String(gradoSeleccionado.idGrado)
-         );
-
-         if (actualizado) {
-            seleccionarGrado(actualizado);
-         }
-      } catch (error) {
+      if (idGrado !== null && idGrado !== undefined) {
+         cargarDatos();
+      } else {
          setError('root', {
             type: 'manual',
-            message: error.message || 'No se pudo actualizar el grado.'
+            message: 'No se recibió el ID del grado.'
+         });
+         setCargandoDatos(false);
+      }
+
+      return () => {
+         activo = false;
+      };
+   }, [idGrado, reset, setError, clearErrors]);
+
+   // Guardar los cambios.
+   const guardarCambios = async (datos) => {
+      clearErrors();
+
+      const gradoInfo = {
+         nombre: datos.nombre.trim(),
+         nivelEducativo: {
+            idnivel: Number(datos.nivelEducativo.idnivel)
+         }
+      };
+
+      setGuardando(true);
+
+      try {
+         // Actualizar el grado existente en el backend.
+         await actualizarGrado(idGrado, gradoInfo);
+
+         // Avisar al componente padre para actualizar la tabla
+         // y cerrar el modal.
+         if (onGradoUpdate) {
+            await onGradoUpdate();
+         }
+      } catch (error) {
+         console.error(
+            'Error al actualizar el grado:',
+            error
+         );
+
+         const mensaje =
+            error.message ||
+            'No se pudo actualizar el grado.';
+
+         setError('root', {
+            type: 'manual',
+            message: mensaje
          });
 
          toast.current?.show({
             severity: 'error',
             summary: 'No se pudo actualizar',
-            detail: error.message || 'Ocurrió un error inesperado.',
+            detail: mensaje,
             life: 4000
          });
       } finally {
-         setCargando(false);
+         setGuardando(false);
+      }
+   };
+
+   // Restaurar los datos actuales consultados desde el servidor.
+   const limpiarCambios = async () => {
+      clearErrors();
+
+      try {
+         const grados = await getGrados();
+
+         const grado = grados.find(
+            (item) =>
+               String(item.idGrado ?? item.id) === String(idGrado)
+         );
+
+         if (grado) {
+            const idNivel =
+               grado.nivelEducativo?.idnivel ??
+               grado.nivelEducativo?.idNivel ??
+               grado.idnivel ??
+               grado.idNivel;
+
+            reset({
+               nombre: grado.nombre ?? grado.nombreGrado ?? '',
+               nivelEducativo: {
+                  idnivel:
+                     idNivel == null || idNivel === ''
+                        ? null
+                        : Number(idNivel)
+               }
+            });
+         }
+      } catch (error) {
+         toast.current?.show({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron restaurar los datos originales.',
+            life: 4000
+         });
       }
    };
 
@@ -161,35 +237,21 @@ const  Updategrado = () => {
          <Toast ref={toast} />
 
          <h2>Actualizar grado académico</h2>
-         <p>Selecciona un grado y modifica su nombre o nivel educativo.</p>
 
-         <form onSubmit={handleSubmit(guardarCambios)}>
-            {/* Seleccionar el grado que se actualizará */}
-            <div className="field mb-4">
-               <label htmlFor="gradoSeleccionado" className="block mb-2">
-                  Grado registrado
-               </label>
+         <p>
+            Modifica el nombre o el nivel educativo del grado
+            seleccionado.
+         </p>
 
-               <Dropdown
-                  inputId="gradoSeleccionado"
-                  value={gradoSeleccionado?.idGrado ?? null}
-                  options={grados}
-                  optionLabel="nombre"
-                  optionValue="idGrado"
-                  onChange={(e) => {
-                     const grado = grados.find(
-                        (item) => String(item.idGrado) === String(e.value)
-                     );
+         {cargandoDatos && (
+            <Message
+               severity="info"
+               text="Cargando los datos del grado..."
+               className="mb-3"
+            />
+         )}
 
-                     seleccionarGrado(grado ?? null);
-                  }}
-                  placeholder="Selecciona un grado"
-                  className="w-full"
-                  filter
-                  showClear
-               />
-            </div>
-
+         <form onSubmit={handleSubmit(guardarCambios)} noValidate>
             {/* Nombre del grado */}
             <div className="field mb-4">
                <label htmlFor="nombre" className="block mb-2">
@@ -201,6 +263,7 @@ const  Updategrado = () => {
                   control={control}
                   rules={{
                      required: 'El nombre del grado es obligatorio.',
+
                      validate: (valor) => {
                         const nombre = valor?.trim() ?? '';
 
@@ -218,16 +281,19 @@ const  Updategrado = () => {
                   render={({ field }) => (
                      <InputText
                         id="nombre"
-                        {...field}
+                        name={field.name}
+                        ref={field.ref}
                         value={field.value ?? ''}
+                        onBlur={field.onBlur}
                         onChange={(e) => {
                            field.onChange(e.target.value);
-                           clearErrors(['nombre', 'root']);
+                           clearErrors('root');
                         }}
                         maxLength={50}
-                        placeholder="Ej. Primer Grado"
-                        className={`w-full ${errors.nombre ? 'p-invalid' : ''}`}
-                        disabled={!gradoSeleccionado || cargando}
+                        placeholder="Ej. 1er año"
+                        className={`w-full ${errors.nombre ? 'p-invalid' : ''
+                           }`}
+                        disabled={cargandoDatos || guardando}
                      />
                   )}
                />
@@ -241,7 +307,10 @@ const  Updategrado = () => {
 
             {/* Nivel educativo */}
             <div className="field mb-4">
-               <label htmlFor="nivelEducativo" className="block mb-2">
+               <label
+                  htmlFor="nivelEducativo"
+                  className="block mb-2"
+               >
                   Nivel educativo *
                </label>
 
@@ -249,23 +318,39 @@ const  Updategrado = () => {
                   name="nivelEducativo.idnivel"
                   control={control}
                   rules={{
-                     required: 'Debes seleccionar un nivel educativo.'
+                     validate: (valor) =>
+                        valor !== null &&
+                           valor !== undefined &&
+                           valor !== '' &&
+                           Number.isInteger(Number(valor)) &&
+                           Number(valor) > 0
+                           ? true
+                           : 'Debes seleccionar un nivel educativo válido.'
                   }}
                   render={({ field }) => (
                      <Dropdown
                         inputId="nivelEducativo"
-                        value={field.value === '' ? null : Number(field.value)}
+                        name={field.name}
+                        value={
+                           field.value == null ||
+                              field.value === ''
+                              ? null
+                              : Number(field.value)
+                        }
+                        onBlur={field.onBlur}
+                        onChange={(e) => {
+                           field.onChange(e.value);
+                           clearErrors('root');
+                        }}
                         options={niveles}
                         optionLabel="label"
                         optionValue="value"
-                        onChange={(e) => {
-                           field.onChange(e.value);
-                           clearErrors(['nivelEducativo', 'root']);
-                        }}
-                        placeholder="Selecciona Primaria o Secundaria"
-                        className={`w-full ${errors.nivelEducativo?.idnivel ? 'p-invalid' : ''
+                        placeholder="Selecciona un nivel educativo"
+                        className={`w-full ${errors.nivelEducativo?.idnivel
+                              ? 'p-invalid'
+                              : ''
                            }`}
-                        disabled={!gradoSeleccionado || cargando}
+                        disabled={cargandoDatos || guardando}
                      />
                   )}
                />
@@ -277,6 +362,7 @@ const  Updategrado = () => {
                )}
             </div>
 
+            {/* Error general */}
             {errors.root && (
                <Message
                   severity="error"
@@ -285,23 +371,28 @@ const  Updategrado = () => {
                />
             )}
 
-            <div className="flex gap-2">
+            {/* Acciones */}
+            <div className="flex flex-wrap gap-2">
                <Button
                   type="submit"
-                  label="Guardar cambios"
+                  label={
+                     guardando
+                        ? 'Guardando cambios...'
+                        : 'Guardar cambios'
+                  }
                   icon="pi pi-save"
-                  loading={cargando}
-                  disabled={!gradoSeleccionado || cargando}
+                  loading={guardando}
+                  disabled={cargandoDatos || guardando}
                />
 
                <Button
                   type="button"
-                  label="Limpiar"
+                  label="Restablecer"
                   icon="pi pi-refresh"
                   severity="secondary"
                   outlined
-                  disabled={cargando}
-                  onClick={() => seleccionarGrado(null)}
+                  disabled={cargandoDatos || guardando}
+                  onClick={limpiarCambios}
                />
             </div>
          </form>
@@ -309,4 +400,4 @@ const  Updategrado = () => {
    );
 };
 
-export default  Updategrado;
+export default EditarGrado;
