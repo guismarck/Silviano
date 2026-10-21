@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 import { DataTable } from 'primereact/datatable';
@@ -5,24 +6,21 @@ import { Column } from 'primereact/column';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { Toast } from 'primereact/toast';
 import { Fieldset } from 'primereact/fieldset';
 import { InputText } from 'primereact/inputtext';
 
-
-import { getGrados, getNivelEducativo, buscarGrados, obtenerNivelesParaBusqueda } from '../../../Servicios/GradoServicios/gradoService';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { getGrados, getNivelEducativo, buscarGrados, obtenerNivelesParaBusqueda,eliminarGradoPorId } from '../../../Servicios/GradoServicios/gradoService';
 import Addgrado from '../../../Servicios/GradoServicios/AgregarGrados';
 import Updategrado from '../../../Servicios/GradoServicios/EditarGrado';
 import VerGrado from '../../../Servicios/GradoServicios/VerGrados';
 import EliminarGrado from '../../../Servicios/GradoServicios/eliminarGrados';
 
 
-export default function ListarGrados() {
-    /**
-     * declaaracion de variables
-     */
+export default function Grados() {
     const toast = useRef(null);
+
     const [grados, setGrados] = useState([]);
     const [niveles, setNiveles] = useState([]);
 
@@ -37,56 +35,40 @@ export default function ListarGrados() {
     const [buscando, setBuscando] = useState(false);
 
     const [loading, setLoading] = useState(false);
+
     const [selectedGradoId, setSelectedGradoId] = useState(null);
 
+    // Cargar la tabla de grados.
     const cargarGrados = useCallback(async () => {
         setLoading(true);
+
         try {
             const data = await getGrados();
-            setGrados(Array.isArray(data) ? data : []);
+
+            setGrados(
+                data.map((grado) => ({
+                    ...grado,
+                    idGrado: grado.idGrado ?? grado.id,
+                    nombre: grado.nombre ?? grado.nombreGrado
+                }))
+            );
         } catch (error) {
+            console.error('Error al cargar los grados:', error);
+
             toast.current?.show({
                 severity: 'error',
-                summary: 'Error de Red',
+                summary: 'Error',
                 detail: 'No se pudo cargar la lista de grados.',
                 life: 4000
             });
         } finally {
             setLoading(false);
         }
-
-
-        const data = await getGrados();
-        console.log("Grados recibidos:", data);
-        setGrados(Array.isArray(data) ? data : []);
-
     }, []);
 
-    const cargarNivel = useCallback(async () => {
-        setLoading(true);
-        try {
-            const data = await getNivelEducativo();
-            setNiveles(Array.isArray(data) ? data : []);
-            console.log(data)
-        } catch (error) {
-            toast.current?.show({
-                severity: 'error',
-                summary: 'Error de Red',
-                detail: 'No se pudo cargar Niveles.',
-                life: 4000
-            });
-            console.log(error)
-        } finally {
-            setLoading(false);
-        }
-        const data = await getGrados();
-        console.log("Grados recibidos:", data);
-        setGrados(Array.isArray(data) ? data : []);
-    }, []);
-
-    const nivelBodyTemplate = (rowData) => {
-        return rowData.nivelEducativo.nombre;
-    };
+    // const nivelBodyTemplate = (rowData) => {
+    //     return rowData.nivelEducativo.nombre;
+    // };
 
 
 
@@ -174,7 +156,8 @@ export default function ListarGrados() {
 
 
 
-    const actionsBodyTemplate = (rowData) => {
+    // Mostrar el nombre del nivel educativo.
+    const nivelBodyTemplate = (rowData) => {
         return (
             <div className="flex gap-2 justify-content-center">
                 <Button
@@ -214,6 +197,42 @@ export default function ListarGrados() {
             </div>
         );
     };
+
+    const confirmarEliminar = (grado) => {
+        confirmDialog({
+            message: `¿Desea eliminar el grado "${grado.nombre}"?`,
+            header: 'Confirmar eliminación',
+            icon: 'pi pi-exclamation-triangle',
+            acceptClassName: 'p-button-danger',
+            acceptLabel: 'Sí, eliminar',
+            rejectLabel: 'Cancelar',
+            accept: () => eliminarGradoPorId(grado.idGrado)
+        });
+    };
+
+    const actionsBodyTemplate = (rowData) => (
+        <div className="flex gap-2 justify-content-center">
+            <Button
+                icon="pi pi-pencil"
+                severity="warning"
+                rounded
+                outlined
+                tooltipOptions={{ position: 'top' }}
+                onClick={() => {
+                    setSelectedGradoId(rowData.idGrado);
+                    setShowEditMode(true);
+                }}
+            />
+            <Button
+                icon="pi pi-trash"
+                severity="danger"
+                rounded
+                outlined
+                tooltipOptions={{ position: 'top' }}
+                onClick={() => confirmarEliminar(rowData)}
+            />
+        </div>
+    );
 
     return (
         <div className="p-3 md:p-4">
@@ -262,20 +281,17 @@ export default function ListarGrados() {
                     <Column header="Accion" body={actionsBodyTemplate} ></Column>
                 </DataTable>
 
-
-                {/* Sección de acciones inferior dentro del Fieldset */}
                 <Fieldset legend="Acciones" className="mt-4">
                     <div className="flex flex-wrap gap-3 align-items-center">
                         <Button
+                            type="button"
                             label="Nuevo Grado"
                             icon="pi pi-plus"
                             severity="primary"
                             onClick={() => setShowAddMode(true)}
                         />
-
                     </div>
                 </Fieldset>
-
             </Card>
             <Dialog
                 header="Consultar grado académico"
@@ -302,11 +318,18 @@ export default function ListarGrados() {
                 header="Registrar Nuevo Grado"
                 visible={showAddMode}
                 style={{ width: '90vw', maxWidth: '850px' }}
+                breakpoints={{
+                    '768px': '95vw',
+                    '480px': '100vw'
+                }}
+                modal
+                draggable={false}
+                resizable={false}
                 onHide={() => setShowAddMode(false)}
             >
                 <Addgrado
                     cargarGrado={cargarGrados}
-                    setGradoAdd={() => setShowAddMode(true)}
+                    setGradoAdd={() => setShowAddMode(false)}
                 />
             </Dialog>
 
@@ -372,7 +395,6 @@ export default function ListarGrados() {
 
 
         </div>
-
     );
 }
 
