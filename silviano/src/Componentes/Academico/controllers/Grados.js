@@ -5,6 +5,7 @@ import { Column } from 'primereact/column';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { Toast } from 'primereact/toast';
 import { Fieldset } from 'primereact/fieldset';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
@@ -44,7 +45,6 @@ export default function ListarGrados() {
 
     const cargarGrados = useCallback(async () => {
         setLoading(true);
-
         try {
             const data = await getGrados();
 
@@ -142,7 +142,6 @@ export default function ListarGrados() {
                 <Fieldset legend="Acciones" className="mt-4">
                     <div className="flex flex-wrap gap-3 align-items-center">
                         <Button
-                            type="button"
                             label="Nuevo Grado"
                             icon="pi pi-plus"
                             severity="primary"
@@ -157,13 +156,6 @@ export default function ListarGrados() {
                 header="Registrar Nuevo Grado"
                 visible={showAddMode}
                 style={{ width: '90vw', maxWidth: '850px' }}
-                breakpoints={{
-                    '768px': '95vw',
-                    '480px': '100vw'
-                }}
-                modal
-                draggable={false}
-                resizable={false}
                 onHide={() => setShowAddMode(false)}
             >
                 <Addgrado
