@@ -136,7 +136,7 @@ function AddEstudiante(props) {
                         <p>
                             <span>Sexo : </span>
                             <Dropdown value={estudianteInfo.sexo}
-                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.target.value })}
+                                onChange={(e) => setEstudianteInfo({ ...estudianteInfo, sexo: e.value })}
                                 options={options} optionLabel="label"
                                 className="w-full md:w-14rem" placeholder="" />
 
@@ -162,7 +162,7 @@ function AddEstudiante(props) {
                     <div className='col-sm-12 col-md-6'>
                         <span>Fecha de Nacimiento : </span>
                         <Calendar className='control-form' value={estudianteInfo.fecha_nacimiento}
-                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, fecha_nacimiento: e.target.value })} />
+                            onChange={(e) => setEstudianteInfo({ ...estudianteInfo, fecha_nacimiento: e.value })} />
                     </div>
 
                     <div className='col-sm-12 col-md-6'>
@@ -215,7 +215,7 @@ function AddEstudiante(props) {
                 <div className='col-sm-12 col-md-6'>
                     <span>Estado  : </span>
                     <InputSwitch checked={estudianteInfo.estado}
-                        onChange={e => setEstudianteInfo({ ...estudianteInfo, estado: e.target.value })} />
+                        onChange={e => setEstudianteInfo({ ...estudianteInfo, estado: e.value })} />
 
                 </div>
             </div>
