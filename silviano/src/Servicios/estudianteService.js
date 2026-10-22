@@ -2,19 +2,102 @@ import api from '../Servicios/api/api';
 import { ValidarEstudiante } from '../Util/validaciones/validacionEstudiante.js';
 
 
+
 export const ServicioValidado = async (estudianteData) => {
-    // Invoca el helper independiente de validación
     const validacion = ValidarEstudiante(estudianteData);
 
     if (!validacion.esValido) {
-        // Lanza un error estructurado si no pasa las validaciones de cliente
         throw new Error(validacion.error);
     }
 
-    // Envía el payload previamente sanitizado a la API REST de Spring Boot
-    const respuesta = await api.post('/estudiante-app/estudiantes/create', validacion.payloadFormateado);
-    return respuesta.data;
+    const payload = validacion.payloadFormateado;
+
+    console.log(
+        'Datos originales del estudiante:',
+        estudianteData
+    );
+
+    console.log(
+        'JSON validado que se enviará al backend:',
+        JSON.stringify(payload, null, 2)
+    );
+
+    try {
+        const respuesta = await api.post(
+            '/estudiante-app/estudiantes/create',
+            payload
+        );
+
+        console.log(
+            'Respuesta del registro de estudiante:',
+            respuesta.data
+        );
+
+        return respuesta.data;
+
+    } catch (error) {
+        console.error(
+            'Error HTTP al registrar estudiante:',
+            error.response?.status
+        );
+
+        console.error(
+            'Respuesta del backend:',
+            error.response?.data
+        );
+
+        throw error;
+    }
 };
+
+
+
+export const registrarEstudianteConTutor = async (payload) => {
+    try {
+        // Comprobar que el JSON tenga la estructura esperada.
+        if (!payload?.estudiante || !Array.isArray(payload?.tutores)) {
+            throw new Error(
+                'El registro debe contener estudiante y una lista de tutores.'
+            );
+        }
+
+        console.log(
+            'JSON completo enviado al backend:',
+            JSON.stringify(payload, null, 2)
+        );
+
+        const respuesta = await api.post(
+            '/estudiante-app/estudiantes/create',
+            payload
+        );
+
+        console.log(
+            'Respuesta del registro completo:',
+            respuesta.data
+        );
+
+        return respuesta.data;
+
+    } catch (error) {
+        console.error(
+            'Estado HTTP:',
+            error.response?.status
+        );
+
+        console.error(
+            'Respuesta del backend:',
+            error.response?.data
+        );
+
+        console.error(
+            'Mensaje:',
+            error.message
+        );
+
+        throw error;
+    }
+};
+
 
 /**
  * Valida los datos e invoca el endpoint POST para registrar un nuevo estudiante.

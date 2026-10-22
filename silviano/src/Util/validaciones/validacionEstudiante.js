@@ -41,7 +41,6 @@ export const ValidarEstudiante= (estudianteInfo) => {
         partida_nacimiento,
         codEstudiante,
         codigoMined,
-        nombre_tutor,
         estado,
         sexo
 
@@ -56,9 +55,9 @@ export const ValidarEstudiante= (estudianteInfo) => {
     const errorApellido = validarSoloTexto(apellido_completo, "Apellidos");
     if (errorApellido) return { esValido: false, error: errorApellido };
 
-    // 3. Validar Nombre del Tutor (Solo letras, no vacío, sin números)
-    const errorTutor = validarSoloTexto(nombre_tutor, "Nombre del Tutor");
-    if (errorTutor) return { esValido: false, error: errorTutor };
+    //* 3. Validar Nombre del Tutor (Solo letras, no vacío, sin números)
+    /*const errorTutor = validarSoloTexto(nombre_tutor, "Nombre del Tutor");
+    if (errorTutor) return { esValido: false, error: errorTutor }; */
 
     // 4. Validar Código de Estudiante
     if (!codEstudiante || !codEstudiante.trim()) {
@@ -86,7 +85,7 @@ export const ValidarEstudiante= (estudianteInfo) => {
     const payloadFormateado = {
         nombre_completo: nombre_completo.trim(),
         apellido_completo: apellido_completo.trim(),
-        nombre_tutor: nombre_tutor.trim(),
+        //nombre_tutor: nombre_tutor.trim(),
         codEstudiante: codEstudiante.trim(),
         sexo: valorSexo,
         fecha_nacimiento: fechaFormateada,
