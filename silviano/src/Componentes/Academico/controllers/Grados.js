@@ -1,16 +1,15 @@
-
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { Toast } from 'primereact/toast';
 import { Fieldset } from 'primereact/fieldset';
 import { InputText } from 'primereact/inputtext';
 
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { getGrados, getNivelEducativo, buscarGrados, obtenerNivelesParaBusqueda,eliminarGradoPorId } from '../../../Servicios/GradoServicios/gradoService';
 import Addgrado from '../../../Servicios/GradoServicios/AgregarGrados';
 import Updategrado from '../../../Servicios/GradoServicios/EditarGrado';
@@ -18,7 +17,7 @@ import VerGrado from '../../../Servicios/GradoServicios/VerGrados';
 import EliminarGrado from '../../../Servicios/GradoServicios/eliminarGrados';
 
 
-export default function Grados() {
+export default function ListarGrados() {
     const toast = useRef(null);
 
     const [grados, setGrados] = useState([]);
@@ -38,10 +37,24 @@ export default function Grados() {
 
     const [selectedGradoId, setSelectedGradoId] = useState(null);
 
-    // Cargar la tabla de grados.
+    // Filtro por nombre del grado y nombre del nivel educativo.
+    // Cada palabra escrita debe aparecer en alguno de los dos ("primaria 4to").
+    const gradosFiltrados = useMemo(() => {
+        const terminos = normalizarNombre(busqueda).split(/\s+/).filter(Boolean);
+        if (terminos.length === 0) return grados;
+
+        return grados.filter((g) => {
+            const texto = normalizarNombre(`${g.nombre ?? ''} ${g.nivelEducativo?.nombre ?? ''}`);
+            return terminos.every((t) => texto.includes(t));
+        });
+    }, [grados, busqueda]);
+
+    const mostrarToast = useCallback((severity, summary, detail) => {
+        toast.current?.show({ severity, summary, detail, life: 4000 });
+    }, []);
+
     const cargarGrados = useCallback(async () => {
         setLoading(true);
-
         try {
             const data = await getGrados();
 
@@ -62,7 +75,7 @@ export default function Grados() {
                 life: 4000
             });
         } finally {
-            setLoading(false);
+            setBuscando(false);
         }
     }, []);
 
@@ -284,7 +297,6 @@ export default function Grados() {
                 <Fieldset legend="Acciones" className="mt-4">
                     <div className="flex flex-wrap gap-3 align-items-center">
                         <Button
-                            type="button"
                             label="Nuevo Grado"
                             icon="pi pi-plus"
                             severity="primary"
@@ -318,18 +330,13 @@ export default function Grados() {
                 header="Registrar Nuevo Grado"
                 visible={showAddMode}
                 style={{ width: '90vw', maxWidth: '850px' }}
-                breakpoints={{
-                    '768px': '95vw',
-                    '480px': '100vw'
-                }}
-                modal
-                draggable={false}
-                resizable={false}
                 onHide={() => setShowAddMode(false)}
             >
                 <Addgrado
                     cargarGrado={cargarGrados}
-                    setGradoAdd={() => setShowAddMode(false)}
+                    // Antes siempre ponía true y el modal no se cerraba al guardar.
+                    // Revisa en AgregarGrados.js con qué valor llama a setGradoAdd.
+                    setGradoAdd={(visible) => setShowAddMode(Boolean(visible))}
                 />
             </Dialog>
 
