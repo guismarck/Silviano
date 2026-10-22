@@ -6,7 +6,6 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
-import { InputSwitch } from 'primereact/inputswitch';
 import { Toast } from 'primereact/toast';
 import { Message } from 'primereact/message';
 
@@ -391,14 +390,7 @@ function AddDocente(props) {
                 <Seccion icono="pi-briefcase" titulo="Información del docente">
                     <div className="formgrid grid">
 
-                        <Campo id="idpersona" label="ID del sistema">
-                            <InputText
-                                id="idpersona"
-                                placeholder="Autogenerado"
-                                className="w-full"
-                                disabled
-                            />
-                        </Campo>
+                       
 
                         <Campo
                             id="codDocente"
@@ -417,20 +409,7 @@ function AddDocente(props) {
                             />
                         </Campo>
 
-                        <Campo id="estado" label="Estado del docente">
-                            <div className="flex align-items-center gap-3 pt-2">
-                                <InputSwitch
-                                    inputId="estado"
-                                    checked={Boolean(docenteInfo.estado)}
-                                    onChange={(e) => handleChange('estado', e.value)}
-                                    disabled={loading}
-                                />
-
-                                <span className="font-medium text-600">
-                                    {docenteInfo.estado ? 'Docente activo' : 'Docente inactivo'}
-                                </span>
-                            </div>
-                        </Campo>
+                       
 
                     </div>
                 </Seccion>

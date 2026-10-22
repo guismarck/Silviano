@@ -7,9 +7,9 @@ import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Fieldset } from 'primereact/fieldset';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { ConfirmDialog} from 'primereact/confirmdialog';
 
-import { getEstudiantes, deleteEstudiante, exportarNominaEstudiantesPDF } from '../../../Servicios/estudianteService';
+import { getEstudiantes } from '../../../Servicios/estudianteService';
 import VerEstudiante from '../../../Servicios/EstudiantesServicios/VerEstudiantes';
 //import AddEstudiante from '../../../Servicios/EstudiantesServicios/AgregarEstudiantes';
 import UpdateEstudiante from '../../../Servicios/EstudiantesServicios/EditarEstudiantes';
@@ -28,7 +28,7 @@ export default function Estudiantes() {
   const [first, setFirst] = useState(0);
 
   const [loading, setLoading] = useState(false);
-  const [downloadingReport, setDownloadingReport] = useState(false);
+  //const [downloadingReport, setDownloadingReport] = useState(false);
 
   const [showViewMode, setShowViewMode] = useState(false);
   const [showAddMode, setShowAddMode] = useState(false);
@@ -56,7 +56,7 @@ export default function Estudiantes() {
     cargarEstudiantes();
   }, [cargarEstudiantes]);
 
-  const handleConfirmDelete = (idPersona) => {
+  /*const handleConfirmDelete = (idPersona) => {
     confirmDialog({
       message: '¿Está seguro de eliminar este expediente de estudiante?',
       header: 'Confirmar Eliminación',
@@ -84,9 +84,9 @@ export default function Estudiantes() {
         }
       }
     });
-  };
+  };*/
 
-  const handleDescargarReporte = async () => {
+  /*const handleDescargarReporte = async () => {
     setDownloadingReport(true);
     try {
       await exportarNominaEstudiantesPDF();
@@ -106,7 +106,7 @@ export default function Estudiantes() {
     } finally {
       setDownloadingReport(false);
     }
-  };
+  };*/
 
   const statusBodyTemplate = (rowData) => {
     const isActivo = Boolean(rowData.estado);
@@ -145,7 +145,7 @@ export default function Estudiantes() {
             setShowEditMode(true);
           }}
         />
-        <Button
+        {/* <Button
           icon="pi pi-trash"
           severity="danger"
           rounded
@@ -153,7 +153,8 @@ export default function Estudiantes() {
           //tooltip="Eliminar"
           tooltipOptions={{ position: 'top' }}
           onClick={() => handleConfirmDelete(rowData.idpersona)}
-        />
+        /> */}
+       
       </div>
     );
   };
@@ -211,14 +212,7 @@ export default function Estudiantes() {
               severity="primary"
               onClick={() => setShowAddMode(true)}
             />
-            <Button
-              label="Reporte MINED"
-              icon="pi pi-file-pdf"
-              severity="help"
-              outlined
-              loading={downloadingReport}
-              onClick={handleDescargarReporte}
-            />
+            
           </div>
         </Fieldset>
       </Card>

@@ -588,7 +588,7 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate, onCancel }) => {
                 />
 
                 <span className="font-medium text-600">
-                  {formValues.estado ? 'Matrícula activa' : 'Matrícula inactiva'}
+                  {formValues.estado ? 'Estado activa' : 'Estado inactiva'}
                 </span>
               </div>
             </Campo>
