@@ -206,3 +206,41 @@ export const actualizarGrado = async (id, gradoInfo) => {
         );
     }
 };
+
+
+/**
+ * Elimina un grado por su identificador.
+ *
+ * Endpoint esperado:
+ * DELETE /estudiante-app/grados/{id}
+ */
+export const eliminarGrado = async (id) => {
+    const errorId = validarIdGrado(id);
+
+    if (errorId !== true) {
+        throw new Error(
+            typeof errorId === 'string'
+                ? errorId
+                : 'El identificador del grado no es válido.'
+        );
+    }
+
+    try {
+        const response = await api.delete(
+            `/estudiante-app/grados/${id}`
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error(
+            'Error al eliminar el grado:',
+            error.response?.data || error.message
+        );
+
+        throw new Error(
+            error.response?.data?.mensaje ||
+            error.response?.data?.message ||
+            'No se pudo eliminar el grado. Comprueba si tiene registros asociados.'
+        );
+    }
+};

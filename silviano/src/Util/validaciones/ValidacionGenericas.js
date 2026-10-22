@@ -4,7 +4,7 @@ import api from '../../Servicios/api/api.js';
 
 // Regex para cédula nicaragüense con o sin guiones: 401-010497-0002C o 4010104970002C
 const REGEX_CEDULA_NICARAGUA = /^(\d{3})-?(\d{2})(\d{2})(\d{2})-?(\d{4})([A-Za-zA-Z])$/;
-const SOLO_LETRAS_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑäëïöüÄËÏÖÜ\s]+$/;
+//const SOLO_LETRAS_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑäëïöüÄËÏÖÜ\s]+$/;
 
 /**
  * Normaliza y valida una cédula nicaragüense, extrayendo la fecha de nacimiento.
@@ -148,7 +148,7 @@ export const validarGrado = (datos) => {
  * Normaliza el nombre para comparar grados.
  * Ignora mayúsculas, minúsculas, tildes y espacios externos.
  */
-const normalizarNombre = (nombre) => {
+export const normalizarNombre = (nombre) => {
   return String(nombre ?? '')
     .trim()
     .normalize('NFD')
