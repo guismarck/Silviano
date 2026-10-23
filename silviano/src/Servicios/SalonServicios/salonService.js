@@ -31,6 +31,13 @@ export const ServicioValidado = async (salonInfo) => {
 };
 
 
+ /**
+  * Actualiza salon en la base de datos centralizada.
+  */
+ export const updateSalones = async (id, payload) => {
+   const response = await api.put(`/estudiante-app/salones/${id}`, payload);
+   return response.data;
+ };
 
 
 
