@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 import { DataTable } from 'primereact/datatable';
@@ -17,13 +16,17 @@ import {
 } from '../../../Servicios/SalonServicios/salonService';
 
 import Addsalon from './AgregarSalon.js';
+import EditarSalon from './EditarCatalogoSalon.js';
 
 export default function ListarCatalogoSalon() {
     const toast = useRef(null);
 
     const [salones, setSalones] = useState([]);
     const [loading, setLoading] = useState(false);
+
     const [showAddMode, setShowAddMode] = useState(false);
+    const [showEditMode, setShowEditMode] = useState(false);
+    const [selectedSalonId, setSelectedSalonId] = useState(null);
 
     // Cargar salones y relacionarlos con sus nombres
     const cargarSalones = useCallback(async () => {
@@ -155,6 +158,12 @@ export default function ListarCatalogoSalon() {
         });
     };
 
+    // Cierra el modal de edición y limpia el salón seleccionado.
+    const cerrarEdicion = () => {
+        setShowEditMode(false);
+        setSelectedSalonId(null);
+    };
+
     // Botones de acciones
     const actionsBodyTemplate = (rowData) => (
         <div className="flex gap-2 justify-content-center">
@@ -172,6 +181,19 @@ export default function ListarCatalogoSalon() {
                         detail: `Grado: ${rowData.nombreGrado} | Salón: ${rowData.nombreCatalogo}`,
                         life: 4000
                     });
+                }}
+            />
+
+            <Button
+                icon="pi pi-pencil"
+                severity="warning"
+                rounded
+                outlined
+                tooltip="Editar salón"
+                tooltipOptions={{ position: 'top' }}
+                onClick={() => {
+                    setSelectedSalonId(rowData.idSalon);
+                    setShowEditMode(true);
                 }}
             />
 
@@ -259,15 +281,15 @@ export default function ListarCatalogoSalon() {
                         body={actionsBodyTemplate}
                         exportable={false}
                         style={{
-                            minWidth: '8rem',
+                            minWidth: '11rem',
                             textAlign: 'center'
                         }}
                     />
                 </DataTable>
             </Card>
 
+            {/* Modal Agregar Salón */}
             <Dialog
-                header="Registrar nuevo salón"
                 visible={showAddMode}
                 style={{ width: '90vw', maxWidth: '850px' }}
                 modal
@@ -279,6 +301,32 @@ export default function ListarCatalogoSalon() {
                     cargarSalon={cargarSalones}
                     setEstudiantedoAdd={() => setShowAddMode(false)}
                 />
+            </Dialog>
+
+            {/* Modal Editar Salón */}
+            <Dialog
+                visible={showEditMode}
+                style={{ width: '90vw', maxWidth: '850px' }}
+                modal
+                onHide={cerrarEdicion}
+            >
+                {selectedSalonId !== null && (
+                    <EditarSalon
+                        idSalon={selectedSalonId}
+                        onCancel={cerrarEdicion}
+                        onSalonUpdate={async () => {
+                            cerrarEdicion();
+                            await cargarSalones();
+
+                            toast.current?.show({
+                                severity: 'success',
+                                summary: 'Salón actualizado',
+                                detail: 'Los cambios se guardaron correctamente.',
+                                life: 3000
+                            });
+                        }}
+                    />
+                )}
             </Dialog>
         </div>
     );

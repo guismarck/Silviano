@@ -197,7 +197,7 @@ export default function Addsalon({
         <div className="p-3">
             <Toast ref={toast} />
 
-            <h2 className="text-xl mb-4">Registrar nuevo salón</h2>
+            <h2 className="text-xl mb-4">Asignar  salón</h2>
 
             {errorMessage && (
                 <Message
