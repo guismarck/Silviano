@@ -1,13 +1,10 @@
+import api from '../../Servicios/api/api.js';
 
 
-/**
- * Utilidad para validación de Cédula Nicaragüense y extracción automática de fecha de nacimiento.
- * Ruta: src/Util/validaciones/validacionEstudiante.js
- */
 
 // Regex para cédula nicaragüense con o sin guiones: 401-010497-0002C o 4010104970002C
 const REGEX_CEDULA_NICARAGUA = /^(\d{3})-?(\d{2})(\d{2})(\d{2})-?(\d{4})([A-Za-zA-Z])$/;
-const SOLO_LETRAS_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑäëïöüÄËÏÖÜ\s]+$/;
+//const SOLO_LETRAS_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑäëïöüÄËÏÖÜ\s]+$/;
 
 /**
  * Normaliza y valida una cédula nicaragüense, extrayendo la fecha de nacimiento.
@@ -70,3 +67,222 @@ export  const extraerFechaNacimientoCedula = (cedula) => {
     };
 };
 
+
+
+/**
+ * Validaciones del módulo de grados académicos.
+ * Compatible con react-hook-form.
+ */
+
+/**
+ * Valida el nombre del grado.
+ * @param {string} nombre
+ * @returns {true|string}
+ */
+export const validarNombreGrado = (nombre) => {
+    if (typeof nombre !== 'string' || !nombre.trim()) {
+        return 'El nombre del grado es obligatorio.';
+    }
+
+    const nombreLimpio = nombre.trim();
+
+    if (nombreLimpio.length < 2) {
+        return 'El nombre debe tener al menos 2 caracteres.';
+    }
+
+    if (nombreLimpio.length > 50) {
+        return 'El nombre no puede superar los 50 caracteres.';
+    }
+
+    return true;
+};
+
+/**
+ * Valida que se seleccione un nivel educativo.
+ * @param {string|number|null} idnivel
+ * @returns {true|string}
+ */
+export const validarNivelEducativo = (idnivel) => {
+    if (
+        idnivel === '' ||
+        idnivel === null ||
+        idnivel === undefined
+    ) {
+        return 'Debe seleccionar un nivel educativo.';
+    }
+
+    return true;
+};
+
+/**
+ * Valida el formulario completo de grado.
+ * @param {object} datos
+ * @returns {{valido: boolean, errores: object}}
+ */
+export const validarGrado = (datos) => {
+    const errores = {};
+
+    const resultadoNombre = validarNombreGrado(datos?.nombre);
+
+    const resultadoNivel = validarNivelEducativo(
+        datos?.nivelEducativo?.idnivel
+    );
+
+    if (resultadoNombre !== true) {
+        errores.nombre = resultadoNombre;
+    }
+
+    if (resultadoNivel !== true) {
+        errores.nivelEducativo = resultadoNivel;
+    }
+
+    return {
+        valido: Object.keys(errores).length === 0,
+        errores
+    };
+};
+
+
+//javascript
+/**
+ * Normaliza el nombre para comparar grados.
+ * Ignora mayúsculas, minúsculas, tildes y espacios externos.
+ */
+export const normalizarNombre = (nombre) => {
+  return String(nombre ?? '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+};
+
+/**
+ * Verifica si ya existe un grado con el mismo nombre.
+ *
+ * @param {string} nombre - Nombre del grado que se desea registrar.
+ * @returns {Promise<boolean>} true si existe, false si no existe.
+ */
+export const validarGradoDuplicado = async (nombre) => {
+  if (!nombre || !nombre.trim()) {
+    return false;
+  }
+
+  try {
+    const response = await api.get('/estudiante-app/grados');
+
+    const grados = Array.isArray(response.data)
+      ? response.data
+      : [];
+
+    const nombreBuscado = normalizarNombre(nombre);
+
+    return grados.some((grado) => {
+      const nombreRegistrado = grado.nombre ?? grado.nombreGrado;
+
+      return normalizarNombre(nombreRegistrado) === nombreBuscado;
+    });
+  } catch (error) {
+    console.error(
+      'Error al verificar si el grado ya existe:',
+      error.response?.data || error.message
+    );
+
+    // No permitir continuar si no se pudo comprobar.
+    throw new Error(
+      'No se pudo verificar si el grado ya existe. Intente nuevamente.'
+    );
+  }
+};
+
+/**
+ * Validaciones independientes para actualizar un grado académico.
+ */
+
+/**
+ * Valida el nombre del grado.
+ */
+export const validarNombreActualizacion = (nombre) => {
+  if (typeof nombre !== 'string' || !nombre.trim()) {
+    return 'El nombre del grado es obligatorio.';
+  }
+
+  const nombreLimpio = nombre.trim();
+
+  if (nombreLimpio.length < 2) {
+    return 'El nombre debe tener al menos 2 caracteres.';
+  }
+
+  if (nombreLimpio.length > 50) {
+    return 'El nombre no puede superar los 50 caracteres.';
+  }
+
+  return true;
+};
+
+/**
+ * Valida que se seleccione un nivel educativo.
+ */
+export const validarNivelActualizacion = (idnivel) => {
+  if (
+    idnivel === '' ||
+    idnivel === null ||
+    idnivel === undefined ||
+    !Number.isInteger(Number(idnivel)) ||
+    Number(idnivel) <= 0
+  ) {
+    return 'Debe seleccionar un nivel educativo válido.';
+  }
+
+  return true;
+};
+
+/**
+ * Valida el identificador del grado.
+ */
+export const validarIdGrado = (id) => {
+  if (
+    id === '' ||
+    id === null ||
+    id === undefined ||
+    !Number.isInteger(Number(id)) ||
+    Number(id) <= 0
+  ) {
+    return 'El identificador del grado no es válido.';
+  }
+
+  return true;
+};
+
+/**
+ * Valida todos los datos antes de actualizar.
+ *
+ * Estructura esperada:
+ * {
+ *   nombre: "Primer Grado",
+ *   nivelEducativo: { idnivel: 1 }
+ * }
+ */
+export const validardatosGrados = (datos) => {
+  const errores = {};
+
+  const resultadoNombre = validarNombreActualizacion(
+    datos?.nombre
+  );
+
+  const resultadoNivel = validarNivelActualizacion(
+    datos?.nivelEducativo?.idnivel
+  );
+
+  if (resultadoNombre !== true) {
+    errores.nombre = resultadoNombre;
+  }
+
+  if (resultadoNivel !== true) {
+    errores.nivelEducativo = resultadoNivel;
+  }
+
+  return {
+    valido: Object.keys(errores).length === 0,
+    errores
+  };
+};

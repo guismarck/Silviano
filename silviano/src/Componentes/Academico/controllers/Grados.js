@@ -1,32 +1,46 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Card } from 'primereact/card';
-import { Dialog } from 'primereact/dialog';
-import axios from 'axios';
 import { Button } from 'primereact/button';
-//import Vergrado from '../../../Servicios/GradoServicios/VerGrados';
-//import Addgrado from '../../../Servicios/GradoServicios/AgregarGrados';
-//import Updategrado from '../../../Servicios/GradoServicios/EditarGrado';
-//import settings from '../../settings.json';
-import { getGrados } from '../../../Servicios/GradoServicios/gradoService';
+import { Dialog } from 'primereact/dialog';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { Toast } from 'primereact/toast';
+import { Fieldset } from 'primereact/fieldset';
 
+import { getGrados, eliminarGrado } from '../../../Servicios/GradoServicios/gradoService';
+import Addgrado from '../../../Servicios/GradoServicios/AgregarGrados';
+import Updategrado from '../../../Servicios/GradoServicios/EditarGrado';
+import { normalizarNombre } from '../../../Util/validaciones/ValidacionGenericas.js';
+import BuscadorGrados from '../../../Servicios/GradoServicios/BuscadorGrado';
 
 export default function ListarGrados() {
-    /**
-     * declaaracion de variables
-     */
     const toast = useRef(null);
-    const [grados, setGrados] = useState([]);
-    const [showViewMode, setshowViewMode] = useState(false);
-    const [showAddMode, setshowAddMode,] = useState(false);
-    const [showEditMode, setshowEditMode,] = useState(false);
-    //const [selectGradoID, setSelectGradoID] = useState(null);
 
-    const [docentes, setDocentes] = useState([]);
+    const [grados, setGrados] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [busqueda, setBusqueda] = useState('');
+
+    const [showAddMode, setShowAddMode] = useState(false);
+    const [showEditMode, setShowEditMode] = useState(false);
     const [selectedGradoId, setSelectedGradoId] = useState(null);
+
+    // Filtro por nombre del grado y nombre del nivel educativo.
+    // Cada palabra escrita debe aparecer en alguno de los dos ("primaria 4to").
+    const gradosFiltrados = useMemo(() => {
+        const terminos = normalizarNombre(busqueda).split(/\s+/).filter(Boolean);
+        if (terminos.length === 0) return grados;
+
+        return grados.filter((g) => {
+            const texto = normalizarNombre(`${g.nombre ?? ''} ${g.nivelEducativo?.nombre ?? ''}`);
+            return terminos.every((t) => texto.includes(t));
+        });
+    }, [grados, busqueda]);
+
+    const mostrarToast = useCallback((severity, summary, detail) => {
+        toast.current?.show({ severity, summary, detail, life: 4000 });
+    }, []);
 
     const cargarGrados = useCallback(async () => {
         setLoading(true);
@@ -34,17 +48,12 @@ export default function ListarGrados() {
             const data = await getGrados();
             setGrados(Array.isArray(data) ? data : []);
         } catch (error) {
-            toast.current?.show({
-                severity: 'error',
-                summary: 'Error de Red',
-                detail: 'No se pudo cargar la lista de grados.',
-                life: 4000
-            });
+            console.error('Error al cargar grados:', error);
+            mostrarToast('error', 'Error de red', 'No se pudo cargar la lista de grados.');
         } finally {
             setLoading(false);
         }
-    }, []);
-
+    }, [mostrarToast]);
 
     useEffect(() => {
         cargarGrados();
@@ -91,46 +100,122 @@ export default function ListarGrados() {
         );
     };
 
+    const confirmarEliminar = (grado) => {
+        confirmDialog({
+            message: `¿Desea eliminar el grado "${grado.nombre}"?`,
+            header: 'Confirmar eliminación',
+            icon: 'pi pi-exclamation-triangle',
+            acceptClassName: 'p-button-danger',
+            acceptLabel: 'Sí, eliminar',
+            rejectLabel: 'Cancelar',
+            accept: () => eliminar(grado.idGrado)
+        });
+    };
+
+    // Cierra el modal de edición y limpia el grado seleccionado.
+    const cerrarEdicion = () => {
+        setShowEditMode(false);
+        setSelectedGradoId(null);
+    };
+
+    const nivelBodyTemplate = (rowData) => rowData.nivelEducativo?.nombre ?? '—';
+
+    const actionsBodyTemplate = (rowData) => (
+        <div className="flex gap-2 justify-content-center">
+            <Button
+                icon="pi pi-pencil"
+                severity="warning"
+                rounded
+                outlined
+                tooltipOptions={{ position: 'top' }}
+                onClick={() => {
+                    setSelectedGradoId(rowData.idGrado);
+                    setShowEditMode(true);
+                }}
+            />
+            <Button
+                icon="pi pi-trash"
+                severity="danger"
+                rounded
+                outlined
+                tooltipOptions={{ position: 'top' }}
+                onClick={() => confirmarEliminar(rowData)}
+            />
+        </div>
+    );
+
     return (
-        <div className="card">
+        <div className="p-3 md:p-4">
+            <Toast ref={toast} />
+            <ConfirmDialog />
 
             <Card title="Grados">
+                {/* Barra de búsqueda */}
+                <BuscadorGrados value={busqueda} onChange={setBusqueda} />
+                <small className="block mb-3 text-color-secondary text-center">
+                    {gradosFiltrados.length} de {grados.length} grado(s)
+                </small>
 
-                <div className='addGrado'>
-                    <Button className='btnAgregar'
-                        label="Nuevo Grado" text raised onClick={() => setshowAddMode(true)} />
-                </div>
+                <DataTable
+                    value={gradosFiltrados}
+                    dataKey="idGrado"
+                    loading={loading}
+                    paginator
+                    rows={10}
+                    stripedRows
+                    emptyMessage={busqueda ? 'No se encontraron grados con ese nombre.' : 'No hay grados registrados.'}
+                    tableStyle={{ minWidth: '30rem' }}
+                >
+                    <Column header="Nivel educativo" body={nivelBodyTemplate} style={{ width: '25%' }} />
+                    <Column field="nombre" header="Nombre" style={{ width: '25%' }} />
+                    <Column header="Acción" body={actionsBodyTemplate} />
+                </DataTable>
 
-                <div className='listarGrados' >
-
-                    <DataTable value={grados} stripedRows tableStyle={{ minWidth: '50rem' }}>
-                        <Column field="idGrado" header="ID-Grado" style={{ width: '25%' }}></Column>
-                        <Column field="idnivel" header="Nivel" style={{ width: '25%' }} ></Column>
-                        <Column field="nombre" header="Nombre" style={{ width: '25%' }}></Column>
-                        <Column header="Accion" body={actionsBodyTemplate} ></Column>
-                    </DataTable>
-                </div>
+                <Fieldset legend="Acciones" className="mt-4">
+                    <div className="flex flex-wrap gap-3 align-items-center">
+                        <Button
+                            label="Nuevo Grado"
+                            icon="pi pi-plus"
+                            severity="primary"
+                            onClick={() => setShowAddMode(true)}
+                        />
+                    </div>
+                </Fieldset>
             </Card>
-            <Dialog header="" visible={showViewMode}
-                style={{ width: '50vw' }}
-                onHide={() => setshowViewMode(false)} >
-                {/* <Vergrado idGrado={selectedGradoId} /> */}
+
+            {/* Modal Agregar Grado */}
+            <Dialog
+                header="Registrar Nuevo Grado"
+                visible={showAddMode}
+                style={{ width: '90vw', maxWidth: '850px' }}
+                onHide={() => setShowAddMode(false)}
+            >
+                <Addgrado
+                    cargarGrado={cargarGrados}
+                    // Revisa en AgregarGrados.js con qué valor llama a setGradoAdd:
+                    // aquí se espera true para mostrar el modal y false para cerrarlo.
+                    setGradoAdd={(visible) => setShowAddMode(Boolean(visible))}
+                />
             </Dialog>
-            <Dialog header="" visible={showAddMode}
-                style={{ width: '50vw' }}
-                onHide={() => setshowAddMode(false)} >
 
-
-            </Dialog>
-
-            <Dialog header="" visible={showEditMode}
-                style={{ width: '50vw' }}
-                onHide={() => setshowEditMode(false)} >
-
+            {/* Modal Editar Grado */}
+            <Dialog
+                header="Editar Grado"
+                visible={showEditMode}
+                style={{ width: '90vw', maxWidth: '850px' }}
+                onHide={cerrarEdicion}
+            >
+                {selectedGradoId && (
+                    <Updategrado
+                        idGrado={selectedGradoId}
+                        onGradoUpdate={async () => {
+                            cerrarEdicion();
+                            await cargarGrados();
+                            mostrarToast('success', 'Grado actualizado', 'Los cambios se guardaron correctamente.');
+                        }}
+                    />
+                )}
             </Dialog>
         </div>
-
     );
 }
-
-

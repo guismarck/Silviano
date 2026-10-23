@@ -217,7 +217,6 @@ export default function Docentes() {
                 visible={showAddMode}
                 style={{ width: '90vw', maxWidth: '850px' }}
                 onHide={() => setShowAddMode(false)}
-
             >
                 <AddDocente
                     cargarDocente={cargarDocentes}
