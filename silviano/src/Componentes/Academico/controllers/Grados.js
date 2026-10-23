@@ -334,8 +334,8 @@ export default function ListarGrados() {
             >
                 <Addgrado
                     cargarGrado={cargarGrados}
-                    // Antes siempre ponía true y el modal no se cerraba al guardar.
-                    // Revisa en AgregarGrados.js con qué valor llama a setGradoAdd.
+                    // Revisa en AgregarGrados.js con qué valor llama a setGradoAdd:
+                    // aquí se espera true para mostrar el modal y false para cerrarlo.
                     setGradoAdd={(visible) => setShowAddMode(Boolean(visible))}
                 />
             </Dialog>
@@ -354,11 +354,11 @@ export default function ListarGrados() {
             >
                 {selectedGradoId && (
                     <Updategrado
-                        idPersona={selectedGradoId}
-                        onEstudianteUpdate={() => {
-                            setShowEditMode(false);
-                            setSelectedGradoId(null);
-                            cargarGrados();
+                        idGrado={selectedGradoId}
+                        onGradoUpdate={async () => {
+                            cerrarEdicion();
+                            await cargarGrados();
+                            mostrarToast('success', 'Grado actualizado', 'Los cambios se guardaron correctamente.');
                         }}
                     />
                 )}
