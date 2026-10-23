@@ -13,7 +13,7 @@ import { getGrados, eliminarGrado } from '../../../Servicios/GradoServicios/grad
 import Addgrado from '../../../Servicios/GradoServicios/AgregarGrados';
 import Updategrado from '../../../Servicios/GradoServicios/EditarGrado';
 import { normalizarNombre } from '../../../Util/validaciones/ValidacionGenericas.js';
-import BuscadorGrados from '../../../Servicios/GradoServicios/BuscadorGrado'; // ajusta la ruta a donde guardaste el componente
+import BuscadorGrados from '../../../Servicios/GradoServicios/BuscadorGrado';
 
 export default function ListarGrados() {
     const toast = useRef(null);
@@ -81,6 +81,12 @@ export default function ListarGrados() {
         });
     };
 
+    // Cierra el modal de edición y limpia el grado seleccionado.
+    const cerrarEdicion = () => {
+        setShowEditMode(false);
+        setSelectedGradoId(null);
+    };
+
     const nivelBodyTemplate = (rowData) => rowData.nivelEducativo?.nombre ?? '—';
 
     const actionsBodyTemplate = (rowData) => (
@@ -90,7 +96,6 @@ export default function ListarGrados() {
                 severity="warning"
                 rounded
                 outlined
-               // tooltip="Editar"
                 tooltipOptions={{ position: 'top' }}
                 onClick={() => {
                     setSelectedGradoId(rowData.idGrado);
@@ -102,7 +107,6 @@ export default function ListarGrados() {
                 severity="danger"
                 rounded
                 outlined
-                //tooltip="Eliminar"
                 tooltipOptions={{ position: 'top' }}
                 onClick={() => confirmarEliminar(rowData)}
             />
@@ -133,7 +137,7 @@ export default function ListarGrados() {
                 >
                     <Column header="Nivel educativo" body={nivelBodyTemplate} style={{ width: '25%' }} />
                     <Column field="nombre" header="Nombre" style={{ width: '25%' }} />
-                    <Column header="Acción" body={actionsBodyTemplate}   />
+                    <Column header="Acción" body={actionsBodyTemplate} />
                 </DataTable>
 
                 <Fieldset legend="Acciones" className="mt-4">
@@ -157,8 +161,8 @@ export default function ListarGrados() {
             >
                 <Addgrado
                     cargarGrado={cargarGrados}
-                    // Antes siempre ponía true y el modal no se cerraba al guardar.
-                    // Revisa en AgregarGrados.js con qué valor llama a setGradoAdd.
+                    // Revisa en AgregarGrados.js con qué valor llama a setGradoAdd:
+                    // aquí se espera true para mostrar el modal y false para cerrarlo.
                     setGradoAdd={(visible) => setShowAddMode(Boolean(visible))}
                 />
             </Dialog>
@@ -168,18 +172,15 @@ export default function ListarGrados() {
                 header="Editar Grado"
                 visible={showEditMode}
                 style={{ width: '90vw', maxWidth: '850px' }}
-                onHide={() => {
-                    setShowEditMode(false);
-                    setSelectedGradoId(null);
-                }}
+                onHide={cerrarEdicion}
             >
                 {selectedGradoId && (
                     <Updategrado
-                        idPersona={selectedGradoId}
-                        onEstudianteUpdate={() => {
-                            setShowEditMode(false);
-                            setSelectedGradoId(null);
-                            cargarGrados();
+                        idGrado={selectedGradoId}
+                        onGradoUpdate={async () => {
+                            cerrarEdicion();
+                            await cargarGrados();
+                            mostrarToast('success', 'Grado actualizado', 'Los cambios se guardaron correctamente.');
                         }}
                     />
                 )}
