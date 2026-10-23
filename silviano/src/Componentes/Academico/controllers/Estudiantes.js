@@ -11,14 +11,22 @@ import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 
 import { getEstudiantes, deleteEstudiante, exportarNominaEstudiantesPDF } from '../../../Servicios/estudianteService';
 import VerEstudiante from '../../../Servicios/EstudiantesServicios/VerEstudiantes';
-import AddEstudiante from '../../../Servicios/EstudiantesServicios/AgregarEstudiantes';
+//import AddEstudiante from '../../../Servicios/EstudiantesServicios/AgregarEstudiantes';
 import UpdateEstudiante from '../../../Servicios/EstudiantesServicios/EditarEstudiantes';
 import BuscarEstudiantes from '../../../Servicios/EstudiantesServicios/BuscarEstudiantes';
+import AddEstudianteTutor from '../../../Servicios/EstudiantesServicios/estudiante';
+
 
 export default function Estudiantes() {
   const toast = useRef(null);
 
+  // Lista completa que viene del backend
   const [estudiantes, setEstudiantes] = useState([]);
+  // Lista que muestra la tabla (resultado del buscador)
+  const [filtrados, setFiltrados] = useState([]);
+  // Primera fila de la página actual de la tabla
+  const [first, setFirst] = useState(0);
+
   const [loading, setLoading] = useState(false);
   const [downloadingReport, setDownloadingReport] = useState(false);
 
@@ -150,11 +158,18 @@ export default function Estudiantes() {
     );
   };
 
-  // Buscador centrado y más amplio
+  // Buscador centrado y más amplio.
+  // Recibe la lista completa y devuelve el resultado filtrado.
   const header = (
     <div className="flex justify-content-center align-items-center w-full py-2">
       <div className="w-full md:w-8" style={{ minWidth: '320px' }}>
-        <BuscarEstudiantes onFilter={(filteredData) => setEstudiantes(filteredData)} loadAll={cargarEstudiantes} />
+        <BuscarEstudiantes
+          estudiantes={estudiantes}
+          onFilter={(datos) => {
+            setFiltrados(datos);
+            setFirst(0); // vuelve a la primera página al buscar
+          }}
+        />
       </div>
     </div>
   );
@@ -166,7 +181,9 @@ export default function Estudiantes() {
 
       <Card title="Expedientes de Estudiantes - SIGE">
         <DataTable
-          value={estudiantes}
+          value={filtrados}
+          first={first}
+          onPage={(e) => setFirst(e.first)}
           paginator
           rows={10}
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
@@ -177,8 +194,7 @@ export default function Estudiantes() {
           emptyMessage="No se encontraron registros de estudiantes."
           responsiveLayout="scroll"
         >
-          <Column field="idpersona" header="ID" sortable style={{ minWidth: '5rem' }} />
-          <Column field="codEstudiante" header="Código" sortable style={{ minWidth: '8rem' }} />
+          <Column field="codEstudiante" header="Código" sortable style={{ minWidth: '12rem' }} />
           <Column field="codigoMined" header="Código MINED" sortable style={{ minWidth: '9rem' }} />
           <Column field="nombre_completo" header="Nombres" sortable style={{ minWidth: '12rem' }} />
           <Column field="apellido_completo" header="Apellidos" sortable style={{ minWidth: '12rem' }} />
@@ -220,14 +236,18 @@ export default function Estudiantes() {
         {selectedEstudianteId && <VerEstudiante idPersona={selectedEstudianteId} />}
       </Dialog>
 
-      {/* Modal Agregar Estudiante */}
+      {/* Modal Registrar Estudiante y Tutor */}
       <Dialog
-        header="Registrar Nuevo Estudiante"
+        header={null}
         visible={showAddMode}
-        style={{ width: '90vw', maxWidth: '850px' }}
+        style={{ width: '90vw', maxWidth: '750px' }}
+        breakpoints={{ '768px': '95vw', '480px': '100vw' }}
+        modal
+        draggable={false}
+        resizable={false}
         onHide={() => setShowAddMode(false)}
       >
-        <AddEstudiante
+        <AddEstudianteTutor
           cargarEstudiante={cargarEstudiantes}
           setEstudiantedoAdd={() => setShowAddMode(false)}
         />

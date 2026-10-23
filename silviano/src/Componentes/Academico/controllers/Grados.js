@@ -59,14 +59,45 @@ export default function ListarGrados() {
         cargarGrados();
     }, [cargarGrados]);
 
-    const eliminar = async (id) => {
-        try {
-            await eliminarGrado(id);
-            mostrarToast('success', 'Eliminado', 'El grado se eliminó correctamente.');
-            await cargarGrados();
-        } catch (error) {
-            mostrarToast('error', 'No se pudo eliminar', error.message);
-        }
+    const actionsBodyTemplate = (rowData) => {
+        return (
+            <div className="flex gap-2 justify-content-center">
+                <Button
+                    icon="pi pi-eye"
+                    severity="info"
+                    rounded
+                    outlined
+                    //tooltip="Ver Expediente"
+                    tooltipOptions={{ position: 'top' }}
+                    onClick={() => {
+                        setSelectedGradoId(rowData.idpersona);
+                        //setShowViewMode(true);
+                    }}
+                />
+                <Button
+                    icon="pi pi-pencil"
+                    severity="warning"
+                    rounded
+                    outlined 
+                    //tooltip="Editar Docente"
+                    tooltipOptions={{ position: 'top' }}
+                    onClick={() => {
+                        setSelectedGradoId(rowData.idpersona);
+                        // setShowEditMode(true);
+                    }}
+                />
+                <Button
+                    icon="pi pi-trash"
+                    severity="danger"
+                    rounded
+                    outlined
+                    //tooltip="Eliminar"
+                    tooltipOptions={{ position: 'top' }}
+                //@ts-expect-erroronClick={() => handleConfirmDelete(rowData.idpersona)}
+                />
+
+            </div>
+        );
     };
 
     const confirmarEliminar = (grado) => {
