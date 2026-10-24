@@ -15,6 +15,7 @@ import Addgrado from '../../../Servicios/GradoServicios/AgregarGrados';
 import Updategrado from '../../../Servicios/GradoServicios/EditarGrado';
 import VerGrado from '../../../Servicios/GradoServicios/VerGrados';
 import EliminarGrado from '../../../Servicios/GradoServicios/eliminarGrados';
+import { normalizarNombre } from '../../../Util/validaciones/ValidacionGenericas.js';
 
 
 export default function ListarGrados() {
@@ -32,6 +33,7 @@ export default function ListarGrados() {
     const [nivelBusqueda, setNivelBusqueda] = useState(null);
     const [nivelesBusqueda, setNivelesBusqueda] = useState([]);
     const [buscando, setBuscando] = useState(false);
+    const [busqueda, setBusqueda] = useState('');
 
     const [loading, setLoading] = useState(false);
 
@@ -88,7 +90,7 @@ export default function ListarGrados() {
     useEffect(() => {
         cargarGrados();
         // cargarNivel();
-    }, [cargarGrados, cargarNivel]);
+    }, [cargarGrados]);
 
     // Cargar niveles educativos para el filtro opcional
     const cargarNivelesBusqueda = async () => {
