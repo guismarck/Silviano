@@ -207,11 +207,7 @@ const UpdateAsignatura = ({
                         <span>Información general</span>
                     </div>
 
-                    <div className="asignatura-id">
-                        <span>ID de asignatura</span>
-
-                        <strong>{idAsignatura}</strong>
-                    </div>
+                   
 
                     <div className="asignatura-fields">
                         {/* Nombre */}
@@ -252,7 +248,7 @@ const UpdateAsignatura = ({
                                     )
                                 }
                                 placeholder="Ingrese el código"
-                                disabled={loading}
+                                disabled={true}
                             />
                         </div>
                     </div>

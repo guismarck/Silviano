@@ -154,7 +154,6 @@ export default function Asignaturas() {
                     emptyMessage="No se encontraron registros de asignaturas."
                     responsiveLayout="scroll"
                 >
-                    <Column field="idAsignatura" header="ID" sortable style={{ minWidth: '5rem' }} />
                     <Column field="nombre" header="nombre" sortable style={{ minWidth: '8rem' }} />
                     <Column field="codigo" header="Codigo " sortable style={{ minWidth: '9rem' }} />
                     <Column header="Acciones" body={actionsBodyTemplate} exportable={false} style={{ minWidth: '10rem', textAlign: 'center' }} />
