@@ -178,6 +178,96 @@ export const buscarGrados = async ({
   return grados;
 };
 
+export const actualizarGrado = async (id, gradoInfo) => {
+    // 1. Validar el identificador.
+    const errorId = validarIdGrado(id);
+
+    if (errorId !== true) {
+        throw new Error(
+            typeof errorId === 'string'
+                ? errorId
+                : 'El identificador del grado no es válido.'
+        );
+    }
+
+    // 2. Validar los campos del formulario.
+    const validacion = validardatosGrados(gradoInfo);
+
+    if (!validacion.valido) {
+        throw new Error(
+            Object.values(validacion.errores).join(' ') ||
+            'Los datos del grado no son válidos.'
+        );
+    }
+
+    // 3. Preparar el JSON que espera el backend.
+    const idNivel = Number(gradoInfo.nivelEducativo?.idnivel);
+
+    if (!Number.isInteger(idNivel) || idNivel <= 0) {
+        throw new Error('Debes seleccionar un nivel educativo válido.');
+    }
+
+    const payload = {
+        nombre: gradoInfo.nombre.trim(),
+        nivelEducativo: {
+            idnivel: idNivel
+        }
+    };
+
+    try {
+        // 4. Consultar los grados para detectar duplicados.
+        const grados = await getGrados();
+
+        const nombreBuscado = normalizarNombre(payload.nombre);
+
+        const duplicado = grados.some((grado) => {
+            const idRegistrado = grado.idGrado ?? grado.id;
+            const nombreRegistrado =
+                grado.nombre ?? grado.nombreGrado;
+
+            // Excluir el mismo grado que estamos editando.
+            if (String(idRegistrado) === String(id)) {
+                return false;
+            }
+
+            return (
+                normalizarNombre(nombreRegistrado) === nombreBuscado
+            );
+        });
+
+        if (duplicado) {
+            throw new Error(
+                `Ya existe otro grado con el nombre "${payload.nombre}".`
+            );
+        }
+
+        // 5. Actualizar el registro existente.
+        const response = await api.put(
+            `/estudiante-app/grados/${id}`,
+            payload
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error(
+            'Error al actualizar el grado:',
+            error.response?.data || error.message
+        );
+
+        // Conservar los mensajes de validación y duplicados.
+        if (!error.response) {
+            throw error;
+        }
+
+        throw new Error(
+            error.response.data?.mensaje ||
+            error.response.data?.message ||
+            'No se pudo actualizar el grado.'
+        );
+    }
+};
+
+
 // Consulta los niveles para llenar el Dropdown.
 export const obtenerNivelesParaBusqueda = async () => {
   const response = await api.get('/nivel-educativo');

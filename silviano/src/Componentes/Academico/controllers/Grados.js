@@ -249,6 +249,11 @@ export default function ListarGrados() {
         </div>
     );
 
+    const cerrarEdicion = () => {
+        setShowEditMode(false);
+        setSelectedGradoId(null);
+    };
+
     return (
         <div className="p-3 md:p-4">
 
