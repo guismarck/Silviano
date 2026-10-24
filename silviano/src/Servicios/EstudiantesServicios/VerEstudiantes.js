@@ -7,14 +7,14 @@ import { Skeleton } from 'primereact/skeleton';
 import { Toast } from 'primereact/toast';
 import { Divider } from 'primereact/divider';
 
-import { getEstudianteById, exportarExpedienteEstudiantePDF } from '../estudianteService';
+import { getEstudianteById } from '../estudianteService';
 
 export default function VerEstudiante({ idPersona }) {
   const toast = useRef(null);
   
   const [estudiante, setEstudiante] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [downloadingReport, setDownloadingReport] = useState(false);
+  const [downloadingReport] = useState(false);
 
   const cargarEstudianteData = useCallback(async () => {
     if (!idPersona) return;
@@ -39,7 +39,7 @@ export default function VerEstudiante({ idPersona }) {
     cargarEstudianteData();
   }, [cargarEstudianteData]);
 
-  const handleDescargarFichaPDF = async () => {
+  /*const handleDescargarFichaPDF = async () => {
     if (!idPersona) return;
     setDownloadingReport(true);
     try {
@@ -60,7 +60,7 @@ export default function VerEstudiante({ idPersona }) {
     } finally {
       setDownloadingReport(false);
     }
-  };
+  };*/
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -104,15 +104,7 @@ export default function VerEstudiante({ idPersona }) {
           </h2>
           <span className="text-sm text-500">Expediente Académico del Estudiante</span>
         </div>
-        <Button
-          label="Imprimir Ficha PDF"
-          icon="pi pi-file-pdf"
-          severity="help"
-          outlined
-          size="small"
-          loading={downloadingReport}
-          onClick={handleDescargarFichaPDF}
-        />
+        
       </div>
 
       {/* Datos Personales */}

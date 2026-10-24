@@ -5,9 +5,9 @@ import { Column } from 'primereact/column';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { Toast } from 'primereact/toast';
 import { Fieldset } from 'primereact/fieldset';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 
 import { getGrados, eliminarGrado } from '../../../Servicios/GradoServicios/gradoService';
 import Addgrado from '../../../Servicios/GradoServicios/AgregarGrados';
@@ -46,7 +46,14 @@ export default function ListarGrados() {
         setLoading(true);
         try {
             const data = await getGrados();
-            setGrados(Array.isArray(data) ? data : []);
+
+            setGrados(
+                data.map((grado) => ({
+                    ...grado,
+                    idGrado: grado.idGrado ?? grado.id,
+                    nombre: grado.nombre ?? grado.nombreGrado
+                }))
+            );
         } catch (error) {
             console.error('Error al cargar grados:', error);
             mostrarToast('error', 'Error de red', 'No se pudo cargar la lista de grados.');
@@ -59,46 +66,6 @@ export default function ListarGrados() {
         cargarGrados();
     }, [cargarGrados]);
 
-    const actionsBodyTemplate = (rowData) => {
-        return (
-            <div className="flex gap-2 justify-content-center">
-                <Button
-                    icon="pi pi-eye"
-                    severity="info"
-                    rounded
-                    outlined
-                    //tooltip="Ver Expediente"
-                    tooltipOptions={{ position: 'top' }}
-                    onClick={() => {
-                        setSelectedGradoId(rowData.idpersona);
-                        //setShowViewMode(true);
-                    }}
-                />
-                <Button
-                    icon="pi pi-pencil"
-                    severity="warning"
-                    rounded
-                    outlined 
-                    //tooltip="Editar Docente"
-                    tooltipOptions={{ position: 'top' }}
-                    onClick={() => {
-                        setSelectedGradoId(rowData.idpersona);
-                        // setShowEditMode(true);
-                    }}
-                />
-                <Button
-                    icon="pi pi-trash"
-                    severity="danger"
-                    rounded
-                    outlined
-                    //tooltip="Eliminar"
-                    tooltipOptions={{ position: 'top' }}
-                //@ts-expect-erroronClick={() => handleConfirmDelete(rowData.idpersona)}
-                />
-
-            </div>
-        );
-    };
 
     const confirmarEliminar = (grado) => {
         confirmDialog({
@@ -108,7 +75,7 @@ export default function ListarGrados() {
             acceptClassName: 'p-button-danger',
             acceptLabel: 'Sí, eliminar',
             rejectLabel: 'Cancelar',
-            accept: () => eliminar(grado.idGrado)
+            accept: () => eliminarGrado(grado.idGrado)
         });
     };
 
