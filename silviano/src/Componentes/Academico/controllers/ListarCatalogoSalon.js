@@ -1,125 +1,333 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
+import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import { Dialog } from 'primereact/dialog';
-import axios from 'axios';
-import { Button } from 'primereact/button';
-import Versalon from './VerCatalogoSalon';
-import Addsalon from './AgregarSalon';
-import Updatesalon from './EditarCatalogoSalon';
-import settings from '../../../settings.json';
+import { Toast } from 'primereact/toast';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 
+import {
+    getSalones,
+    deleteSalon,
+    getGrados,
+    getCatalogoSalon
+} from '../../../Servicios/SalonServicios/salonService';
 
+import Addsalon from './AgregarSalon.js';
+import EditarSalon from './EditarCatalogoSalon.js';
 
-export default ListarCatalogoSalon;
-const urlBase = `${settings.api.baseUrl}/catalogo/salon`;
+export default function ListarCatalogoSalon() {
+    const toast = useRef(null);
 
-function ListarCatalogoSalon() {
-    /**
-     * declaración de variables
-     */
-    const [salon, setCatSalon] = useState([]);
-    const [showViewMode, setshowViewMode] = useState(false);
-    const [showAddMode, setshowAddMode,] = useState(false);
-    const [showEditMode, setshowEditMode,] = useState(false);
-    const [selectCatSalonID, setSelectCatSalonID] = useState(null);
-    useEffect(() => {
-        cargarCatalogoSalon();
+    const [salones, setSalones] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    const [showAddMode, setShowAddMode] = useState(false);
+    const [showEditMode, setShowEditMode] = useState(false);
+    const [selectedSalonId, setSelectedSalonId] = useState(null);
+
+    // Cargar salones y relacionarlos con sus nombres
+    const cargarSalones = useCallback(async () => {
+        try {
+            setLoading(true);
+
+            const [
+                respuestaSalones,
+                respuestaGrados,
+                respuestaCatalogos
+            ] = await Promise.all([
+                getSalones(),
+                getGrados(),
+                getCatalogoSalon()
+            ]);
+
+            const listaSalones = Array.isArray(respuestaSalones)
+                ? respuestaSalones
+                : [];
+
+            const listaGrados = Array.isArray(respuestaGrados)
+                ? respuestaGrados
+                : [];
+
+            const listaCatalogos = Array.isArray(respuestaCatalogos)
+                ? respuestaCatalogos
+                : [];
+
+            const mapaGrados = new Map(
+                listaGrados.map(grado => [
+                    Number(grado.idGrado ?? grado.idgrado),
+                    grado.nombre
+                ])
+            );
+
+            const mapaCatalogos = new Map(
+                listaCatalogos.map(catalogo => [
+                    Number(
+                        catalogo.idCatalogoSalon ??
+                        catalogo.idcatalogo_salon ??
+                        catalogo.idcatalogoSalon
+                    ),
+                    catalogo.nombreSalon ?? catalogo.nombre_salon
+                ])
+            );
+
+            const salonesCompletos = listaSalones.map(salon => {
+                const idGrado =
+                    salon.grado?.idGrado ??
+                    salon.idGrado ??
+                    salon.grado?.idgrado;
+
+                const idCatalogo =
+                    salon.catalogoSalon?.idCatalogoSalon ??
+                    salon.catalogoSalon?.idcatalogo_salon ??
+                    salon.idCatalogoSalon ??
+                    salon.idcatalogo_salon;
+
+                return {
+                    ...salon,
+
+                    nombreGrado:
+                        salon.grado?.nombre ??
+                        mapaGrados.get(Number(idGrado)) ??
+                        'Grado no encontrado',
+
+                    nombreCatalogo:
+                        salon.catalogoSalon?.nombreSalon ??
+                        salon.catalogoSalon?.nombre_salon ??
+                        mapaCatalogos.get(Number(idCatalogo)) ??
+                        'Catálogo no encontrado'
+                };
+            });
+
+            setSalones(salonesCompletos);
+
+        } catch (error) {
+            console.error('Error al cargar los salones:', error);
+
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudo cargar la lista de salones.',
+                life: 4000
+            });
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    const cargarCatalogoSalon = async () => {//peticion asicrona
-        try {
-            //ServicioGrado.getGradosMini().then(data  => setGrados(data));
-            const resultado = await axios.get(urlBase);
-            if (resultado) {
-                // console.log(resultado.data);
-                setCatSalon(resultado.data);
-            }
-        } catch (error) {console.log(error.data) }
-    }
+    useEffect(() => {
+        cargarSalones();
+    }, [cargarSalones]);
 
-    const onClickDelete = async (id) => {
-        try {
-            const respuesta = await axios
-                .delete(`${urlBase}/${id}`);
-            if (respuesta) {
-                cargarCatalogoSalon();
-            }
-        } catch (error) {
-            console.log(error)
-        }
-    }
+    // Eliminar salón
+    const handleConfirmDelete = (idSalon) => {
+        confirmDialog({
+            message: '¿Está seguro de eliminar este salón?',
+            header: 'Confirmar eliminación',
+            icon: 'pi pi-exclamation-triangle',
+            acceptClassName: 'p-button-danger',
+            acceptLabel: 'Sí, eliminar',
+            rejectLabel: 'Cancelar',
 
-    const actionsTemplate = (rowDate) => { //botones de la opción
-        return (
-            <>
-                <button className='btn btn-success' onClick={() => {
-                    setSelectCatSalonID(rowDate.idcatalogo_salon)
-                    setshowViewMode(true)
-                }} >
-                    <img className='icon' src="https://img.icons8.com/material-outlined/visible--v1.png" alt="visible--v1" />
-                </button>
-                <button className='btn btn-primary'
-                        onClick={() => {
-                            setSelectCatSalonID(rowDate.idcatalogo_salon)
-                            setshowEditMode(true)
-                        }}  >
-                    <img className='icon' src="https://img.icons8.com/material-outlined/edit--v1.png" alt="edit--v1" />
-                </button>
-                <button className='btn btn-danger' onClick={() => {
-                    onClickDelete(rowDate.idcatalogo_salon);
-                }}  >
-                    <img className='icon' src="https://img.icons8.com/material-outlined/filled-trash.png" alt="filled-trash" />
-                </button>
-            </>
-        )
-    }
+            accept: async () => {
+                try {
+                    await deleteSalon(idSalon);
+
+                    toast.current?.show({
+                        severity: 'success',
+                        summary: 'Registro eliminado',
+                        detail: 'El salón se eliminó correctamente.',
+                        life: 3000
+                    });
+
+                    await cargarSalones();
+
+                } catch (error) {
+                    console.error('Error al eliminar salón:', error);
+
+                    toast.current?.show({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'No se pudo eliminar el salón.',
+                        life: 4000
+                    });
+                }
+            }
+        });
+    };
+
+    // Cierra el modal de edición y limpia el salón seleccionado.
+    const cerrarEdicion = () => {
+        setShowEditMode(false);
+        setSelectedSalonId(null);
+    };
+
+    // Botones de acciones
+    const actionsBodyTemplate = (rowData) => (
+        <div className="flex gap-2 justify-content-center">
+            <Button
+                icon="pi pi-eye"
+                severity="info"
+                rounded
+                outlined
+                tooltip="Ver salón"
+                tooltipOptions={{ position: 'top' }}
+                onClick={() => {
+                    toast.current?.show({
+                        severity: 'info',
+                        summary: 'Detalle del salón',
+                        detail: `Grado: ${rowData.nombreGrado} | Salón: ${rowData.nombreCatalogo}`,
+                        life: 4000
+                    });
+                }}
+            />
+
+            <Button
+                icon="pi pi-pencil"
+                severity="warning"
+                rounded
+                outlined
+                tooltip="Editar salón"
+                tooltipOptions={{ position: 'top' }}
+                onClick={() => {
+                    setSelectedSalonId(rowData.idSalon);
+                    setShowEditMode(true);
+                }}
+            />
+
+            <Button
+                icon="pi pi-trash"
+                severity="danger"
+                rounded
+                outlined
+                tooltip="Eliminar salón"
+                tooltipOptions={{ position: 'top' }}
+                onClick={() => handleConfirmDelete(rowData.idSalon)}
+            />
+        </div>
+    );
+
+    const header = (
+        <div className="flex flex-wrap justify-content-between align-items-center gap-3">
+            <span className="text-lg font-semibold">
+                Salones registrados
+            </span>
+
+            <Button
+                label="Agregar salón"
+                icon="pi pi-plus"
+                severity="primary"
+                onClick={() => setShowAddMode(true)}
+            />
+        </div>
+    );
 
     return (
-        <div className="card">
+        <div className="p-3 md:p-4">
+            <Toast ref={toast} />
+            <ConfirmDialog />
 
-            <Card title="Catalogo Salón">
+            <Card title="Lista de salones">
+                <DataTable
+                    value={salones}
+                    paginator
+                    rows={10}
+                    dataKey="idSalon"
+                    stripedRows
+                    loading={loading}
+                    header={header}
+                    emptyMessage="No se encontraron salones registrados."
+                    responsiveLayout="scroll"
+                >
+                    <Column
+                        field="nombreGrado"
+                        header="Grado"
+                        sortable
+                        style={{ minWidth: '10rem' }}
+                    />
 
-                <div className='addGrado'>
-                    <Button className='btnAgregar'
-                            label="Nuevo Salón" text raised onClick={() => setshowAddMode(true)} />
-                </div>
+                    <Column
+                        field="nombreCatalogo"
+                        header="Nombre del salón"
+                        sortable
+                        style={{ minWidth: '12rem' }}
+                    />
 
-                <div className='listarGrados' >
+                    <Column
+                        field="turno"
+                        header="Turno"
+                        sortable
+                        style={{ minWidth: '9rem' }}
+                    />
 
-                    <DataTable value={salon} stripedRows tableStyle={{ minWidth: '50rem' }}>
-                        <Column field="idcatalogo_salon" header="ID-Catalogo-Salón" style={{ width: '25%' }}></Column>
-                        <Column field="nombre_salon" header="Nombre" style={{ width: '25%' }}></Column>
-                        <Column header="Acción" body={actionsTemplate} ></Column>
-                    </DataTable>
-                </div>
+                    <Column
+                        field="seccion"
+                        header="Sección"
+                        sortable
+                        style={{ minWidth: '8rem' }}
+                    />
+
+                    <Column
+                        field="anioLectivo"
+                        header="Año lectivo"
+                        sortable
+                        style={{ minWidth: '10rem' }}
+                    />
+
+                    <Column
+                        header="Acciones"
+                        body={actionsBodyTemplate}
+                        exportable={false}
+                        style={{
+                            minWidth: '11rem',
+                            textAlign: 'center'
+                        }}
+                    />
+                </DataTable>
             </Card>
-            <Dialog header="" visible={showViewMode}
-                    style={{ width: '50vw' }}
-                    onHide={() => setshowViewMode(false)} >
-                <Versalon idcatalogo_salon={selectCatSalonID} />
+
+            {/* Modal Agregar Salón */}
+            <Dialog
+                visible={showAddMode}
+                style={{ width: '90vw', maxWidth: '850px' }}
+                modal
+                onHide={() => setShowAddMode(false)}
+                closable={!loading}
+                closeOnEscape={!loading}
+            >
+                <Addsalon
+                    cargarSalon={cargarSalones}
+                    setEstudiantedoAdd={() => setShowAddMode(false)}
+                />
             </Dialog>
-            <Dialog header="" visible={showAddMode}
-                    style={{ width: '50vw' }}
-                    onHide={() => setshowAddMode(false)} >
-                <Addsalon setSalonAdd={() => {
-                    setshowAddMode(false)
-                    cargarCatalogoSalon()
-                }} />
-            </Dialog>
-            <Dialog header="" visible={showEditMode}
-                    style={{ width: '50vw' }}
-                    onHide={() => setshowEditMode(false)} >
-                <Updatesalon
-                    salonID={selectCatSalonID}
-                    setCatSalonUpdate={() => {
-                        setshowEditMode(false)
-                        cargarCatalogoSalon()
-                    }} />
+
+            {/* Modal Editar Salón */}
+            <Dialog
+                visible={showEditMode}
+                style={{ width: '90vw', maxWidth: '850px' }}
+                modal
+                onHide={cerrarEdicion}
+            >
+                {selectedSalonId !== null && (
+                    <EditarSalon
+                        idSalon={selectedSalonId}
+                        onCancel={cerrarEdicion}
+                        onSalonUpdate={async () => {
+                            cerrarEdicion();
+                            await cargarSalones();
+
+                            toast.current?.show({
+                                severity: 'success',
+                                summary: 'Salón actualizado',
+                                detail: 'Los cambios se guardaron correctamente.',
+                                life: 3000
+                            });
+                        }}
+                    />
+                )}
             </Dialog>
         </div>
-
     );
 }
-

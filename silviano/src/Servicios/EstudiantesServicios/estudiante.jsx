@@ -828,30 +828,7 @@ function AddEstudianteTutor(props) {
  
                         {/* ESTADO DEL ESTUDIANTE */}
  
-                        <div className="registro-estado flex align-items-center justify-content-between mt-3 p-2 surface-ground border-round">
-                            <span className="registro-estado-texto font-semibold">
-                                Estado del estudiante
-                            </span>
- 
-                            <div className="registro-estado-activo flex align-items-center gap-2">
-                                <InputSwitch
-                                    checked={Boolean(estudianteInfo.estado)}
-                                    onChange={e =>
-                                        actualizarEstudiante(
-                                            'estado',
-                                            e.value
-                                        )
-                                    }
-                                    disabled={loading}
-                                />
- 
-                                <span className="font-bold">
-                                    {estudianteInfo.estado
-                                        ? 'Activo'
-                                        : 'Inactivo'}
-                                </span>
-                            </div>
-                        </div>
+                       
  
                         {/* BOTONES DEL PASO 1 */}
  

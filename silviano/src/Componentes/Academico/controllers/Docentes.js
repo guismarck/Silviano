@@ -8,8 +8,8 @@ import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { Fieldset } from 'primereact/fieldset';
 
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import { getDocentes, deleteDocente } from '../../../Servicios/DocenteServicios/docenteService';
+import { ConfirmDialog } from 'primereact/confirmdialog';
+import { getDocentes } from '../../../Servicios/DocenteServicios/docenteService';
 import AddDocente from '../../../Servicios/DocenteServicios/agregarDocente';
 import VerDocente from '../../../Servicios/DocenteServicios/VerDocentes';
 import UpdateDocente from '../../../Servicios/DocenteServicios/EditarDocentes';
@@ -57,7 +57,7 @@ export default function Docentes() {
         cargarDocentes();
     }, [cargarDocentes]);
 
-    const handleConfirmDelete = (idPersona) => {
+    /*const handleConfirmDelete = (idPersona) => {
         confirmDialog({
             message: '¿Está seguro de eliminar este expediente de docente?',
             header: 'Confirmar Eliminación',
@@ -85,7 +85,7 @@ export default function Docentes() {
                 }
             }
         });
-    };
+    };*/
 
     const statusBodyTemplate = (rowData) => {
         const isActivo = Boolean(rowData.estado);
@@ -124,7 +124,8 @@ export default function Docentes() {
                         setShowEditMode(true);
                     }}
                 />
-                <Button
+
+                {/*<Button
                     icon="pi pi-trash"
                     severity="danger"
                     rounded
@@ -132,7 +133,8 @@ export default function Docentes() {
                     //tooltip="Eliminar"
                     tooltipOptions={{ position: 'top' }}
                     onClick={() => handleConfirmDelete(rowData.idpersona)}
-                />
+                />*/ }
+                
 
             </div>
         );
@@ -217,7 +219,6 @@ export default function Docentes() {
                 visible={showAddMode}
                 style={{ width: '90vw', maxWidth: '850px' }}
                 onHide={() => setShowAddMode(false)}
-
             >
                 <AddDocente
                     cargarDocente={cargarDocentes}

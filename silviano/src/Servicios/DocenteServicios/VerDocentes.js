@@ -87,15 +87,7 @@ export default function VerDocente({ idPersona }) {
                     </h2>
                     <span className="text-sm text-500">Expediente Académico del Docente</span>
                 </div>
-                <Button
-                    label="Imprimir Ficha PDF"
-                    icon="pi pi-file-pdf"
-                    severity="help"
-                    outlined
-                    size="small"
-                    //loading={downloadingReport}
-                    //onClick={handleDescargarFichaPDF}
-                />
+               
             </div>
 
             {/* Datos Personales */}
