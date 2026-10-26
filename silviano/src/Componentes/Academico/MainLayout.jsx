@@ -35,7 +35,7 @@ export const MainLayout = () => {
       title: 'Inicio',
       icon: 'bx bx-home',
       path: '/dashboard',
-      roles: ['*'],
+      roles: ['DIRECTOR'],
     },
     {
       title: 'Académico',
@@ -45,7 +45,7 @@ export const MainLayout = () => {
         { label: 'Estudiantes', path: '/estudiantes' },
         { label: 'Salón', path: '/salon' },
         { label: 'Grados', path: '/grados' },
-        { label: 'Agregar Grados', path: '/agregargrados' },
+        { label: 'Asignaturas', path: '/asignaturas' },
         { label: 'Asignación Docente', path: '/asignacionDocente' },
       ],
     },
@@ -61,7 +61,7 @@ export const MainLayout = () => {
     {
       title: 'Notas',
       icon: 'bx bx-notepad',
-      roles: ['DIRECTOR', 'DOCENTE'],
+      roles: ['DOCENTE'],
       subMenu: [{ label: 'Gestión Calificaciones', path: '/calificaciones' }],
     },
     {
@@ -74,7 +74,7 @@ export const MainLayout = () => {
       title: 'Reportes',
       icon: 'bx bx-line-chart',
       path: '/reportes',
-      roles: ['DIRECTOR'],
+      roles: ['DIRECTOR', 'SECRETARIA'],
     },
   ];
 
@@ -135,7 +135,7 @@ export const MainLayout = () => {
                 <div className="profile_name">
                   {user?.nombreCompleto || user?.username || 'William Guzman'}
                 </div>
-                <div className="job">{user?.roles?.join(', ') || 'DIRECTOR'}</div>
+                <div className="job">{user?.roles?.join(', ') || ''}</div>
               </div>
               <i
                 className="bx bx-log-out"
@@ -151,7 +151,7 @@ export const MainLayout = () => {
       <section className="home-section">
         <div className="home-content">
           <i className="bx bx-menu" onClick={toggleSidebar} style={{ cursor: 'pointer' }}></i>
-          <span className="text">SISTEMA DE GESTIÓN ESCOLAR (SIGE)</span>
+          <span className="text">Menu Principal</span>
         </div>
 
         <div className="home-panel p-4">

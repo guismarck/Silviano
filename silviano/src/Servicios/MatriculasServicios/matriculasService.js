@@ -245,7 +245,7 @@ export const registrarMatriculaOficial = async (payload) => {
  */
 export const getCatalogosMatricula = async () => {
   try {
-    const { data } = await api.get('/nivel-educativo/');
+    const { data } = await api.get('estudiante-app/nivel-educativo');
     const nivelesData = Array.isArray(data) ? data : [];
     
     return nivelesData.map((n) => ({
@@ -273,12 +273,13 @@ export const buscarEstudiantesAuto = async (criterio) => {
     return lista.map((e) => {
       const est = e.estudiante || e;
       const tut = e.tutor || {};
-      const codigo = est.codEstudiante || est.codigo || 'SIN-COD';
-      const cedula = est.cedulaDni || 'SIN-DNI';
+      const codigoMined = String(est.codigoMined ?? est.codigoMINED ?? '').trim();
       const nombreCompleto = `${est.nombres || est.nombre_completo || ''} ${est.apellidos || est.apellido_completo || ''}`.trim();
+      const labelEstudiante = `[${codigoMined || 'SIN-COD'} ] - ${nombreCompleto}`;
 
       return {
-        label: `[${codigo} / ${cedula}] - ${nombreCompleto}`,
+        label: labelEstudiante,
+        labelEstudiante,
         value: est.id || est.idPersona || est.idpersona,
         rawEstudiante: {
           id: est.id || est.idPersona || est.idpersona || '',
@@ -286,6 +287,7 @@ export const buscarEstudiantesAuto = async (criterio) => {
           idPersonaEstudiante: est.idPersonaEstudiante ?? est.idEstudiante ?? est.idestudiante ?? est.id,
           nombres: est.nombres || est.nombre_completo || '',
           apellidos: est.apellidos || est.apellido_completo || '',
+          codigoMined,
           cedulaDni: est.cedulaDni || est.codEstudiante || '',
           alergiasEnfermedades: est.alergiasEnfermedades || 'Ninguna'
         },
@@ -307,11 +309,13 @@ export const buscarEstudiantesAuto = async (criterio) => {
     if (criterio === '123' || criterio.toLowerCase().includes('william') || criterio.toLowerCase().includes('mendez')) {
       return [{
         label: '[EST-1024 / 0801-2013-09122] - William Mendez',
+        labelEstudiante: '[EST-1024 / 0801-2013-09122] - William Mendez',
         value: 1024,
         rawEstudiante: {
           id: 1024,
           nombres: 'William',
           apellidos: 'Mendez',
+          codigoMined: '',
           cedulaDni: '0801-2013-09122',
           alergiasEnfermedades: 'Ninguna'
         },
@@ -338,8 +342,8 @@ export const buscarTutoresAuto = async (criterio) => {
   if (!criterio || String(criterio).trim().length < 2) return [];
 
   try {
-    const { data } = await api.get(`/estudiante-app/expediente/buscar`, {
-      params: { criterio: String(criterio).trim(), tipoBusqueda: 'TUTOR' }
+    const { data } = await api.get(`/estudiante-app/tutores`, {
+      params: { search: String(criterio).trim(), tipoBusqueda: 'TUTOR' }
     });
 
     const lista = Array.isArray(data) ? data : [data];
@@ -358,41 +362,27 @@ export const buscarTutoresAuto = async (criterio) => {
  */
 const mapearRespuestaBuscador = (lista) => {
   return lista.map((e) => {
-    const est = e.estudiante || e || {};
-    const tut = e.tutor || {};
-    
-    const codMined = String(est.codEstudiante || est.codigo || '').trim() || 'EST-1024';
-    const nombresEst = String(est.nombres || est.nombre_completo || '').trim();
-    const apellidosEst = String(est.apellidos || est.apellido_completo || '').trim();
-    const nombreEstudiante = `${nombresEst} ${apellidosEst}`.trim() || 'Estudiante Sin Nombre';
-
-    const nombreTutor = String(tut.nombreCompleto || tut.nombre || '').trim() || 'Sin Tutor';
-    const cedulaTutor = String(tut.cedulaDni || tut.cedula || '').trim();
+    const tut = e.tutor || e;
+    const nombresTutor = String(tut.nombres || tut.nombre_completo || '').trim();
+    const apellidosTutor = String(tut.apellidos || tut.apellido_completo || '').trim();
+    const nombreTutor = String(
+      tut.nombreCompleto || tut.nombre || `${nombresTutor} ${apellidosTutor}`
+    ).trim() || 'Sin nombre';
+    const cedulaTutor = String(tut.cedulaDni || tut.cedula || tut.cedula_dni || '').trim();
+    const idPersonaTutor = tut.idPersonaTutor ?? tut.idPersona ?? tut.idpersona ?? tut.id;
 
     return {
-      labelEstudiante: `[${codMined}] - ${nombreEstudiante}`,
       labelTutor: `[Cédula: ${cedulaTutor || 'Sin DNI'}] - ${nombreTutor}`,
-      value: est.id || est.idPersona || est.idpersona || Math.floor(Math.random() * 10000),
-      rawEstudiante: {
-        id: est.id || est.idPersona || est.idpersona || '',
-        idPersona: est.idPersona ?? est.idpersona ?? est.id,
-        idPersonaEstudiante: est.idPersonaEstudiante ?? est.idEstudiante ?? est.idestudiante ?? est.id,
-        nombres: nombresEst,
-        apellidos: apellidosEst,
-        codEstudiante: codMined,
-        alergiasEnfermedades: String(est.alergiasEnfermedades || 'Ninguna').trim()
-      },
+      value: idPersonaTutor,
       rawTutor: {
-        idPersonaTutor: tut.idPersonaTutor ?? tut.idPersona ?? tut.idpersona ?? tut.id,
+        idPersonaTutor,
         nombreCompleto: nombreTutor,
         cedulaDni: cedulaTutor,
         parentesco: typeof tut.parentesco === 'object' ? (tut.parentesco?.value || 'PADRE') : String(tut.parentesco || 'PADRE').trim(),
-        telefono: String(tut.telefono || '').replace(/\D/g, '').slice(0, 8),
-        correo: String(tut.correo || '').trim(),
+        telefono: String(tut.telefono || tut.telefonoPrincipal || tut.telefono_principal || '').replace(/\D/g, '').slice(0, 8),
+        correo: String(tut.correo || tut.email || tut.correo_electronico || '').trim(),
         esResponsableFinanciero: tut.esResponsableFinanciero ?? true
-      },
-      pagoRealizado: Boolean(e.pagoRealizado ?? true),
-      numRecibo: String(e.numRecibo || 'REC-' + Math.floor(100000 + Math.random() * 900000)).trim()
+      }
     };
   });
 };
@@ -477,7 +467,7 @@ export const registrarMatriculaCompleta = async (payload) => {
     idPersonaEstudiante: Number(estudiante.idPersonaEstudiante ?? estudiante.id),
     nombresEstudiante: estudiante.nombres,
     apellidosEstudiante: estudiante.apellidos,
-    codigoMined: estudiante.codEstudiante,
+    codigoMined: estudiante.codigoMined,
     idPersonaTutor: tutor.idPersonaTutor ? Number(tutor.idPersonaTutor) : null,
     nombreCompletoTutor: tutor.nombreCompleto,
     cedulaTutor: tutor.cedulaDni,

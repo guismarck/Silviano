@@ -31,8 +31,8 @@ export const AuthProvider = ({ children }) => {
       if (!user || !user.roles) return false;
       if (allowedRoles.includes('*')) return true;
 
-      // El Director / Admin conserva acceso total
-      if (user.roles.includes('DIRECTOR') || user.roles.includes('ADMIN')) return true;
+      // El administrador conserva acceso total; los demás roles respetan cada permiso declarado.
+      if (user.roles.includes('ADMIN')) return true;
 
       return user.roles.some((role) => allowedRoles.includes(role));
     },

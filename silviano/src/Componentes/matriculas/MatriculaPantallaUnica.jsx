@@ -127,7 +127,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
       idPersonaEstudiante: '',
       nombres: '',
       apellidos: '',
-      codEstudiante: '',
+      codigoMined: '',
       alergiasEnfermedades: ''
     },
 
@@ -135,7 +135,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
       idPersonaTutor: '',
       nombreCompleto: '',
       cedulaDni: '',
-      parentesco: 'PADRE',
+      parentesco: '',
       telefono: '',
       correo: '',
       esResponsableFinanciero: true
@@ -164,7 +164,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
         idPersonaEstudiante: '',
         nombres: '',
         apellidos: '',
-        codEstudiante: '',
+        codigoMined: '',
         alergiasEnfermedades: ''
       },
       tutor: {
@@ -221,7 +221,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
     setLoadingTutorAuto(false);
   };
 
-  const handleSelectExpedienteAuto = (e) => {
+  const handleSelectEstudiante = (e) => {
     const item = e.value;
     if (!item || typeof item !== 'object') return;
 
@@ -236,7 +236,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
         idPersonaEstudiante: rawEst.idPersonaEstudiante ?? rawEst.id ?? '',
         nombres: rawEst.nombres ?? '',
         apellidos: rawEst.apellidos ?? '',
-        codEstudiante: rawEst.codEstudiante ?? '',
+        codigoMined: rawEst.codigoMined ?? '',
         alergiasEnfermedades: rawEst.alergiasEnfermedades ?? 'Ninguna'
       },
       tutor: {
@@ -254,13 +254,41 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
       numRecibo: ''
     }));
 
-    setBusquedaEstudianteInput(item.labelEstudiante || `${rawEst.codEstudiante || ''} - ${rawEst.nombres || ''}`);
+    setBusquedaEstudianteInput(item.labelEstudiante || `${rawEst.codigoMined || ''} - ${rawEst.nombres || ''}`);
     setBusquedaTutorInput(item.labelTutor || `${rawTut.cedulaDni || ''} - ${rawTut.nombreCompleto || ''}`);
 
     toast.current?.show({
       severity: 'info',
       summary: 'Expediente Vinculado',
       detail: 'Se han cargado los datos del Estudiante y su Tutor Legal.'
+    });
+  };
+
+  const handleSelectTutor = (e) => {
+    const item = e.value;
+    if (!item || typeof item !== 'object') return;
+
+    const rawTutor = item.rawTutor || {};
+    setFormData((prev) => ({
+      ...prev,
+      tutor: {
+        idPersonaTutor: rawTutor.idPersonaTutor ?? '',
+        nombreCompleto: rawTutor.nombreCompleto ?? '',
+        cedulaDni: formatearCedulaDinamica(rawTutor.cedulaDni ?? ''),
+        parentesco: typeof rawTutor.parentesco === 'object'
+          ? (rawTutor.parentesco?.value ?? 'PADRE')
+          : (rawTutor.parentesco ?? 'PADRE'),
+        telefono: rawTutor.telefono ?? '',
+        correo: rawTutor.correo ?? '',
+        esResponsableFinanciero: rawTutor.esResponsableFinanciero ?? true
+      }
+    }));
+    setBusquedaTutorInput(item.labelTutor || rawTutor.nombreCompleto || '');
+
+    toast.current?.show({
+      severity: 'info',
+      summary: 'Tutor seleccionado',
+      detail: 'Se cargaron los datos del tutor sin modificar los datos del estudiante.'
     });
   };
 
@@ -358,25 +386,21 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
 
   const estudianteItemTemplate = (item) => {
     const est = item.rawEstudiante || {};
-    const tut = item.rawTutor || {};
     return (
       <div className="flex flex-column gap-1 p-1">
         <span className="font-bold text-primary">{est.nombres} {est.apellidos}</span>
-        <small className="text-600">
-          Código: <strong>{est.codEstudiante || 'SIN-COD'}</strong> | Tutor: {tut.nombreCompleto || 'Sin tutor'}
-        </small>
+        <span className="text-600 text-sm">Código MINED: {est.codigoMined || 'Sin código'}</span>
       </div>
     );
   };
 
   const tutorItemTemplate = (item) => {
     const tut = item.rawTutor || {};
-    const est = item.rawEstudiante || {};
     return (
       <div className="flex flex-column gap-1 p-1">
         <span className="font-bold text-800">{tut.nombreCompleto}</span>
         <small className="text-600">
-          Cédula: <strong>{tut.cedulaDni || 'N/A'}</strong> | Estudiante: {est.nombres} {est.apellidos}
+          Cédula: <strong>{tut.cedulaDni || 'N/A'}</strong>
         </small>
       </div>
     );
@@ -386,7 +410,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
   const validacionesPaso0 = useMemo(() => {
     const nombres = String(formData.estudiante?.nombres ?? '').trim();
     const apellidos = String(formData.estudiante?.apellidos ?? '').trim();
-    const codEstudiante = String(formData.estudiante?.codEstudiante ?? '').trim();
+    const codigoMined = String(formData.estudiante?.codigoMined ?? '').trim();
 
     const nombreCompletoTutor = String(formData.tutor?.nombreCompleto ?? '').trim();
     const telefono = String(formData.tutor?.telefono ?? '').trim();
@@ -395,7 +419,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
 
     const esNombresValido = nombres.length > 0 && REGEX_SOLO_LETRAS_ESPANOL.test(nombres);
     const esApellidosValido = apellidos.length > 0 && REGEX_SOLO_LETRAS_ESPANOL.test(apellidos);
-    const esCodEstudianteValido = codEstudiante.length > 0;
+    const esCodigoMinedValido = codigoMined.length > 0;
 
     const esTutorNombreValido = nombreCompletoTutor.length > 0 && REGEX_SOLO_LETRAS_ESPANOL.test(nombreCompletoTutor);
     const esTelefonoValido = /^\d{8}$/.test(telefono);
@@ -405,13 +429,13 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
     const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const esCorreoValido = correo === '' || regexEmail.test(correo);
 
-    const esValido = esNombresValido && esApellidosValido && esCodEstudianteValido &&
+    const esValido = esNombresValido && esApellidosValido && esCodigoMinedValido &&
                      esTutorNombreValido && esTelefonoValido && esCedulaTutorValida && esCorreoValido;
 
     return {
       esNombresValido,
       esApellidosValido,
-      esCodEstudianteValido,
+      esCodigoMinedValido,
       esTutorNombreValido,
       esTelefonoValido,
       esCedulaTutorValida,
@@ -617,7 +641,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
                 field="labelEstudiante"
                 itemTemplate={estudianteItemTemplate}
                 onChange={(e) => setBusquedaEstudianteInput(e.value)}
-                onSelect={handleSelectExpedienteAuto}
+                onSelect={handleSelectEstudiante}
                 placeholder="Escriba código MINED o nombre del alumno..."
                 loading={loadingEstudianteAuto}
                 dropdown
@@ -659,13 +683,13 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
             </div>
 
             <div className="col-12 col-md-4 mb-3">
-              <label htmlFor="codEstudiante" className="font-bold block mb-1">
-                Código MINED / Sistema <span className="text-red-500">*</span>
+              <label htmlFor="codigoMined" className="font-bold block mb-1">
+                Código MINED  <span className="text-red-500">*</span>
               </label>
               <InputText
-                id="codEstudiante"
-                name="codEstudiante"
-                value={formData.estudiante.codEstudiante}
+                id="codigoMined"
+                name="codigoMined"
+                value={formData.estudiante.codigoMined}
                 onChange={handleEstudianteChange}
                 placeholder="Ej: EST-1024"
               />
@@ -687,7 +711,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
                 field="labelTutor"
                 itemTemplate={tutorItemTemplate}
                 onChange={(e) => setBusquedaTutorInput(e.value)}
-                onSelect={handleSelectExpedienteAuto}
+                onSelect={handleSelectTutor}
                 placeholder="Escriba número de cédula o nombre del padre/madre..."
                 loading={loadingTutorAuto}
                 dropdown

@@ -6,7 +6,7 @@ import { MainLayout } from './Componentes/Academico/MainLayout';
 import { Login } from './Componentes/Login/Login'; // Verifica esta ruta de archivo
 
 // Controladores del Sistema SIGE
-//import ListarGrados from './Componentes/Academico/controllers/ListarGrados';
+import ListarGrados from './Componentes/Academico/controllers/Grados';
 import Estudiantes from './Componentes/Academico/controllers/Estudiantes';
 //import AgregarGrados from './Componentes/Academico/controllers/AgregarGrados';
 import ListarCatalogoSalon from './Componentes/Academico/controllers/ListarCatalogoSalon';
@@ -17,7 +17,7 @@ import Calificaciones from './Componentes/Academico/controllers/GestionCalificac
 import { ReporteBoletin } from './Componentes/Academico/controllers/ReporteBoletin';
 // Nuevo Componente de Asignación Académica
 import { AsignacionDocente } from './Componentes/Academico/controllers/AsignacionDocente';
-
+import Asignaturas from './Componentes/Academico/controllers/Asignaturas';
 import './estilosCSS/flags.css';
 import './index.css';
 
@@ -40,22 +40,22 @@ function AppRoutes() {
             path="/dashboard"
             element={
               <div className="card p-4">
-                <h2>Bienvenido al Sistema SIGE - Colegio Silviano Matamoros</h2>
+                <h2>Bienvenido al Sistema  - Colegio Silviano Matamoros</h2>
               </div>
             }
           />
 
           <Route element={<ProtectedRoute allowedRoles={['DIRECTOR', 'SECRETARIA']} />}>
             <Route path="/estudiantes" element={<Estudiantes />} />
-            {/* <Route path="/grados" element={<ListarGrados />} /> */}
-            {/* <Route path="/agregargrados" element={<AgregarGrados />} /> */}
+            <Route path="/grados" element={<ListarGrados />} /> 
+            <Route path="/asignaturas" element={<Asignaturas />} />
             <Route path="/salon" element={<ListarCatalogoSalon />} />
             <Route path="/asignacionDocente" element={<AsignacionDocente />} />
             <Route path="/matriculas" element={<ListMatriculas />} />
             <Route path="/registroMatricula" element={<RegistroMatricula />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={['DIRECTOR', 'DOCENTE']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['DOCENTE']} />}>
             <Route path="/calificaciones" element={<Calificaciones />} />
           </Route>
 
@@ -63,7 +63,7 @@ function AppRoutes() {
             <Route path="/gestionCobro" element={<GestionCobroForm />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={['DIRECTOR']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['DIRECTOR', 'SECRETARIA']} />}>
             <Route path="/reportes" element={<ReporteBoletin />} />
           </Route>
         </Route>
