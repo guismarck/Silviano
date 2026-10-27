@@ -20,6 +20,8 @@ import { AsignacionDocente } from './Componentes/Academico/controllers/Asignacio
 import Asignaturas from './Componentes/Academico/controllers/Asignaturas';
 import './estilosCSS/flags.css';
 import './index.css';
+import  Docentes  from './Componentes/Academico/controllers/Docentes';
+import  Tutores  from './Componentes/Academico/controllers/Tutores';
 
 const RootRedirect = () => {
   const { isAuthenticated } = useAuth();
@@ -47,6 +49,8 @@ function AppRoutes() {
 
           <Route element={<ProtectedRoute allowedRoles={['DIRECTOR', 'SECRETARIA']} />}>
             <Route path="/estudiantes" element={<Estudiantes />} />
+            <Route path="/tutores" element={<Tutores />} />
+            <Route path="/docentes" element={<Docentes />} />
             <Route path="/grados" element={<ListarGrados />} /> 
             <Route path="/asignaturas" element={<Asignaturas />} />
             <Route path="/salon" element={<ListarCatalogoSalon />} />

@@ -1,58 +1,159 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
+import { AutoComplete } from 'primereact/autocomplete';
 import { Toast } from 'primereact/toast';
-import { reportesService } from '../../../Servicios/ReporteServicios/reportesService';
+import { buscarEstudiantesMatricula, descargarBoletin } from '../../../Servicios/ReporteServicios/reportesService';
+
+// Expresión regular para caracteres en español (letras, espacios, tildes, ñ/Ñ)
+const REGEX_SOLO_LETRAS_ESPANOL = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/;
 
 export const ReporteBoletin = () => {
   const toast = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [filtros, setFiltros] = useState({
+  const [loadingEstudianteAuto, setLoadingEstudianteAuto] = useState(false);
+  const anioActual = new Date().getFullYear();
+
+  // Combo de Años Lectivos dinámico desde 1990 hasta el año actual
+  const opcionesAnios = useMemo(() => {
+    const anios = [];
+    for (let yr = anioActual; yr >= 1990; yr--) {
+      anios.push({ label: `${yr}`, value: yr });
+    }
+    return anios;
+  }, [anioActual]);
+
+  // Estado unificado e inmutable del formulario
+  const [formData, setFormData] = useState({
+    periodoLectivo: anioActual,
     codigoMined: '',
-    periodoLectivo: '2026',
-    formato: 'pdf',
+    idPersona: null,
   });
 
-  const formatosOptions = [
-    { label: 'Documento PDF (.pdf)', value: 'pdf' },
-    { label: 'Hoja de Cálculo Excel (.xlsx)', value: 'xlsx' },
-  ];
+  // Estados independientes para la búsqueda y autocompletado
+  const [busquedaEstudianteInput, setBusquedaEstudianteInput] = useState('');
+  const [sugerenciasEstudiantes, setSugerenciasEstudiantes] = useState([]);
 
-  // Handler unificado inmutable para inputs
+  // Handler para inputs primitivos de texto con validación de tildes
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
-    setFiltros((prev) => ({ ...prev, [name]: value }));
+    const strVal = value ?? '';
+
+    if (name === 'codigoMined' && strVal !== '' && !REGEX_SOLO_LETRAS_ESPANOL.test(strVal)) {
+      // Si el código MINED solo permite ciertos caracteres, ajusta la regex aquí
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: strVal }));
   }, []);
 
+  // Handler inmutable para el Dropdown de años
+  const handleDropdownChange = useCallback((name, value) => {
+    const valorPrimitivo = typeof value === 'object' && value !== null ? value.value : value;
+    setFormData((prev) => ({ ...prev, [name]: valorPrimitivo }));
+  }, []);
+
+  // Búsqueda en la API mediante AutoComplete
+  const handleCompleteEstudiantes = async (e) => {
+    const query = e.query ? e.query.trim() : '';
+    if (!query) {
+      setSugerenciasEstudiantes([]);
+      return;
+    }
+
+    setLoadingEstudianteAuto(true);
+    try {
+      const resultados = await buscarEstudiantesMatricula(query);
+
+      // Normalización de datos devueltos por el backend
+      const datosFormateados = resultados.map((est) => {
+        const idPersonaExtrahido = est.idPersona || est.id_persona || est.id || null;
+        const codigoMinedExtraido = est.codigoMined || est.codigo_mined || est.codigo || '';
+        const nombreStr = est.nombre_completo || `${est.nombres || ''} ${est.apellidos || ''}`.trim();
+
+        return {
+          ...est,
+          idPersona: idPersonaExtrahido,
+          codigoMined: codigoMinedExtraido,
+          labelEstudiante: codigoMinedExtraido 
+            ? `[${codigoMinedExtraido}] - ${nombreStr}` 
+            : nombreStr,
+        };
+      });
+
+      setSugerenciasEstudiantes(datosFormateados);
+    } catch (error) {
+      setSugerenciasEstudiantes([]);
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error de Búsqueda',
+        detail: 'No se pudieron cargar las sugerencias de estudiantes.',
+      });
+    } finally {
+      setLoadingEstudianteAuto(false);
+    }
+  };
+
+  // Selección de un estudiante desde la lista desplegable
+  const handleSelectEstudiante = (e) => {
+    const item = e.value;
+    if (!item) return;
+
+    setBusquedaEstudianteInput(item.labelEstudiante || '');
+    setFormData((prev) => ({
+      ...prev,
+      idPersona: item.idPersona,
+      codigoMined: item.codigoMined || prev.codigoMined,
+    }));
+  };
+
+  // Template personalizado para renderizar cada elemento en la lista desplegable
+  const estudianteItemTemplate = (item) => {
+    return (
+      <div className="flex align-items-center justify-content-between p-1">
+        <div>
+          <span className="font-bold block text-800">{item.labelEstudiante}</span>
+          {item.cedula && <small className="text-500">Cédula: {item.cedula}</small>}
+        </div>
+        {item.codigoMined && (
+          <span className="p-tag p-tag-info font-normal text-xs">
+            MINED: {item.codigoMined}
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  // Handler principal para envío del formulario y generación del PDF
   const handleGenerarBoletin = async (e) => {
     e.preventDefault();
 
-    if (!filtros.codigoMined.trim()) {
+    if (!formData.codigoMined.trim() && !formData.idPersona) {
       toast.current?.show({
         severity: 'warn',
-        summary: 'Atención',
-        detail: 'Ingrese un Código MINED válido para generar el boletín.',
+        summary: 'Campo requerido',
+        detail: 'Debe ingresar un Código MINED o seleccionar un estudiante para continuar.',
       });
       return;
     }
 
     setLoading(true);
     try {
-      await reportesService.descargarBoletin(
-        filtros.codigoMined,
-        filtros.periodoLectivo,
-        filtros.formato
-      );
+      await descargarBoletin({
+        idPersona: formData.idPersona,
+        codigoMined: formData.codigoMined,
+        anioLectivo: formData.periodoLectivo,
+      });
+
       toast.current?.show({
         severity: 'success',
-        summary: 'Reporte Generado',
-        detail: 'El archivo se ha descargado correctamente.',
+        summary: 'Boletín Generado',
+        detail: 'El archivo PDF se ha descargado correctamente.',
       });
     } catch (error) {
       toast.current?.show({
         severity: 'error',
-        summary: 'Error de Reportes',
+        summary: 'Error al generar reporte',
         detail: error.message,
       });
     } finally {
@@ -63,61 +164,91 @@ export const ReporteBoletin = () => {
   return (
     <div className="card p-4 shadow-1 border-round bg-white">
       <Toast ref={toast} />
-      <h3 className="text-xl font-bold mb-4 text-800 flex align-items-center gap-2">
-        <i className="bx bx-file text-primary text-2xl"></i>
-        Emisión de Boletín Académico MINED
-      </h3>
+
+      <div className="flex align-items-center gap-2 mb-4">
+        <i className="bx bx-file text-primary text-3xl"></i>
+        <div>
+          <h3 className="text-xl font-bold m-0 text-800">
+            Emisión de Boletín Académico 
+          </h3>
+          <small className="text-500">
+            Generación oficial de boletines de calificaciones 
+          </small>
+        </div>
+      </div>
 
       <form onSubmit={handleGenerarBoletin} className="p-fluid grid">
+        {/* Selector de Año Lectivo (1990 - Año Actual) */}
         <div className="col-12 col-md-4 mb-3">
+          <label htmlFor="periodoLectivo" className="font-semibold block mb-2 text-700">
+            Año Lectivo
+          </label>
+          <Dropdown
+            id="periodoLectivo"
+            name="periodoLectivo"
+            value={formData.periodoLectivo}
+            options={opcionesAnios}
+            optionLabel="label"
+            optionValue="value"
+            onChange={(e) => handleDropdownChange('periodoLectivo', e.value)}
+            placeholder="Seleccione el Año"
+            filter
+          />
+        </div>
+
+        {/* Buscador Autocompletado de Estudiantes */}
+        <div className="col-12 mb-3 surface-50 p-3 border-round border-1 surface-border">
+          <label htmlFor="autoEstudiante" className="font-bold block mb-2 text-700">
+            🔍 Buscar Estudiante Existente (Código MINED o Nombres, ej: '123' o 'William')
+          </label>
+          <AutoComplete
+            id="autoEstudiante"
+            value={busquedaEstudianteInput}
+            suggestions={sugerenciasEstudiantes}
+            completeMethod={handleCompleteEstudiantes}
+            field="labelEstudiante"
+            itemTemplate={estudianteItemTemplate}
+            onChange={(e) => {
+              // Permite escribir texto sin romper la selección previa
+              const val = e.value;
+              setBusquedaEstudianteInput(typeof val === 'string' ? val : val?.labelEstudiante || '');
+            }}
+            onSelect={handleSelectEstudiante}
+            placeholder="Escriba código MINED o nombre del alumno..."
+            loading={loadingEstudianteAuto}
+            dropdown
+            emptyMessage="No se encontraron estudiantes"
+            className="w-full"
+          />
+        </div>
+
+        {/* Código MINED del Estudiante */}
+        <div className="col-12 col-md-6 mb-3">
           <label htmlFor="codigoMined" className="font-semibold block mb-2 text-700">
             Código MINED Estudiante
           </label>
           <InputText
             id="codigoMined"
             name="codigoMined"
-            value={filtros.codigoMined}
+            value={formData.codigoMined}
             onChange={handleInputChange}
             placeholder="Ej. MINED-2026-88"
           />
         </div>
 
-        <div className="col-12 col-md-4 mb-3">
-          <label htmlFor="periodoLectivo" className="font-semibold block mb-2 text-700">
-            Año Lectivo
-          </label>
-          <InputText
-            id="periodoLectivo"
-            name="periodoLectivo"
-            value={filtros.periodoLectivo}
-            onChange={handleInputChange}
-          />
-        </div>
-
-        <div className="col-12 col-md-4 mb-3">
-          <label htmlFor="formato" className="font-semibold block mb-2 text-700">
-            Formato de Exportación
-          </label>
-          <Dropdown
-            id="formato"
-            value={filtros.formato}
-            options={formatosOptions}
-            onChange={(e) => setFiltros((prev) => ({ ...prev, formato: e.value }))}
-            placeholder="Seleccione Formato"
-          />
-        </div>
-
+        {/* Botón de Envío */}
         <div className="col-12 flex justify-content-end gap-2 mt-2">
           <Button
             type="submit"
-            label="Descargar Reporte"
-            icon="pi pi-download"
+            label="Descargar PDF"
+            icon="pi pi-file-pdf"
             loading={loading}
-            className="p-button-success font-bold"
+            className="p-button-danger font-bold"
           />
         </div>
       </form>
     </div>
   );
 };
+
 export default ReporteBoletin;

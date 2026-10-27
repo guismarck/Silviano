@@ -43,6 +43,8 @@ export const MainLayout = () => {
       roles: ['DIRECTOR', 'SECRETARIA'],
       subMenu: [
         { label: 'Estudiantes', path: '/estudiantes' },
+        { label: 'Docentes', path: '/docentes' },
+        { label: 'Tutores', path: '/tutores' },
         { label: 'Salón', path: '/salon' },
         { label: 'Grados', path: '/grados' },
         { label: 'Asignaturas', path: '/asignaturas' },
