@@ -22,20 +22,35 @@ export const buscarEstudiantesMatricula = async (search) => {
  * @param {number|string} payload.anioLectivo - Año lectivo (panio_lectivo)
  * @param {number|string} payload.idPersona - ID de la persona (pidpersona)
  * @param {string} payload.codigoMined - Código MINED (pcodigo_mined)
+ * @param {'parcial'|'final'} payload.tipoReporte - Tipo de boletín a generar
+ * @param {number|string} payload.numeroPeriodo - Período requerido por el boletín parcial
  * @returns {Promise<Blob>}
  */
-export const descargarBoletin = async ({ anioLectivo, idPersona, codigoMined }) => {
+export const descargarBoletin = async ({
+  anioLectivo,
+  idPersona,
+  codigoMined,
+  tipoReporte = 'final',
+  numeroPeriodo,
+}) => {
   try {
+    const esParcial = tipoReporte === 'parcial';
+    const parametros = {
+      panio_lectivo: anioLectivo ? Number(anioLectivo) : null,
+      pidpersona: idPersona ? Number(idPersona) : null,
+      pcodigo_mined: codigoMined ? codigoMined.trim() : '',
+    };
+
+    if (esParcial) {
+      parametros.pnumero_periodo = numeroPeriodo ? Number(numeroPeriodo) : null;
+    }
+
     const response = await api.post(
       '/reportes/descargar',
       {
-        nombrePlantilla: 'Boletin_Silviano_final',
+        nombrePlantilla: esParcial ? 'Boletin_Individual_Silviano' : 'Boletin_Silviano_final',
         formato: 'PDF',
-        parametros: {
-          panio_lectivo: anioLectivo ? Number(anioLectivo) : null,
-          pidpersona: idPersona ? Number(idPersona) : null,
-          pcodigo_mined: codigoMined ? codigoMined.trim() : '',
-        },
+        parametros,
       },
       {
         responseType: 'blob',

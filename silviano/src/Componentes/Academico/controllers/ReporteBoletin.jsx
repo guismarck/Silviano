@@ -26,10 +26,25 @@ export const ReporteBoletin = () => {
 
   // Estado unificado e inmutable del formulario
   const [formData, setFormData] = useState({
+    tipoReporte: null,
     periodoLectivo: anioActual,
+    numeroPeriodo: null,
     codigoMined: '',
     idPersona: null,
   });
+
+  const opcionesTipoReporte = useMemo(() => [
+    { label: 'Boletín Parcial', value: 'parcial' },
+    { label: 'Boletín Final', value: 'final' },
+  ], []);
+
+  const opcionesPeriodos = useMemo(() => [
+    { label: 'I PARCIAL', value: 1 },
+    { label: 'II PARCIAL', value: 2 },
+    { label: 'III PARCIAL', value: 3 },
+    { label: 'IV PARCIAL', value: 4 },
+    { label: 'V PARCIAL', value: 5 },
+  ], []);
 
   // Estados independientes para la búsqueda y autocompletado
   const [busquedaEstudianteInput, setBusquedaEstudianteInput] = useState('');
@@ -128,11 +143,29 @@ export const ReporteBoletin = () => {
   const handleGenerarBoletin = async (e) => {
     e.preventDefault();
 
+    if (!formData.tipoReporte) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Campo requerido',
+        detail: 'Debe seleccionar si desea generar un boletín parcial o final.',
+      });
+      return;
+    }
+
     if (!formData.codigoMined.trim() && !formData.idPersona) {
       toast.current?.show({
         severity: 'warn',
         summary: 'Campo requerido',
         detail: 'Debe ingresar un Código MINED o seleccionar un estudiante para continuar.',
+      });
+      return;
+    }
+
+    if (formData.tipoReporte === 'parcial' && !formData.numeroPeriodo) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Campo requerido',
+        detail: 'Debe seleccionar el período del boletín parcial.',
       });
       return;
     }
@@ -143,6 +176,8 @@ export const ReporteBoletin = () => {
         idPersona: formData.idPersona,
         codigoMined: formData.codigoMined,
         anioLectivo: formData.periodoLectivo,
+        tipoReporte: formData.tipoReporte,
+        numeroPeriodo: formData.tipoReporte === 'parcial' ? formData.numeroPeriodo : undefined,
       });
 
       toast.current?.show({
@@ -178,6 +213,42 @@ export const ReporteBoletin = () => {
       </div>
 
       <form onSubmit={handleGenerarBoletin} className="p-fluid grid">
+        {/* Tipo de boletín */}
+        <div className="col-12 col-md-6 mb-3">
+          <label htmlFor="tipoReporte" className="font-semibold block mb-2 text-700">
+            Tipo de Boletín
+          </label>
+          <Dropdown
+            id="tipoReporte"
+            name="tipoReporte"
+            value={formData.tipoReporte}
+            options={opcionesTipoReporte}
+            optionLabel="label"
+            optionValue="value"
+            onChange={(e) => handleDropdownChange('tipoReporte', e.value)}
+            placeholder="Seleccione el tipo de boletín"
+          />
+        </div>
+
+        {/* Período únicamente para boletines parciales */}
+        {formData.tipoReporte === 'parcial' && (
+          <div className="col-12 col-md-6 mb-3">
+            <label htmlFor="numeroPeriodo" className="font-semibold block mb-2 text-700">
+              Período
+            </label>
+            <Dropdown
+              id="numeroPeriodo"
+              name="numeroPeriodo"
+              value={formData.numeroPeriodo}
+              options={opcionesPeriodos}
+              optionLabel="label"
+              optionValue="value"
+              onChange={(e) => handleDropdownChange('numeroPeriodo', e.value)}
+              placeholder="Seleccione el período"
+            />
+          </div>
+        )}
+
         {/* Selector de Año Lectivo (1990 - Año Actual) */}
         <div className="col-12 col-md-4 mb-3">
           <label htmlFor="periodoLectivo" className="font-semibold block mb-2 text-700">
@@ -240,10 +311,10 @@ export const ReporteBoletin = () => {
         <div className="col-12 flex justify-content-end gap-2 mt-2">
           <Button
             type="submit"
-            label="Descargar PDF"
+            label="Generar Boletín"
             icon="pi pi-file-pdf"
             loading={loading}
-            className="p-button-danger font-bold"
+            className="p-button-primary font-bold"
           />
         </div>
       </form>
