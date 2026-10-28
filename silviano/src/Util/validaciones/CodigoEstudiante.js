@@ -1,14 +1,14 @@
 /**
  * Generador del código de estudiante.
- * Ubicación sugerida: src/Util/validaciones/codigoEstudiante.js
+ * Ubicación sugerida: src/Util/validaciones/CodigoEstudiante.js
  *
- * Formato: INICIALES-DDMMAA-0001
- * Ejemplo: Guismarck Josue Nuñez Gonzalez, 01/04/1997 -> GJNG-010497-0001
+ * Formato: INICIALES-DDMMAA  (sin consecutivo)
+ * Ejemplo: Guismarck Josue Nuñez Gonzalez, 01/04/1997 -> GJNG-010497
  */
- 
+
 // Palabras que no aportan inicial: "María de los Ángeles" -> M, A
 const PARTICULAS = ['DE', 'DEL', 'LA', 'LAS', 'LOS', 'Y'];
- 
+
 const iniciales = (texto = '') =>
     texto
         .normalize('NFD')
@@ -18,23 +18,21 @@ const iniciales = (texto = '') =>
         .filter(palabra => palabra && !PARTICULAS.includes(palabra))
         .map(palabra => palabra[0])
         .join('');
- 
+
 /**
  * @param {string} nombres
  * @param {string} apellidos
  * @param {Date|null} fecha - Fecha de nacimiento
- * @param {string[]} codigosExistentes - Códigos ya registrados, para el consecutivo
  * @returns {string} Código generado, o '' si faltan datos.
+ *
+ * Nota: ya no se usa la lista de códigos existentes (antes servía para el
+ * consecutivo 0001, 0002...). Los llamados que todavía pasen un cuarto
+ * argumento siguen funcionando: simplemente se ignora.
  */
-export const generarCodigoEstudiante = (
-    nombres,
-    apellidos,
-    fecha,
-    codigosExistentes = []
-) => {
+export const generarCodigoEstudiante = (nombres, apellidos, fecha) => {
     const inicialesNombres = iniciales(nombres);
     const inicialesApellidos = iniciales(apellidos);
- 
+
     if (
         !inicialesNombres ||
         !inicialesApellidos ||
@@ -43,19 +41,10 @@ export const generarCodigoEstudiante = (
     ) {
         return '';
     }
- 
+
     const dd = String(fecha.getDate()).padStart(2, '0');
     const mm = String(fecha.getMonth() + 1).padStart(2, '0');
     const aa = String(fecha.getFullYear()).slice(-2);
- 
-    const prefijo = `${inicialesNombres}${inicialesApellidos}-${dd}${mm}${aa}-`;
- 
-    // Busca el consecutivo más alto con el mismo prefijo y suma 1.
-    const mayor = codigosExistentes
-        .filter(codigo => typeof codigo === 'string' && codigo.startsWith(prefijo))
-        .map(codigo => parseInt(codigo.slice(prefijo.length), 10))
-        .filter(numero => !isNaN(numero))
-        .reduce((max, numero) => Math.max(max, numero), 0);
- 
-    return `${prefijo}${String(mayor + 1).padStart(4, '0')}`;
+
+    return `${inicialesNombres}${inicialesApellidos}-${dd}${mm}${aa}`;
 };

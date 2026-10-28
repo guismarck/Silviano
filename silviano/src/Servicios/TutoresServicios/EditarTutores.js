@@ -1,4 +1,3 @@
-
 import React, {
     useState,
     useEffect,
@@ -16,6 +15,12 @@ import { Divider } from 'primereact/divider';
 
 import { CedulaInput } from '../../Componentes/CedulaComponent/cedulaInput';
 import { extraerFechaNacimientoCedula } from '../../Util/validaciones/ValidacionGenericas';
+
+// NUEVO: edad mínima del tutor (18 años cumplidos).
+import {
+    validarEdadTutor,
+    EDAD_MINIMA_TUTOR
+} from '../../Util/validaciones/ValidacionEdad.js';
 
 import {
     updateTutorService,
@@ -42,6 +47,18 @@ const estadoInicial = {
     ocupacion: '',
     telefonoPrincipal: '',
     telefonoSecundario: ''
+};
+
+// NUEVO: fecha más reciente permitida = hoy menos 18 años.
+// Los días posteriores quedan deshabilitados en el Calendar.
+const fechaMaximaTutor = () => {
+    const hoy = new Date();
+
+    return new Date(
+        hoy.getFullYear() - EDAD_MINIMA_TUTOR,
+        hoy.getMonth(),
+        hoy.getDate()
+    );
 };
 
 const parseDateFromDB = (dateString) => {
@@ -144,6 +161,86 @@ const UpdateTutor = ({
         }));
     };
 
+    // =========================================================
+    // EDAD SEGÚN LA CÉDULA
+    // Se calcula en cada render a partir de la cédula escrita, así el
+    // mensaje aparece y desaparece solo, sin depender del orden de eventos.
+    // =========================================================
+
+    const resultadoCedula =
+        tutorInfo.cedula && tutorInfo.cedula.length === 16
+            ? extraerFechaNacimientoCedula(tutorInfo.cedula)
+            : null;
+
+    const errorEdadCedula =
+        resultadoCedula?.esValida && resultadoCedula.fechaNacimiento
+            ? validarEdadTutor(resultadoCedula.fechaNacimiento)
+            : null;
+
+    // NUEVO: fecha elegida o escrita en el calendario; se rechaza si es menor de 18 años.
+    const handleFechaChange = (nueva) => {
+        if (nueva) {
+            const errorEdad = validarEdadTutor(nueva);
+
+            if (errorEdad) {
+                handleChange('fecha_nacimiento', null);
+
+                // Después, porque handleChange() limpia el error del campo.
+                setErrores(prev => ({
+                    ...prev,
+                    fecha_nacimiento: errorEdad
+                }));
+
+                toast.current?.show({
+                    severity: 'warn',
+                    summary: 'Edad no permitida',
+                    detail: errorEdad,
+                    life: 4000
+                });
+
+                return;
+            }
+        }
+
+        handleChange('fecha_nacimiento', nueva);
+    };
+
+    // NUEVO: cuando la cédula es válida, su fecha pasa al calendario,
+    // siempre que el tutor tenga al menos 18 años.
+    const handleCedulaValida = (esValida, numeroCedula) => {
+        setCedulaValida(esValida);
+
+        if (!esValida) return;
+
+        const resultado = extraerFechaNacimientoCedula(numeroCedula);
+
+        if (!resultado.esValida || !resultado.fechaNacimiento) return;
+
+        const errorEdad = validarEdadTutor(resultado.fechaNacimiento);
+
+        if (errorEdad) {
+            // El error se muestra bajo la cédula (errorEdadCedula)
+            // y la fecha se deja vacía.
+            handleChange('fecha_nacimiento', null);
+
+            toast.current?.show({
+                severity: 'warn',
+                summary: 'Edad no permitida',
+                detail: errorEdad,
+                life: 4000
+            });
+
+            return;
+        }
+
+        setErrores(prev => ({
+            ...prev,
+            cedula: ''
+        }));
+
+        handleChange('fecha_nacimiento', resultado.fechaNacimiento);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -152,13 +249,26 @@ const UpdateTutor = ({
             cedulaValida
         );
 
-        setErrores(resultado.errores);
+        // NUEVO: el tutor debe tener al menos 18 años cumplidos.
+        const errorEdadFecha = tutorInfo.fecha_nacimiento
+            ? validarEdadTutor(tutorInfo.fecha_nacimiento)
+            : null;
 
-        if (!resultado.esValido) {
+        const erroresFinales = {
+            ...resultado.errores,
+            ...(errorEdadFecha ? { fecha_nacimiento: errorEdadFecha } : {})
+        };
+
+        setErrores(erroresFinales);
+
+        if (!resultado.esValido || errorEdadFecha || errorEdadCedula) {
             toast.current?.show({
                 severity: 'warn',
                 summary: 'Revise el formulario',
-                detail: 'Complete los campos obligatorios y corrija los datos indicados.',
+                detail:
+                    errorEdadCedula ||
+                    errorEdadFecha ||
+                    'Complete los campos obligatorios y corrija los datos indicados.',
                 life: 3500
             });
 
@@ -199,11 +309,16 @@ const UpdateTutor = ({
         }
     };
 
-    const campoConError = (campo) => (
-        errores[campo]
-            ? <small className="p-error tutor-error">{errores[campo]}</small>
-            : null
-    );
+    const campoConError = (campo) => {
+        // Para la cédula también se muestra el error de edad calculado.
+        const mensaje =
+            errores[campo] ||
+            (campo === 'cedula' ? errorEdadCedula : null);
+
+        return mensaje
+            ? <small className="p-error tutor-error">{mensaje}</small>
+            : null;
+    };
 
     if (fetching) {
         return (
@@ -307,14 +422,11 @@ const UpdateTutor = ({
                             <Calendar
                                 id="fecha_nacimiento"
                                 value={tutorInfo.fecha_nacimiento}
-                                onChange={e => handleChange(
-                                    'fecha_nacimiento',
-                                    e.value
-                                )}
+                                onChange={e => handleFechaChange(e.value)}
                                 dateFormat="dd/mm/yy"
                                 placeholder="Día / Mes / Año"
                                 showIcon
-                                maxDate={new Date()}
+                                maxDate={fechaMaximaTutor()}
                                 className={errores.fecha_nacimiento ? 'p-invalid' : ''}
                                 disabled={loading}
                             />
@@ -333,31 +445,7 @@ const UpdateTutor = ({
                                     'cedula',
                                     e.target.value
                                 )}
-                                onValidChage={(esValida, numeroCedula) => {
-                                    setCedulaValida(esValida);
-
-                                    if (esValida) {
-                                        setErrores(prev => ({
-                                            ...prev,
-                                            cedula: ''
-                                        }));
-
-                                        const resultado =
-                                            extraerFechaNacimientoCedula(
-                                                numeroCedula
-                                            );
-
-                                        if (
-                                            resultado.esValida &&
-                                            resultado.fechaNacimiento
-                                        ) {
-                                            handleChange(
-                                                'fecha_nacimiento',
-                                                resultado.fechaNacimiento
-                                            );
-                                        }
-                                    }
-                                }}
+                                onValidChage={handleCedulaValida}
                             />
 
                             {campoConError('cedula')}

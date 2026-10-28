@@ -25,6 +25,12 @@ import {
   validarCedula
 } from '../../Util/validaciones/Validacioncedula.js';
 
+// NUEVO: edad mínima del estudiante (5 años cumplidos), igual que en el registro.
+import {
+  validarEdadEstudiante,
+  EDAD_MINIMA_ESTUDIANTE
+} from '../../Util/validaciones/ValidacionEdad.js';
+
 // =========================================================
 // CONSTANTES Y UTILIDADES
 // =========================================================
@@ -53,6 +59,18 @@ const ESTADO_INICIAL = {
   partida_nacimiento: 'no',
   estado: true,
   sexo: ''
+};
+
+// NUEVO: fecha más reciente permitida = hoy menos 5 años.
+// Los días posteriores quedan deshabilitados en el Calendar.
+const fechaMaximaEstudiante = () => {
+  const hoy = new Date();
+
+  return new Date(
+    hoy.getFullYear() - EDAD_MINIMA_ESTUDIANTE,
+    hoy.getMonth(),
+    hoy.getDate()
+  );
 };
 
 // Convierte el string de la BD (YYYY-MM-DD) a Date, sin desfase de zona horaria.
@@ -211,19 +229,60 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate, onCancel }) => {
     setError(null);
   };
 
+  // NUEVO: fecha elegida o escrita en el calendario;
+  // se rechaza si el estudiante tendría menos de 5 años.
+  const handleFechaChange = (nueva) => {
+    if (nueva) {
+      const errorEdad = validarEdadEstudiante(nueva);
+
+      if (errorEdad) {
+        handleChange('fecha_nacimiento', null);
+
+        // Después, porque handleChange() limpia el error.
+        setError({ campo: 'fecha_nacimiento', mensaje: errorEdad });
+
+        toast.current?.show({
+          severity: 'warn',
+          summary: 'Edad no permitida',
+          detail: errorEdad,
+          life: 4000
+        });
+
+        return;
+      }
+    }
+
+    handleChange('fecha_nacimiento', nueva);
+  };
+
   // La cédula se formatea al escribir y, cuando está completa,
   // su fecha pasa al campo de fecha de nacimiento.
+  // NUEVO: si esa fecha deja al estudiante con menos de 5 años,
+  // se rechaza igual que en el calendario.
   const handleCedula = (valor) => {
     const cedula = formatearCedula(valor);
     const fecha = extraerFechaDeCedula(cedula);
 
+    const errorEdad = fecha ? validarEdadEstudiante(fecha) : null;
+
     setFormValues((prev) => ({
       ...prev,
       cedula,
-      ...(fecha ? { fecha_nacimiento: fecha } : {})
+      ...(fecha
+        ? { fecha_nacimiento: errorEdad ? null : fecha }
+        : {})
     }));
 
-    if (cedula.length === 16 && !fecha) {
+    if (errorEdad) {
+      setError({ campo: 'cedula', mensaje: errorEdad });
+
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Edad no permitida',
+        detail: errorEdad,
+        life: 4000
+      });
+    } else if (cedula.length === 16 && !fecha) {
       setError({
         campo: 'cedula',
         mensaje: 'La cédula no contiene una fecha de nacimiento válida.'
@@ -255,6 +314,10 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate, onCancel }) => {
 
     const errorFecha = validarFechaNacimiento(formValues.fecha_nacimiento, 'del estudiante');
     if (errorFecha) return { campo: 'fecha_nacimiento', mensaje: errorFecha };
+
+    // NUEVO: el estudiante debe tener al menos 5 años cumplidos.
+    const errorEdad = validarEdadEstudiante(formValues.fecha_nacimiento);
+    if (errorEdad) return { campo: 'fecha_nacimiento', mensaje: errorEdad };
 
     const errorCedula = validarCedula(
       formValues.cedula,
@@ -471,7 +534,7 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate, onCancel }) => {
             <Campo
               id="cedula"
               label="Cédula"
-              ayuda="La fecha de nacimiento se completa sola con la fecha de la cédula."
+              ayuda="La fecha de nacimiento se completa sola con la fecha de la cédula. El estudiante debe tener al menos 5 años."
               error={errorDe('cedula')}
             >
               <InputText
@@ -494,10 +557,10 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate, onCancel }) => {
               <Calendar
                 inputId="fecha_nacimiento"
                 value={formValues.fecha_nacimiento}
-                onChange={(e) => handleChange('fecha_nacimiento', e.value)}
+                onChange={(e) => handleFechaChange(e.value)}
                 dateFormat="dd/mm/yy"
                 showIcon
-                maxDate={new Date()}
+                maxDate={fechaMaximaEstudiante()}
                 placeholder="dd/mm/aaaa"
                 className={`w-full ${claseInvalida('fecha_nacimiento')}`}
                 inputClassName="w-full"
@@ -551,9 +614,7 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate, onCancel }) => {
 
         <Seccion icono="pi-book" titulo="Información académica y registro MINED">
           <div className="formgrid grid">
-            <Campo id="idpersona" label="ID del sistema">
-              <InputText id="idpersona" value={formValues.idpersona} className="w-full" disabled />
-            </Campo>
+           
 
             <Campo
               id="codEstudiante"

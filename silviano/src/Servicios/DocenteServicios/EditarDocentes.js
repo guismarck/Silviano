@@ -16,6 +16,16 @@ import { updateDocenteService, getDocenteById } from '../../Servicios/DocenteSer
 
 import { validarSoloTexto } from '../../Util/validaciones/validacionEstudiante.js';
 
+// NUEVO: validaciones de teléfono y correo (las mismas del registro de docente).
+import {
+  validarTelefono,
+  validarEmail,
+  EDAD_MINIMA_DOCENTE
+} from '../../Util/validaciones/validacionDocente.js';
+
+// NUEVO: el docente debe tener al menos 18 años cumplidos.
+import { validarEdadMinima } from '../../Util/validaciones/ValidacionEdad.js';
+
 import {
   formatearCedula,
   extraerFechaDeCedula,
@@ -41,6 +51,8 @@ const ESTADO_INICIAL = {
   cedula: '',
   codDocente: '',
   especialidad: '',
+  telefono: '',
+  email: '',
   estado: true,
   sexo: ''
 };
@@ -64,6 +76,18 @@ const formatDateToDB = (dateObj) => {
   const day = String(dateObj.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+};
+
+// Fecha más reciente permitida = hoy menos 18 años.
+// Los días posteriores quedan deshabilitados en el Calendar.
+const fechaMaximaDocente = () => {
+  const hoy = new Date();
+
+  return new Date(
+    hoy.getFullYear() - EDAD_MINIMA_DOCENTE,
+    hoy.getMonth(),
+    hoy.getDate()
+  );
 };
 
 const normalizarSexo = (valor) => {
@@ -166,6 +190,8 @@ const UpdateDocente = ({ idPersona, onDocenteUpdate, onEstudianteUpdate, onCance
         cedula: formatearCedula(data.cedula ?? ''),
         codDocente: data.codDocente ?? '',
         especialidad: data.especialidad ?? '',
+        telefono: String(data.telefono ?? ''),
+        email: data.email ?? '',
         sexo: normalizarSexo(data.sexo),
         fecha_nacimiento: parseDateFromDB(data.fecha_nacimiento),
         estado: Boolean(data.estado)
@@ -207,13 +233,30 @@ const UpdateDocente = ({ idPersona, onDocenteUpdate, onEstudianteUpdate, onCance
     const cedula = formatearCedula(valor);
     const fecha = extraerFechaDeCedula(cedula);
 
+    // NUEVO: si la fecha de la cédula corresponde a un menor de 18 años,
+    // se rechaza: la fecha queda vacía y el error se muestra bajo la cédula.
+    const errorEdad = fecha
+      ? validarEdadMinima(fecha, EDAD_MINIMA_DOCENTE, 'docente')
+      : null;
+
     setFormValues((prev) => ({
       ...prev,
       cedula,
-      ...(fecha ? { fecha_nacimiento: fecha } : {})
+      ...(fecha
+        ? { fecha_nacimiento: errorEdad ? null : fecha }
+        : {})
     }));
 
-    if (cedula.length === 16 && !fecha) {
+    if (errorEdad) {
+      setError({ campo: 'cedula', mensaje: errorEdad });
+
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Edad no permitida',
+        detail: errorEdad,
+        life: 4000
+      });
+    } else if (cedula.length === 16 && !fecha) {
       setError({
         campo: 'cedula',
         mensaje: 'La cédula no contiene una fecha de nacimiento válida.'
@@ -221,6 +264,31 @@ const UpdateDocente = ({ idPersona, onDocenteUpdate, onEstudianteUpdate, onCance
     } else {
       setError(null);
     }
+  };
+
+  // NUEVO: fecha elegida o escrita en el calendario; se rechaza si es menor de 18 años.
+  const handleFechaChange = (nueva) => {
+    if (nueva) {
+      const errorEdad = validarEdadMinima(nueva, EDAD_MINIMA_DOCENTE, 'docente');
+
+      if (errorEdad) {
+        handleChange('fecha_nacimiento', null);
+
+        // Después, porque handleChange() limpia el error.
+        setError({ campo: 'fecha_nacimiento', mensaje: errorEdad });
+
+        toast.current?.show({
+          severity: 'warn',
+          summary: 'Edad no permitida',
+          detail: errorEdad,
+          life: 4000
+        });
+
+        return;
+      }
+    }
+
+    handleChange('fecha_nacimiento', nueva);
   };
 
   // ---------------------------------------------------------
@@ -246,12 +314,28 @@ const UpdateDocente = ({ idPersona, onDocenteUpdate, onEstudianteUpdate, onCance
     const errorFecha = validarFechaNacimiento(formValues.fecha_nacimiento, 'del docente');
     if (errorFecha) return { campo: 'fecha_nacimiento', mensaje: errorFecha };
 
+    // NUEVO: el docente debe tener al menos 18 años cumplidos.
+    const errorEdad = validarEdadMinima(
+      formValues.fecha_nacimiento,
+      EDAD_MINIMA_DOCENTE,
+      'docente'
+    );
+    if (errorEdad) return { campo: 'fecha_nacimiento', mensaje: errorEdad };
+
     const errorCedula = validarCedula(
       formValues.cedula,
       formValues.fecha_nacimiento,
       'del docente'
     );
     if (errorCedula) return { campo: 'cedula', mensaje: errorCedula };
+
+    // NUEVO: teléfono obligatorio y de 8 dígitos.
+    const errorTelefono = validarTelefono(formValues.telefono);
+    if (errorTelefono) return { campo: 'telefono', mensaje: errorTelefono };
+
+    // NUEVO: correo obligatorio y con formato válido (con @).
+    const errorEmail = validarEmail(formValues.email);
+    if (errorEmail) return { campo: 'email', mensaje: errorEmail };
 
     return null;
   };
@@ -284,6 +368,8 @@ const UpdateDocente = ({ idPersona, onDocenteUpdate, onEstudianteUpdate, onCance
         cedula: formValues.cedula.trim() || null,
         direccion: formValues.direccion.trim(),
         especialidad: formValues.especialidad.trim() || null,
+        telefono: String(formValues.telefono).trim(),
+        email: String(formValues.email).trim().toLowerCase(),
         estado: Boolean(formValues.estado)
       };
 
@@ -457,7 +543,7 @@ const UpdateDocente = ({ idPersona, onDocenteUpdate, onEstudianteUpdate, onCance
             <Campo
               id="cedula"
               label="Cédula"
-              ayuda="La fecha de nacimiento se completa sola con la fecha de la cédula."
+              ayuda="La fecha de nacimiento se completa sola con la fecha de la cédula. El docente debe ser mayor de 18 años."
               error={errorDe('cedula')}
             >
               <InputText
@@ -480,10 +566,10 @@ const UpdateDocente = ({ idPersona, onDocenteUpdate, onEstudianteUpdate, onCance
               <Calendar
                 inputId="fecha_nacimiento"
                 value={formValues.fecha_nacimiento}
-                onChange={(e) => handleChange('fecha_nacimiento', e.value)}
+                onChange={(e) => handleFechaChange(e.value)}
                 dateFormat="dd/mm/yy"
                 showIcon
-                maxDate={new Date()}
+                maxDate={fechaMaximaDocente()}
                 placeholder="dd/mm/aaaa"
                 className={`w-full ${claseInvalida('fecha_nacimiento')}`}
                 inputClassName="w-full"
@@ -538,13 +624,56 @@ const UpdateDocente = ({ idPersona, onDocenteUpdate, onEstudianteUpdate, onCance
           </div>
         </Seccion>
 
+        {/* DATOS DE CONTACTO (NUEVO) */}
+
+        <Seccion icono="pi-phone" titulo="Datos de contacto">
+          <div className="formgrid grid">
+            <Campo
+              id="telefono"
+              label="Teléfono"
+              requerido
+              ayuda="8 dígitos, sin guiones ni espacios."
+              error={errorDe('telefono')}
+            >
+              <InputText
+                id="telefono"
+                placeholder="88881234"
+                value={formValues.telefono}
+                onChange={(e) => handleChange('telefono', e.target.value)}
+                className={`w-full ${claseInvalida('telefono')}`}
+                maxLength={8}
+                keyfilter="int"
+                inputMode="numeric"
+                disabled={loading}
+              />
+            </Campo>
+
+            <Campo
+              id="email"
+              label="Correo electrónico"
+              requerido
+              ayuda="Ejemplo: nombre@correo.com"
+              error={errorDe('email')}
+            >
+              <InputText
+                id="email"
+                type="email"
+                placeholder="nombre@correo.com"
+                value={formValues.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                className={`w-full ${claseInvalida('email')}`}
+                maxLength={100}
+                disabled={loading}
+              />
+            </Campo>
+          </div>
+        </Seccion>
+
         {/* INFORMACIÓN DEL DOCENTE */}
 
         <Seccion icono="pi-briefcase" titulo="Información del docente">
           <div className="formgrid grid">
-            <Campo id="idpersona" label="ID del sistema">
-              <InputText id="idpersona" value={formValues.idpersona} className="w-full" disabled />
-            </Campo>
+           
 
             <Campo
               id="codDocente"

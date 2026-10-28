@@ -13,6 +13,10 @@ import { extraerFechaNacimientoCedula } from '../../Util/validaciones/Validacion
 import { CedulaInput } from '../../Componentes/CedulaComponent/cedulaInput';
 import { generarCodigoDocente } from '../../Util/validaciones/CodigoDocente.js';
 
+// NUEVO: edad mínima del docente (18 años cumplidos).
+import { validarEdadMinima } from '../../Util/validaciones/ValidacionEdad.js';
+import { EDAD_MINIMA_DOCENTE } from '../../Util/validaciones/validacionDocente.js';
+
 import { ServicioValidado, getDocentes } from '../../Servicios/DocenteServicios/docenteService';
 
 // =========================================================
@@ -33,8 +37,13 @@ const DOCENTE_INICIAL = {
     codDocente: '',
     especialidad: '',
     estado: true,
+    telefono: '',
+    email: '',
     sexo: ''
 };
+
+const MENSAJE_CODIGO_REPETIDO =
+    'Ya existe un docente con este código (mismas iniciales y fecha de nacimiento).';
 
 // Las validaciones de ValidarDocente devuelven un mensaje de texto. Para
 // marcar el campo afectado se busca a qué campo se refiere ese mensaje.
@@ -45,11 +54,27 @@ const CAMPOS_POR_TEXTO = [
     ['Especialidad', 'especialidad'],
     ['Código Docente', 'codDocente'],
     ['sexo', 'sexo'],
-    ['Fecha de Nacimiento', 'fecha_nacimiento']
+    ['Teléfono', 'telefono'],
+    ['Correo', 'email'],
+    ['Fecha de Nacimiento', 'fecha_nacimiento'],
+    ['fecha de nacimiento', 'fecha_nacimiento'],
+    ['años cumplidos', 'fecha_nacimiento']
 ];
 
 const campoDelError = (mensaje = '') =>
     CAMPOS_POR_TEXTO.find(([texto]) => mensaje.includes(texto))?.[1] ?? null;
+
+// Fecha más reciente permitida = hoy menos 18 años.
+// Los días posteriores quedan deshabilitados en el Calendar.
+const fechaMaximaDocente = () => {
+    const hoy = new Date();
+
+    return new Date(
+        hoy.getFullYear() - EDAD_MINIMA_DOCENTE,
+        hoy.getMonth(),
+        hoy.getDate()
+    );
+};
 
 // =========================================================
 // COMPONENTES AUXILIARES
@@ -113,7 +138,7 @@ function AddDocente(props) {
     // { campo: 'nombre_completo' | ... | null, mensaje: string }
     const [error, setError] = useState(null);
 
-    // Códigos ya registrados, para calcular el consecutivo del nuevo código.
+    // Códigos ya registrados, para avisar si el código generado ya existe.
     const [codigosExistentes, setCodigosExistentes] = useState([]);
 
     // ---------------------------------------------------------
@@ -142,20 +167,39 @@ function AddDocente(props) {
 
     // ---------------------------------------------------------
     // AUTOGENERAR EL CÓDIGO
-    // Se recalcula cuando cambian nombres o apellidos.
+    // Formato INICIALES-DDMMAA. Se recalcula cuando cambian nombres,
+    // apellidos o la fecha de nacimiento (que sale de la cédula o del
+    // calendario).
+    //
+    // CORREGIDO: antes el tercer parámetro era la lista de códigos
+    // existentes. generarCodigoDocente espera la FECHA, y al no recibirla
+    // devolvía siempre '' (por eso el código nunca se generaba).
     // ---------------------------------------------------------
 
     useEffect(() => {
         const codigo = generarCodigoDocente(
             docenteInfo.nombre_completo,
             docenteInfo.apellido_completo,
-            codigosExistentes
+            docenteInfo.fecha_nacimiento
         );
 
         setDocenteInfo(prev =>
             prev.codDocente === codigo ? prev : { ...prev, codDocente: codigo }
         );
-    }, [docenteInfo.nombre_completo, docenteInfo.apellido_completo, codigosExistentes]);
+    }, [
+        docenteInfo.nombre_completo,
+        docenteInfo.apellido_completo,
+        docenteInfo.fecha_nacimiento
+    ]);
+
+    // El código no lleva consecutivo, así que dos docentes con las mismas
+    // iniciales y fecha de nacimiento darían el mismo código. Se avisa
+    // antes de guardar (la columna del código es única en la base de datos).
+    const codigoRepetido =
+        docenteInfo.codDocente !== '' &&
+        codigosExistentes.some(
+            c => String(c).toUpperCase() === docenteInfo.codDocente.toUpperCase()
+        );
 
     // ---------------------------------------------------------
     // CAMBIOS EN EL FORMULARIO
@@ -168,15 +212,85 @@ function AddDocente(props) {
         setError(null);
     };
 
-    // Cuando la cédula es válida, su fecha pasa al campo de fecha de nacimiento.
+    // ---------------------------------------------------------
+    // EDAD SEGÚN LA CÉDULA
+    // Se calcula en cada render a partir de la cédula escrita, así el
+    // mensaje aparece y desaparece solo, sin depender del orden de eventos.
+    // ---------------------------------------------------------
+
+    const resultadoCedula =
+        docenteInfo.cedula.length === 16
+            ? extraerFechaNacimientoCedula(docenteInfo.cedula)
+            : null;
+
+    const errorEdadCedula =
+        resultadoCedula?.esValida && resultadoCedula.fechaNacimiento
+            ? validarEdadMinima(
+                  resultadoCedula.fechaNacimiento,
+                  EDAD_MINIMA_DOCENTE,
+                  'docente'
+              )
+            : null;
+
+    // Cuando la cédula es válida, su fecha pasa al campo de fecha de nacimiento,
+    // siempre que el docente tenga la edad mínima. Si no la tiene, la fecha
+    // se deja vacía y el error se muestra bajo la cédula.
     const handleCedulaValida = (esValida, numeroCedula) => {
         if (!esValida) return;
 
         const resultado = extraerFechaNacimientoCedula(numeroCedula);
 
-        if (resultado.esValida && resultado.fechaNacimiento) {
-            handleChange('fecha_nacimiento', resultado.fechaNacimiento);
+        if (!resultado.esValida || !resultado.fechaNacimiento) return;
+
+        const errorEdad = validarEdadMinima(
+            resultado.fechaNacimiento,
+            EDAD_MINIMA_DOCENTE,
+            'docente'
+        );
+
+        if (errorEdad) {
+            handleChange('fecha_nacimiento', null);
+
+            toast.current?.show({
+                severity: 'warn',
+                summary: 'Edad no permitida',
+                detail: errorEdad,
+                life: 4000
+            });
+
+            return;
         }
+
+        handleChange('fecha_nacimiento', resultado.fechaNacimiento);
+    };
+
+    // Fecha elegida o escrita en el calendario: se rechaza si es menor de 18 años.
+    const handleFechaChange = (nueva) => {
+        if (nueva) {
+            const errorEdad = validarEdadMinima(
+                nueva,
+                EDAD_MINIMA_DOCENTE,
+                'docente'
+            );
+
+            if (errorEdad) {
+                handleChange('fecha_nacimiento', null);
+
+                // Después, porque handleChange() limpia el error.
+                setError({ campo: 'fecha_nacimiento', mensaje: errorEdad });
+
+                toast.current?.show({
+                    severity: 'warn',
+                    summary: 'Edad no permitida',
+                    detail: errorEdad,
+                    life: 4000
+                });
+
+                return;
+            }
+        }
+
+        handleChange('fecha_nacimiento', nueva);
     };
 
     // ---------------------------------------------------------
@@ -188,6 +302,34 @@ function AddDocente(props) {
         if (e) e.preventDefault();
 
         if (loading) return;
+
+        // La cédula escrita corresponde a una persona menor de 18 años.
+        if (errorEdadCedula) {
+            setError({ campo: 'cedula', mensaje: errorEdadCedula });
+
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Edad no permitida',
+                detail: errorEdadCedula,
+                life: 5000
+            });
+
+            return;
+        }
+
+        // El código generado ya pertenece a otro docente.
+        if (codigoRepetido) {
+            setError({ campo: 'codDocente', mensaje: MENSAJE_CODIGO_REPETIDO });
+
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Código repetido',
+                detail: MENSAJE_CODIGO_REPETIDO,
+                life: 5000
+            });
+
+            return;
+        }
 
         setError(null);
         setLoading(true);
@@ -303,7 +445,8 @@ function AddDocente(props) {
                         <Campo
                             id="cedula"
                             label="Cédula"
-                            ayuda="Al completarla, la fecha de nacimiento se llena sola."
+                            ayuda="Al completarla, la fecha de nacimiento se llena sola. El docente debe ser mayor de 18 años."
+                            error={errorDe('cedula') ?? errorEdadCedula ?? undefined}
                         >
                             <CedulaInput
                                 value={docenteInfo.cedula}
@@ -321,10 +464,10 @@ function AddDocente(props) {
                             <Calendar
                                 inputId="fecha_nacimiento"
                                 value={docenteInfo.fecha_nacimiento}
-                                onChange={(e) => handleChange('fecha_nacimiento', e.value)}
+                                onChange={(e) => handleFechaChange(e.value)}
                                 dateFormat="dd/mm/yy"
                                 showIcon
-                                maxDate={new Date()}
+                                maxDate={fechaMaximaDocente()}
                                 placeholder="dd/mm/aaaa"
                                 className={`w-full ${claseInvalida('fecha_nacimiento')}`}
                                 inputClassName="w-full"
@@ -385,31 +528,77 @@ function AddDocente(props) {
                     </div>
                 </Seccion>
 
+                {/* DATOS DE CONTACTO (NUEVO) */}
+
+                <Seccion icono="pi-phone" titulo="Datos de contacto">
+                    <div className="formgrid grid">
+
+                        <Campo
+                            id="telefono"
+                            label="Teléfono"
+                            requerido
+                            ayuda="8 dígitos, sin guiones ni espacios."
+                            error={errorDe('telefono')}
+                        >
+                            <InputText
+                                id="telefono"
+                                placeholder="88881234"
+                                value={docenteInfo.telefono}
+                                onChange={(e) => handleChange('telefono', e.target.value)}
+                                className={`w-full ${claseInvalida('telefono')}`}
+                                maxLength={8}
+                                keyfilter="int"
+                                inputMode="numeric"
+                                disabled={loading}
+                            />
+                        </Campo>
+
+                        <Campo
+                            id="email"
+                            label="Correo electrónico"
+                            requerido
+                            ayuda="Ejemplo: nombre@correo.com"
+                            error={errorDe('email')}
+                        >
+                            <InputText
+                                id="email"
+                                type="email"
+                                placeholder="nombre@correo.com"
+                                value={docenteInfo.email}
+                                onChange={(e) => handleChange('email', e.target.value)}
+                                className={`w-full ${claseInvalida('email')}`}
+                                maxLength={100}
+                                disabled={loading}
+                            />
+                        </Campo>
+
+                    </div>
+                </Seccion>
+
                 {/* INFORMACIÓN DEL DOCENTE */}
 
                 <Seccion icono="pi-briefcase" titulo="Información del docente">
                     <div className="formgrid grid">
 
-                       
-
                         <Campo
                             id="codDocente"
                             label="Código de docente"
                             requerido
-                            ayuda="Se genera con las iniciales de nombres y apellidos más un consecutivo."
-                            error={errorDe('codDocente')}
+                            ayuda="Se genera con las iniciales de nombres y apellidos más la fecha de nacimiento (DDMMAA)."
+                            error={
+                                errorDe('codDocente') ??
+                                (codigoRepetido ? MENSAJE_CODIGO_REPETIDO : undefined)
+                            }
                         >
                             <InputText
                                 id="codDocente"
                                 placeholder="Se genera automáticamente"
                                 value={docenteInfo.codDocente}
-                                className={`w-full ${claseInvalida('codDocente')}`}
+                                className={`w-full ${claseInvalida('codDocente')} ${codigoRepetido ? 'p-invalid' : ''}`}
                                 maxLength={20}
                                 disabled
                             />
                         </Campo>
-
-                       
 
                     </div>
                 </Seccion>
