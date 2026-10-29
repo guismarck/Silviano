@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './Componentes/Academico/controllers/ProtectedRoute';
 import { MainLayout } from './Componentes/Academico/MainLayout';
 import { Login } from './Componentes/Login/Login'; // Verifica esta ruta de archivo
+import Dashboard from './Servicios/DashboarService/Dashboard';
 
 // Controladores del Sistema SIGE
 //import ListarGrados from './Componentes/Academico/controllers/ListarGrados';
@@ -38,11 +39,7 @@ function AppRoutes() {
         <Route element={<MainLayout />}>
           <Route
             path="/dashboard"
-            element={
-              <div className="card p-4">
-                <h2>Bienvenido al Sistema SIGE - Colegio Silviano Matamoros</h2>
-              </div>
-            }
+            element={<Dashboard />}
           />
 
           <Route element={<ProtectedRoute allowedRoles={['DIRECTOR', 'SECRETARIA']} />}>
