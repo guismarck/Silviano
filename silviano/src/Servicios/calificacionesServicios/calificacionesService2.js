@@ -34,6 +34,14 @@ export const calificacionesService = {
     return data;
   },
 
+  getEstadoEdicionPeriodoEvaluativo: async (idPeriodoEvaluativo, idDetallePlanDeEstudio) => {
+    const { data } = await api.get(
+      `/periodo-evaluativo/${idPeriodoEvaluativo}/estado-edicion`,
+      { params: { idDetallePlanDeEstudio } }
+    );
+    return data;
+  },
+
   /**
    * Obtiene la nómina de estudiantes con sus notas actuales
    */

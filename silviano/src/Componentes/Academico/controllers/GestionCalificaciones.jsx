@@ -36,10 +36,12 @@ export const GestionCalificaciones = () => {
 
   // Estados de interfaz
   const [estudiantes, setEstudiantes] = useState([]);
+  const [estadoEdicion, setEstadoEdicion] = useState(null);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
   const [loadingTabla, setLoadingTabla] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [descargandoPDF, setDescargandoPDF] = useState(false);
+  const permiteEdicion = Number(estadoEdicion?.permiteEdicion) > 0;
 
   const opcionesAsignaturas = useMemo(() => {
     const idDocente = asignacionesRaw[0]?.id_docente;
@@ -103,6 +105,7 @@ export const GestionCalificaciones = () => {
     setAsignaturas([]);
     setAsignaturaSeleccionada(null);
     setEstudiantes([]);
+    setEstadoEdicion(null);
   }, []);
 
   const handleNivelChange = useCallback(async (e) => {
@@ -136,6 +139,7 @@ export const GestionCalificaciones = () => {
     setAsignaturas([]);
     setAsignaturaSeleccionada(null);
     setEstudiantes([]);
+    setEstadoEdicion(null);
     if (!grado) return;
 
     setLoadingCatalogos(true);
@@ -160,6 +164,7 @@ export const GestionCalificaciones = () => {
     setAsignaturas([]);
     setAsignaturaSeleccionada(null);
     setEstudiantes([]);
+    setEstadoEdicion(null);
     if (!salon || !gradoSeleccionado) return;
 
     const idDocente = asignacionesRaw[0]?.id_docente;
@@ -196,17 +201,16 @@ export const GestionCalificaciones = () => {
   const handleAsignaturaChange = useCallback((e) => {
     setAsignaturaSeleccionada(e.value);
     setEstudiantes([]);
+    setEstadoEdicion(null);
   }, []);
 
   const handlePeriodoChange = useCallback((e) => {
     setPeriodoSeleccionado(e.value);
     setEstudiantes([]);
+    setEstadoEdicion(null);
   }, []);
 
-  // Verificación de periodo cerrado
-  const esPeriodoCerrado = useMemo(() => {
-    return periodoSeleccionado?.estado === 'CERRADO';
-  }, [periodoSeleccionado]);
+  const esPeriodoCerrado = estadoEdicion !== null && !permiteEdicion;
 
   // Consulta de Nómina
   const handleConsultarNomina = useCallback(async () => {
@@ -221,7 +225,13 @@ export const GestionCalificaciones = () => {
     }
 
     setLoadingTabla(true);
+    setEstadoEdicion(null);
+    setEstudiantes([]);
     try {
+      const estado = await calificacionesService.getEstadoEdicionPeriodoEvaluativo(
+        periodoSeleccionado.idperiodo_evaluativo,
+        asignaturaSeleccionada.iddetalle_plan_de_estudio
+      );
       const data = await calificacionesService.getEstudiantesTabla(
         asignaturaSeleccionada.iddetalle_plan_de_estudio,
         periodoSeleccionado.idperiodo_evaluativo,
@@ -230,21 +240,34 @@ export const GestionCalificaciones = () => {
       );
 
       // Inicializar estructura con propiedades de validación y conducta
-      const estudiantesMapeados = data.map((est) => ({
-        ...est,
-        idEstudiante: est.idMatricula ?? est.idEstudiante,
-        codigoMINED: est.codigoMined ?? est.codigoMINED,
-        codigoEstudiante: est.codEstudiante ?? est.codigoEstudiante,
-        nombreCompleto: est.nombreCompletoEstudiante ?? est.nombreCompleto,
-        acumulado: est.acumulado ?? null,
-        examen: est.examen ?? null,
-        conducta: est.conducta ?? '',
-        errorAcumulado: null,
-        errorExamen: null,
-        dirty: false
-      }));
+      const estudiantesMapeados = data.map((est) => {
+        const conducta = est.conducta == null || est.conducta === '' ? null : Number(est.conducta);
+        return {
+          ...est,
+          idEstudiante: est.idMatricula ?? est.idEstudiante,
+          codigoMINED: est.codigoMined ?? est.codigoMINED,
+          codigoEstudiante: est.codEstudiante ?? est.codigoEstudiante,
+          nombreCompleto: est.nombreCompletoEstudiante ?? est.nombreCompleto,
+          acumulado: est.acumulado ?? null,
+          examen: est.examen ?? null,
+          conducta: Number.isFinite(conducta) ? conducta : null,
+          errorAcumulado: null,
+          errorExamen: null,
+          dirty: false
+        };
+      });
 
+      setEstadoEdicion(estado);
       setEstudiantes(estudiantesMapeados);
+      if (!(Number(estado?.permiteEdicion) > 0)) {
+        toastRef.current?.show({
+          severity: 'warn',
+          summary: 'Edición cerrada',
+          detail: estado?.mensajePantalla
+            || 'No se pueden editar las notas porque el período para ingresar notas está cerrado.',
+          life: 5000
+        });
+      }
     } catch (error) {
       toastRef.current?.show({
         severity: 'error',
@@ -261,6 +284,7 @@ export const GestionCalificaciones = () => {
    * Manejador de cambio con validación explícita (Mantiene el valor sin auto-recorte)
    */
   const handleNotaFieldChange = useCallback((idEstudiante, campo, nuevoValor) => {
+    if (!permiteEdicion || guardando) return;
     setEstudiantes((prevEstudiantes) =>
       prevEstudiantes.map((est) => {
         if (est.idEstudiante === idEstudiante) {
@@ -304,7 +328,7 @@ export const GestionCalificaciones = () => {
         return est;
       })
     );
-  }, []);
+  }, [permiteEdicion, guardando]);
 
   // Validación de errores activos en la nómina
   const registrosModificados = useMemo(() => estudiantes.filter((est) => est.dirty), [estudiantes]);
@@ -364,7 +388,24 @@ export const GestionCalificaciones = () => {
     }
 
     setGuardando(true);
+    setEstadoEdicion(null);
     try {
+      const estado = await calificacionesService.getEstadoEdicionPeriodoEvaluativo(
+        periodoSeleccionado.idperiodo_evaluativo,
+        asignaturaSeleccionada.iddetalle_plan_de_estudio
+      );
+      setEstadoEdicion(estado);
+      if (!(Number(estado?.permiteEdicion) > 0)) {
+        toastRef.current?.show({
+          severity: 'warn',
+          summary: 'Edición cerrada',
+          detail: estado?.mensajePantalla
+            || 'No se pueden editar las notas porque el período para ingresar notas está cerrado.',
+          life: 5000
+        });
+        return;
+      }
+
       const payload = {
         idDetallePlanDeEstudio: asignaturaSeleccionada.iddetalle_plan_de_estudio,
         idDocente: asignaturaSeleccionada.id_docente,
@@ -435,7 +476,7 @@ export const GestionCalificaciones = () => {
           onValueChange={(e) => handleNotaFieldChange(rowData.idEstudiante, 'acumulado', e.value)}
           minFractionDigits={0}
           maxFractionDigits={2}
-          disabled={esPeriodoCerrado}
+          disabled={!permiteEdicion || guardando}
           className={tieneError ? 'p-invalid w-full' : 'w-full'}
           inputClassName="text-center font-semibold"
         />
@@ -457,7 +498,7 @@ export const GestionCalificaciones = () => {
           onValueChange={(e) => handleNotaFieldChange(rowData.idEstudiante, 'examen', e.value)}
           minFractionDigits={0}
           maxFractionDigits={2}
-          disabled={esPeriodoCerrado}
+          disabled={!permiteEdicion || guardando}
           className={tieneError ? 'p-invalid w-full' : 'w-full'}
           inputClassName="text-center font-semibold"
         />
@@ -473,13 +514,15 @@ export const GestionCalificaciones = () => {
   const editorConductaTemplate = (rowData) => {
     return (
       <div className="flex flex-column align-items-center gap-1 p-1">
-        <InputText
-          value={rowData.conducta || ''}
-          onChange={(e) => handleNotaFieldChange(rowData.idEstudiante, 'conducta', e.target.value.toUpperCase())}
-          disabled={esPeriodoCerrado}
+        <InputNumber
+          value={rowData.conducta}
+          onValueChange={(e) => handleNotaFieldChange(rowData.idEstudiante, 'conducta', e.value)}
+          min={0}
+          minFractionDigits={0}
+          maxFractionDigits={0}
+          useGrouping={false}
+          disabled={!permiteEdicion || guardando}
           className="w-full text-center font-semibold"
-          placeholder=""
-          maxLength={4}
         />
       </div>
     );
@@ -541,7 +584,8 @@ export const GestionCalificaciones = () => {
           <div className="p-message p-message-warn mb-3 p-2 border-round flex align-items-center gap-2">
             <i className="pi pi-lock text-xl"></i>
             <span className="font-semibold">
-              El periodo seleccionado se encuentra CERRADO. La consulta está en modo lectura.
+              {estadoEdicion?.mensajePantalla
+                || 'No se pueden editar las notas porque el período para ingresar notas está cerrado.'}
             </span>
           </div>
         )}
@@ -650,7 +694,7 @@ export const GestionCalificaciones = () => {
             className="p-button-primary"
             onClick={handleGuardarBatch}
             loading={guardando}
-            disabled={estudiantes.length === 0 || esPeriodoCerrado || tieneErroresValidacion}
+            disabled={estudiantes.length === 0 || !permiteEdicion || tieneErroresValidacion}
           >
             {registrosModificados.length > 0 && (
               <Badge value={registrosModificados.length} severity="warning" className="ml-2" />

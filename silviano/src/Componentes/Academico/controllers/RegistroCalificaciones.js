@@ -24,10 +24,12 @@ export const GestionCalificaciones = () => {
 
   // Estados de carga y datos
   const [estudiantes, setEstudiantes] = useState([]);
+  const [estadoEdicion, setEstadoEdicion] = useState(null);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
   const [loadingTabla, setLoadingTabla] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [descargandoPDF, setDescargandoPDF] = useState(false);
+  const permiteEdicion = Number(estadoEdicion?.permiteEdicion) > 0;
 
   useEffect(() => {
     const cargarCatalogos = async () => {
@@ -86,6 +88,7 @@ export const GestionCalificaciones = () => {
     setGradoSeleccionado(e.value);
     setAsignaturaSeleccionada(null);
     setEstudiantes([]);
+    setEstadoEdicion(null);
   }, []);
 
   const handleConsultarNomina = useCallback(async () => {
@@ -100,14 +103,30 @@ export const GestionCalificaciones = () => {
     }
 
     setLoadingTabla(true);
+    setEstadoEdicion(null);
+    setEstudiantes([]);
     try {
+      const estado = await calificacionesService.getEstadoEdicionPeriodoEvaluativo(
+        periodoSeleccionado.idperiodo_evaluativo,
+        asignaturaSeleccionada.iddetalle_plan_de_estudio
+      );
       const data = await calificacionesService.getEstudiantesTabla(
         asignaturaSeleccionada.iddetalle_plan_de_estudio,
         periodoSeleccionado.idperiodo_evaluativo,
         asignaturaSeleccionada.id_docente,
         asignaturaSeleccionada.idSalon
       );
+      setEstadoEdicion(estado);
       setEstudiantes(data);
+      if (!(Number(estado?.permiteEdicion) > 0)) {
+        toastRef.current?.show({
+          severity: 'warn',
+          summary: 'Edición cerrada',
+          detail: estado?.mensajePantalla
+            || 'No se pueden editar las notas porque el período para ingresar notas está cerrado.',
+          life: 5000
+        });
+      }
     } catch (error) {
       toastRef.current?.show({
         severity: 'error',
@@ -124,6 +143,7 @@ export const GestionCalificaciones = () => {
    * Actualizador genérico inmutable para Componentes de nota (Acumulado o Examen)
    */
   const handleNotaFieldChange = useCallback((idEstudiante, campo, nuevoValor) => {
+    if (!permiteEdicion || guardando) return;
     const valSanitizado = nuevoValor === null || nuevoValor === undefined ? 0 : nuevoValor;
 
     setEstudiantes((prevEstudiantes) =>
@@ -143,7 +163,7 @@ export const GestionCalificaciones = () => {
         return est;
       })
     );
-  }, []);
+  }, [permiteEdicion, guardando]);
 
   // Guardado masivo
   const handleGuardarBatch = async () => {
@@ -159,7 +179,24 @@ export const GestionCalificaciones = () => {
     }
 
     setGuardando(true);
+    setEstadoEdicion(null);
     try {
+      const estado = await calificacionesService.getEstadoEdicionPeriodoEvaluativo(
+        periodoSeleccionado.idperiodo_evaluativo,
+        asignaturaSeleccionada.iddetalle_plan_de_estudio
+      );
+      setEstadoEdicion(estado);
+      if (!(Number(estado?.permiteEdicion) > 0)) {
+        toastRef.current?.show({
+          severity: 'warn',
+          summary: 'Edición cerrada',
+          detail: estado?.mensajePantalla
+            || 'No se pueden editar las notas porque el período para ingresar notas está cerrado.',
+          life: 5000
+        });
+        return;
+      }
+
       const payload = {
         iddetalle_plan_de_estudio: asignaturaSeleccionada.iddetalle_plan_de_estudio,
         idperiodo_evaluativo: periodoSeleccionado.idperiodo_evaluativo,
@@ -223,6 +260,7 @@ export const GestionCalificaciones = () => {
     <InputNumber
       value={rowData.acumulado}
       onValueChange={(e) => handleNotaFieldChange(rowData.idEstudiante, 'acumulado', e.value)}
+      disabled={!permiteEdicion || guardando}
       min={0}
       max={40}
       minFractionDigits={0}
@@ -236,6 +274,7 @@ export const GestionCalificaciones = () => {
     <InputNumber
       value={rowData.examen}
       onValueChange={(e) => handleNotaFieldChange(rowData.idEstudiante, 'examen', e.value)}
+      disabled={!permiteEdicion || guardando}
       min={0}
       max={60}
       minFractionDigits={0}
@@ -289,7 +328,11 @@ export const GestionCalificaciones = () => {
               id="combo-asignatura"
               value={asignaturaSeleccionada}
               options={opcionesAsignaturas}
-              onChange={(e) => setAsignaturaSeleccionada(e.value)}
+              onChange={(e) => {
+                setAsignaturaSeleccionada(e.value);
+                setEstudiantes([]);
+                setEstadoEdicion(null);
+              }}
               optionLabel="label"
               placeholder={!gradoSeleccionado ? 'Seleccione un grado primero' : '-- Seleccione Asignatura --'}
               disabled={!gradoSeleccionado}
@@ -306,7 +349,11 @@ export const GestionCalificaciones = () => {
               id="combo-periodo"
               value={periodoSeleccionado}
               options={periodos}
-              onChange={(e) => setPeriodoSeleccionado(e.value)}
+              onChange={(e) => {
+                setPeriodoSeleccionado(e.value);
+                setEstudiantes([]);
+                setEstadoEdicion(null);
+              }}
               optionLabel="nombre"
               placeholder="-- Seleccione Periodo --"
               className="w-full"
@@ -329,7 +376,7 @@ export const GestionCalificaciones = () => {
             className="p-button-primary"
             onClick={handleGuardarBatch}
             loading={guardando}
-            disabled={estudiantes.length === 0}
+            disabled={estudiantes.length === 0 || !permiteEdicion}
           />
           <Button
             label="Descargar Acta (PDF)"

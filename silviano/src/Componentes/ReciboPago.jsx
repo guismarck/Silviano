@@ -301,7 +301,7 @@ const ReciboPago = () => {
   const handleCancelar = () => {
     setFormData((prev) => ({
       ...ESTADO_INICIAL,
-      num_recibo: prev.num_recibo,
+      num_recibo: null,
       fecha_pago: new Date()
     }));
     setErrors({});
@@ -604,8 +604,8 @@ const ReciboPago = () => {
                 />
               )}
               <Button
-                label="Cancelar"
-                icon="pi pi-times"
+                label="Limpiar"
+                icon="pi pi-trash"
                 className="btn-institucional-outlined"
                 type="button"
                 onClick={handleCancelar}
