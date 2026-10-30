@@ -42,6 +42,7 @@ export const MainLayout = () => {
       icon: 'bx bxs-school',
       roles: ['DIRECTOR', 'SECRETARIA'],
       subMenu: [
+        { label: 'Periodo Evaluativo', path: '/periodos'},
         { label: 'Estudiantes', path: '/estudiantes' },
         { label: 'Docentes', path: '/docentes' },
         { label: 'Tutores', path: '/tutores' },

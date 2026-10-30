@@ -22,6 +22,7 @@ import './estilosCSS/flags.css';
 import './index.css';
 import  Docentes  from './Componentes/Academico/controllers/Docentes';
 import  Tutores  from './Componentes/Academico/controllers/Tutores';
+import {GestionPeriodos} from './Componentes/Academico/controllers/GestionPeriodo'
 
 const RootRedirect = () => {
   const { isAuthenticated } = useAuth();
@@ -48,6 +49,7 @@ function AppRoutes() {
           />
 
           <Route element={<ProtectedRoute allowedRoles={['DIRECTOR', 'SECRETARIA']} />}>
+            <Route path="/periodos" element={<GestionPeriodos />} />
             <Route path="/estudiantes" element={<Estudiantes />} />
             <Route path="/tutores" element={<Tutores />} />
             <Route path="/docentes" element={<Docentes />} />
