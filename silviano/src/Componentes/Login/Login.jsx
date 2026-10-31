@@ -6,7 +6,7 @@ import { Toast } from 'primereact/toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import authService from '../../Servicios/LoginService/authService';
-
+import { RecuperarPasswordOTPModal } from '../Academico/controllers/RecuperarPasswordModal';
 import nicaraguaBg from '../../assets/img/nicaragua.jpg';
 import '../../css/Login.css';
 
@@ -21,9 +21,10 @@ export const Login = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+
   const logoUrl = `${process.env.PUBLIC_URL}/img/Silviano.png`;
 
-  // Handler inmutable unificado para actualizar inputs
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -32,23 +33,15 @@ export const Login = () => {
     }));
   }, []);
 
-  // Determina la pantalla inicial de destino en función de los roles asignados
   const getDestinationRoute = (roles = []) => {
-    if (roles.includes('DIRECTOR') || roles.includes('ADMIN')) {
-      return '/dashboard';
-    }
-    if (roles.includes('DOCENTE')) {
-      return '/calificaciones';
-    }
-    if (roles.includes('SECRETARIA')) {
-      return '/estudiantes';
-    }
-    if (roles.includes('CAJERO')) {
-      return '/gestionCobro';
-    }
+    if (roles.includes('DIRECTOR') || roles.includes('ADMIN')) return '/dashboard';
+    if (roles.includes('DOCENTE')) return '/calificaciones';
+    if (roles.includes('SECRETARIA')) return '/estudiantes';
+    if (roles.includes('CAJERO')) return '/gestionCobro';
     return '/dashboard';
   };
 
+  // Login principal llamando a POST /auth/login (LoginRequestDTO)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -82,7 +75,6 @@ export const Login = () => {
           life: 1500,
         });
 
-        // Redirección adaptativa tras confirmación visual
         setTimeout(() => {
           const targetRoute = getDestinationRoute(userData.roles);
           navigate(targetRoute, { replace: true });
@@ -98,6 +90,12 @@ export const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenOTPModal = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowOTPModal(true);
   };
 
   return (
@@ -145,12 +143,22 @@ export const Login = () => {
           </div>
 
           <div className="field m-0">
-            <label
-              htmlFor="password"
-              className="block text-sm font-semibold text-700 mb-1"
-            >
-              Contraseña
-            </label>
+            <div className="flex justify-content-between align-items-center mb-1">
+              <label
+                htmlFor="password"
+                className="text-sm font-semibold text-700 m-0"
+              >
+                Contraseña
+              </label>
+              <button
+                type="button"
+                className="p-link text-xs text-primary font-semibold border-none bg-transparent cursor-pointer hover:underline p-0"
+                onClick={handleOpenOTPModal}
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+
             <Password
               id="password"
               name="password"
@@ -175,6 +183,12 @@ export const Login = () => {
           />
         </form>
       </div>
+
+      <RecuperarPasswordOTPModal
+        visible={showOTPModal}
+        onHide={() => setShowOTPModal(false)}
+        toastRef={toast}
+      />
     </div>
   );
 };

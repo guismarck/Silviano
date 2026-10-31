@@ -171,8 +171,8 @@ export const GestionCalificaciones = () => {
     if (idDocente == null) {
       toastRef.current?.show({
         severity: 'error',
-        summary: 'Docente no disponible',
-        detail: 'No se encontró el docente asociado a las asignaciones.',
+        summary: 'Docente',
+        detail: 'EL Docente no Tiene Materias Asignadas',
         life: 4000
       });
       return;
