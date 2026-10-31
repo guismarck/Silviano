@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './Componentes/Academico/controllers/ProtectedRoute';
 import { MainLayout } from './Componentes/Academico/MainLayout';
 import { Login } from './Componentes/Login/Login'; // Verifica esta ruta de archivo
+import Dashboard from './Servicios/DashboarService/Dashboard';
 
 // Controladores del Sistema SIGE
 import ListarGrados from './Componentes/Academico/controllers/Grados';
@@ -20,9 +21,12 @@ import { AsignacionDocente } from './Componentes/Academico/controllers/Asignacio
 import Asignaturas from './Componentes/Academico/controllers/Asignaturas';
 import './estilosCSS/flags.css';
 import './index.css';
+
 import  Docentes  from './Componentes/Academico/controllers/Docentes';
 import  Tutores  from './Componentes/Academico/controllers/Tutores';
 import {GestionPeriodos} from './Componentes/Academico/controllers/GestionPeriodo'
+
+
 
 const RootRedirect = () => {
   const { isAuthenticated } = useAuth();
@@ -41,11 +45,7 @@ function AppRoutes() {
         <Route element={<MainLayout />}>
           <Route
             path="/dashboard"
-            element={
-              <div className="card p-4">
-                <h2>Bienvenido al Sistema  - Colegio Silviano Matamoros</h2>
-              </div>
-            }
+            element={<Dashboard />}
           />
 
           <Route element={<ProtectedRoute allowedRoles={['DIRECTOR', 'SECRETARIA']} />}>
@@ -53,7 +53,7 @@ function AppRoutes() {
             <Route path="/estudiantes" element={<Estudiantes />} />
             <Route path="/tutores" element={<Tutores />} />
             <Route path="/docentes" element={<Docentes />} />
-            <Route path="/grados" element={<ListarGrados />} /> 
+            <Route path="/grados" element={<ListarGrados />} />
             <Route path="/asignaturas" element={<Asignaturas />} />
             <Route path="/salon" element={<ListarCatalogoSalon />} />
             <Route path="/asignacionDocente" element={<AsignacionDocente />} />

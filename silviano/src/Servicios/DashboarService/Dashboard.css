@@ -1,0 +1,247 @@
+
+.dashboard-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: clamp(1rem, 2.5vw, 2rem);
+    background: #f5f7fb;
+    color: #1e293b;
+}
+
+.dashboard-container *,
+.dashboard-container *::before,
+.dashboard-container *::after {
+    box-sizing: border-box;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+    color: #1e293b;
+}
+
+.dashboard-header p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.dashboard-refresh {
+    flex-shrink: 0;
+}
+
+.dashboard-section {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 1.75rem;
+}
+
+.dashboard-section-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.dashboard-section-heading h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: #1e293b;
+}
+
+.dashboard-section-heading span {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+/* Seis tarjetas generales */
+.dashboard-general-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    width: 100%;
+}
+
+/* Tres tarjetas por estado */
+.dashboard-status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    width: 100%;
+}
+
+.dashboard-status-card,
+.dashboard-chart-card {
+    min-width: 0;
+    border-radius: 12px;
+    box-shadow: 0 3px 14px rgba(15, 23, 42, 0.06);
+}
+
+.dashboard-status-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.dashboard-status-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.dashboard-status-info p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+}
+
+.dashboard-status-info strong {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    line-height: 1.2;
+}
+
+.dashboard-status-info > span {
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
+.dashboard-status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+}
+
+.dashboard-status-icon i {
+    font-size: 1.3rem;
+}
+
+/* Gráfico */
+.dashboard-chart-card .p-card-body {
+    padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.dashboard-chart-heading {
+    margin-bottom: 1.25rem;
+}
+
+.dashboard-chart-heading h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.2rem;
+}
+
+.dashboard-chart-heading p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.dashboard-chart {
+    position: relative;
+    width: 100%;
+    height: clamp(260px, 36vw, 400px);
+    min-width: 0;
+}
+
+.dashboard-chart-legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    padding-top: 1.25rem;
+    margin-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.dashboard-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #475569;
+    font-size: 0.85rem;
+}
+
+.dashboard-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dashboard-loading {
+    display: flex;
+    min-height: 280px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: #64748b;
+}
+
+.dashboard-message {
+    display: flex;
+    margin-bottom: 1.5rem;
+}
+
+/* Pantallas medianas */
+@media (max-width: 1000px) {
+    .dashboard-general-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-status-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Celulares */
+@media (max-width: 600px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+
+    .dashboard-header {
+        align-items: flex-start;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.45rem;
+    }
+
+    .dashboard-general-grid,
+    .dashboard-status-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .dashboard-chart {
+        height: 280px;
+    }
+
+    .dashboard-chart-legend {
+        justify-content: flex-start;
+        gap: 0.75rem;
+    }
+
+    .dashboard-legend-item {
+        font-size: 0.8rem;
+    }
+}
