@@ -1,0 +1,387 @@
+/* CONTENEDOR PRINCIPAL */
+.dashboard-container {
+    width: 100%;
+    min-height: 100vh;
+    padding: 24px;
+    box-sizing: border-box;
+    background: #f4f8fd;
+}
+
+/* ENCABEZADO */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 24px;
+}
+
+.dashboard-header h1 {
+    margin: 0;
+    color: #102a50;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.dashboard-header p {
+    margin: 6px 0 0;
+    color: #6480a7;
+    font-size: 14px;
+}
+
+/* SECCIONES */
+.dashboard-section-card {
+    width: 100%;
+    margin-bottom: 18px;
+    border: 1px solid #e1ebf8;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(30, 64, 120, 0.04);
+}
+
+.dashboard-section-card .p-card-body {
+    padding: 16px;
+}
+
+.section-title {
+    margin-bottom: 12px;
+}
+
+.section-title h2 {
+    margin: 0 0 4px;
+    color: #153563;
+    font-size: 17px;
+}
+
+.section-title span {
+    color: #7188a9;
+    font-size: 13px;
+}
+
+/* SEIS TARJETAS GENERALES */
+.dashboard-general-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.dashboard-info-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+    min-height: 84px;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid #e2ecf9;
+    border-radius: 9px;
+    box-shadow: 0 2px 7px rgba(30, 64, 120, 0.04);
+}
+
+.dashboard-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    width: 55px;
+    height: 55px;
+    border-radius: 13px;
+    font-size: 24px;
+}
+
+.dashboard-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.dashboard-info span {
+    color: #536d94;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.dashboard-info strong {
+    font-size: 25px;
+    line-height: 1.1;
+}
+
+.dashboard-info small {
+    color: #8295b0;
+    font-size: 11px;
+}
+
+.card-arrow {
+    margin-left: auto;
+    color: #6b86ad;
+}
+
+/* COLORES DE ICONOS */
+.turquesa {
+    background: #ddf7f4;
+    color: #009c98;
+}
+
+.azul {
+    background: #e5edff;
+    color: #1764ed;
+}
+
+.morado {
+    background: #f1e5ff;
+    color: #9333ea;
+}
+
+.naranja {
+    background: #fff0e5;
+    color: #f97316;
+}
+
+.rosa {
+    background: #ffe5f0;
+    color: #ec4899;
+}
+
+.celeste {
+    background: #e1f6fc;
+    color: #0891b2;
+}
+
+.verde {
+    background: #e0f8e9;
+    color: #16a34a;
+}
+
+.rojo {
+    background: #ffe8e8;
+    color: #dc2626;
+}
+
+/* VALORES DE LAS TARJETAS */
+.dashboard-info-card .turquesa + .dashboard-info strong {
+    color: #009c98;
+}
+
+.dashboard-info-card .azul + .dashboard-info strong {
+    color: #1764ed;
+}
+
+.dashboard-info-card .morado + .dashboard-info strong {
+    color: #9333ea;
+}
+
+.dashboard-info-card .naranja + .dashboard-info strong {
+    color: #f97316;
+}
+
+.dashboard-info-card .rosa + .dashboard-info strong {
+    color: #ec4899;
+}
+
+.dashboard-info-card .celeste + .dashboard-info strong {
+    color: #0891b2;
+}
+
+.dashboard-info-card .verde + .dashboard-info strong {
+    color: #16a34a;
+}
+
+.dashboard-info-card .rojo + .dashboard-info strong {
+    color: #dc2626;
+}
+
+/* TRES TARJETAS DE ESTADO */
+.dashboard-status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.status-card {
+    min-height: 95px;
+}
+
+/* DISTRIBUCIÓN DE LOS TRES GRÁFICOS */
+.dashboard-analytics-grid {
+    display: grid;
+    grid-template-columns: 1.45fr 1fr 1fr;
+    gap: 14px;
+    width: 100%;
+    align-items: stretch;
+}
+
+/* TARJETAS DE GRÁFICOS */
+.dashboard-chart-card {
+    min-width: 0;
+    border: 1px solid #e1ebf8;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(30, 64, 120, 0.05);
+}
+
+.dashboard-chart-card .p-card-body {
+    height: 100%;
+    padding: 16px;
+}
+
+.dashboard-chart-card .p-card-content {
+    height: 100%;
+    padding: 0;
+}
+
+.chart-header {
+    margin-bottom: 15px;
+}
+
+.chart-header h3 {
+    margin: 0 0 5px;
+    color: #153563;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.chart-header span {
+    color: #7188a9;
+    font-size: 12px;
+}
+
+/* GRÁFICO DE BARRAS */
+.dashboard-bar-card {
+    min-height: 330px;
+}
+
+.bar-chart-container {
+    position: relative;
+    width: 100%;
+    height: 245px;
+}
+
+/* GRÁFICOS CIRCULARES */
+.dashboard-pie-card {
+    min-height: 330px;
+}
+
+.pie-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 245px;
+}
+
+.pie-chart-container {
+    position: relative;
+    flex: 0 0 48%;
+    width: 48%;
+    max-width: 190px;
+    height: 190px;
+}
+
+.pie-legend {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 15px;
+    min-width: 0;
+}
+
+.pie-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    color: #61799d;
+    font-size: 11px;
+}
+
+.legend-dot {
+    flex-shrink: 0;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+.legend-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pie-legend-item strong {
+    color: #526d96;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.chart-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    color: #8495ad;
+    font-size: 13px;
+}
+
+/* TABLETS */
+@media screen and (max-width: 1200px) {
+    .dashboard-analytics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-bar-card {
+        grid-column: 1 / -1;
+    }
+
+    .pie-chart-container {
+        max-width: 180px;
+    }
+}
+
+/* PANTALLAS PEQUEÑAS */
+@media screen and (max-width: 850px) {
+    .dashboard-general-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-analytics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-bar-card {
+        grid-column: auto;
+    }
+}
+
+@media screen and (max-width: 550px) {
+    .dashboard-container {
+        padding: 12px;
+    }
+
+    .dashboard-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .dashboard-general-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pie-content {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .pie-chart-container {
+        flex: 0 0 180px;
+        width: 180px;
+    }
+
+    .pie-legend {
+        flex: 1 1 100%;
+    }
+}
