@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -10,7 +10,17 @@ import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import usuarioService from '../../../Servicios/UsuarioService/usuarioService';
 import rolService from '../../../Servicios/RolService/rolService';
-import { searchDocente } from '../../../Servicios/DocenteServicios/docenteService';
+import {
+  getDocenteById,
+  searchDocente,
+} from '../../../Servicios/DocenteServicios/docenteService';
+
+const obtenerCorreoDocente = (docente = {}) =>
+  docente.email ||
+  docente.correo ||
+  docente.correoElectronico ||
+  docente.correo_electronico ||
+  '';
 
 const generarUsernameSugerido = (nombres, apellidos) => {
   const primerNombre = nombres.trim().split(/\s+/).filter(Boolean)[0];
@@ -150,7 +160,9 @@ export const UsuarioFormModal = ({
   const [busquedaDocente, setBusquedaDocente] = useState('');
   const [sugerenciasDocentes, setSugerenciasDocentes] = useState([]);
   const [loadingDocentes, setLoadingDocentes] = useState(false);
+  const [loadingDocenteDetalle, setLoadingDocenteDetalle] = useState(false);
   const [docenteSeleccionado, setDocenteSeleccionado] = useState(null);
+  const docenteDetalleRequestId = useRef(0);
 
   // Carga asíncrona del catálogo de roles desde el backend al abrir el modal
   const cargarRoles = useCallback(async () => {
@@ -177,6 +189,8 @@ export const UsuarioFormModal = ({
   }, [toastRef]);
 
   useEffect(() => {
+    docenteDetalleRequestId.current += 1;
+    setLoadingDocenteDetalle(false);
     if (!visible) return undefined;
 
     let active = true;
@@ -285,10 +299,11 @@ export const UsuarioFormModal = ({
     }
   };
 
-  const handleSelectDocente = (e) => {
+  const handleSelectDocente = async (e) => {
     const docente = e.value;
     if (!docente) return;
 
+    const requestId = ++docenteDetalleRequestId.current;
     setDocenteSeleccionado(docente);
     setBusquedaDocente(docente.labelDocente || docente.nombreCompletoMostrar || '');
     setFormData((prev) => ({
@@ -296,12 +311,37 @@ export const UsuarioFormModal = ({
       nombreCompleto: docente.nombreCompleto || '',
       apellidoCompleto: docente.apellidoCompleto || '',
       cedula: docente.cedula || '',
+      email: obtenerCorreoDocente(docente),
       sexo: normalizarSexo(docente.sexo),
       fechaNacimiento: normalizarFecha(
         docente.fecha_nacimiento || docente.fechaNacimiento
       ),
       direccion: docente.direccion || '',
     }));
+
+    setLoadingDocenteDetalle(true);
+    try {
+      const detalle = await getDocenteById(docente.idPersona);
+      if (requestId === docenteDetalleRequestId.current) {
+        setFormData((prev) => ({
+          ...prev,
+          email: obtenerCorreoDocente(detalle) || obtenerCorreoDocente(docente),
+        }));
+      }
+    } catch (error) {
+      if (requestId === docenteDetalleRequestId.current) {
+        toastRef.current?.show({
+          severity: 'error',
+          summary: 'No se pudo cargar el correo del docente',
+          detail: error.message,
+          life: 4000,
+        });
+      }
+    } finally {
+      if (requestId === docenteDetalleRequestId.current) {
+        setLoadingDocenteDetalle(false);
+      }
+    }
   };
 
   const docenteItemTemplate = (docente) => (
@@ -322,6 +362,8 @@ export const UsuarioFormModal = ({
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (name === 'nombreCompleto' || name === 'apellidoCompleto') {
+      docenteDetalleRequestId.current += 1;
+      setLoadingDocenteDetalle(false);
       setDocenteSeleccionado(null);
       setBusquedaDocente('');
     }
@@ -330,6 +372,8 @@ export const UsuarioFormModal = ({
   const handleRolesChange = (e) => {
     setFormData((prev) => ({ ...prev, roles: e.value }));
     if (!e.value.some(esRolDocente)) {
+      docenteDetalleRequestId.current += 1;
+      setLoadingDocenteDetalle(false);
       setDocenteSeleccionado(null);
       setBusquedaDocente('');
       setSugerenciasDocentes([]);
@@ -361,7 +405,7 @@ export const UsuarioFormModal = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (loadingUserDetails) return;
+    if (loadingUserDetails || loadingDocenteDetalle) return;
 
     if (usernameError) {
       toastRef.current?.show({
@@ -429,6 +473,7 @@ export const UsuarioFormModal = ({
             direccion: formData.direccion.trim(),
             username: formData.username.trim(),
             password: formData.password,
+            estado: 1,
             rolesIds: formData.roles.map(Number),
           };
 
@@ -524,7 +569,11 @@ export const UsuarioFormModal = ({
                 setBusquedaDocente(
                   typeof value === 'string' ? value : value?.labelDocente || ''
                 );
-                if (typeof value === 'string') setDocenteSeleccionado(null);
+                if (typeof value === 'string') {
+                  docenteDetalleRequestId.current += 1;
+                  setLoadingDocenteDetalle(false);
+                  setDocenteSeleccionado(null);
+                }
               }}
               onSelect={handleSelectDocente}
               placeholder="Escriba nombre, cédula o código del docente..."
@@ -534,6 +583,12 @@ export const UsuarioFormModal = ({
               className="w-full"
               disabled={loadingSubmit || loadingUserDetails}
             />
+            {loadingDocenteDetalle && (
+              <small className="text-primary block mt-1">
+                <i className="pi pi-spin pi-spinner mr-1" />
+                Cargando correo del docente...
+              </small>
+            )}
           </div>
         )}
 
@@ -673,7 +728,7 @@ export const UsuarioFormModal = ({
             onChange={handleChange}
             placeholder="docente@mined.gob.ni"
             autoComplete="off"
-            disabled={loadingSubmit || loadingUserDetails}
+            disabled={loadingSubmit || loadingUserDetails || loadingDocenteDetalle}
           />
         </div>
 
@@ -703,7 +758,7 @@ export const UsuarioFormModal = ({
             inputId="activo"
             checked={formData.activo}
             onChange={(e) => handleChange({ target: { name: 'activo', value: e.value } })}
-            disabled={loadingSubmit || loadingUserDetails}
+            disabled={!isEditing || loadingSubmit || loadingUserDetails}
           />
           <label htmlFor="activo" className="text-sm font-semibold text-700 cursor-pointer">
             Estado
@@ -724,7 +779,7 @@ export const UsuarioFormModal = ({
             label={loadingSubmit ? 'Procesando...' : isEditing ? 'Guardar Cambios' : 'Registrar'}
             icon={loadingSubmit ? 'pi pi-spin pi-spinner' : 'pi pi-check'}
             loading={loadingSubmit}
-            disabled={loadingUserDetails}
+            disabled={loadingUserDetails || loadingDocenteDetalle}
             className="p-button-success font-bold"
           />
         </div>
