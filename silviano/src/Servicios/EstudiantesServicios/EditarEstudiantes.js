@@ -360,10 +360,7 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate, onCancel }) => {
         return;
       }
 
-      const payload = {
-        ...formValues,
-        ...validacion.payloadFormateado
-      };
+      const payload = validacion.payloadFormateado;
 
       await updateEstudianteService(formValues.idpersona, payload);
 
@@ -634,8 +631,9 @@ const UpdateEstudiante = ({ idPersona, onEstudianteUpdate, onCancel }) => {
                 id="codigoMined"
                 placeholder="Sin código MINED"
                 value={formValues.codigoMined}
+                onChange={(e) => handleChange('codigoMined', e.target.value)}
                 className="w-full"
-                disabled
+                disabled={loading}
               />
             </Campo>
 

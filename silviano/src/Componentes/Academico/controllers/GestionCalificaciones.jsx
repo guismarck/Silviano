@@ -41,6 +41,7 @@ export const GestionCalificaciones = () => {
   const [loadingTabla, setLoadingTabla] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [descargandoPDF, setDescargandoPDF] = useState(false);
+  const [calificacionesGuardadas, setCalificacionesGuardadas] = useState(false);
   const permiteEdicion = Number(estadoEdicion?.permiteEdicion) > 0;
 
   const opcionesAsignaturas = useMemo(() => {
@@ -106,6 +107,7 @@ export const GestionCalificaciones = () => {
     setAsignaturaSeleccionada(null);
     setEstudiantes([]);
     setEstadoEdicion(null);
+    setCalificacionesGuardadas(false);
   }, []);
 
   const handleNivelChange = useCallback(async (e) => {
@@ -140,6 +142,7 @@ export const GestionCalificaciones = () => {
     setAsignaturaSeleccionada(null);
     setEstudiantes([]);
     setEstadoEdicion(null);
+    setCalificacionesGuardadas(false);
     if (!grado) return;
 
     setLoadingCatalogos(true);
@@ -165,6 +168,7 @@ export const GestionCalificaciones = () => {
     setAsignaturaSeleccionada(null);
     setEstudiantes([]);
     setEstadoEdicion(null);
+    setCalificacionesGuardadas(false);
     if (!salon || !gradoSeleccionado) return;
 
     const idDocente = asignacionesRaw[0]?.id_docente;
@@ -202,12 +206,14 @@ export const GestionCalificaciones = () => {
     setAsignaturaSeleccionada(e.value);
     setEstudiantes([]);
     setEstadoEdicion(null);
+    setCalificacionesGuardadas(false);
   }, []);
 
   const handlePeriodoChange = useCallback((e) => {
     setPeriodoSeleccionado(e.value);
     setEstudiantes([]);
     setEstadoEdicion(null);
+    setCalificacionesGuardadas(false);
   }, []);
 
   const esPeriodoCerrado = estadoEdicion !== null && !permiteEdicion;
@@ -227,6 +233,7 @@ export const GestionCalificaciones = () => {
     setLoadingTabla(true);
     setEstadoEdicion(null);
     setEstudiantes([]);
+    setCalificacionesGuardadas(false);
     try {
       const estado = await calificacionesService.getEstadoEdicionPeriodoEvaluativo(
         periodoSeleccionado.idperiodo_evaluativo,
@@ -285,6 +292,7 @@ export const GestionCalificaciones = () => {
    */
   const handleNotaFieldChange = useCallback((idEstudiante, campo, nuevoValor) => {
     if (!permiteEdicion || guardando) return;
+    setCalificacionesGuardadas(false);
     setEstudiantes((prevEstudiantes) =>
       prevEstudiantes.map((est) => {
         if (est.idEstudiante === idEstudiante) {
@@ -388,6 +396,7 @@ export const GestionCalificaciones = () => {
     }
 
     setGuardando(true);
+    setCalificacionesGuardadas(false);
     setEstadoEdicion(null);
     try {
       const estado = await calificacionesService.getEstadoEdicionPeriodoEvaluativo(
@@ -420,6 +429,7 @@ export const GestionCalificaciones = () => {
 
       const resp = await calificacionesService.guardarCalificacionesBatch(payload);
       setEstudiantes((prev) => prev.map((est) => ({ ...est, dirty: false })));
+      setCalificacionesGuardadas(true);
 
       toastRef.current?.show({
         severity: 'success',
@@ -442,6 +452,16 @@ export const GestionCalificaciones = () => {
   // Descarga de PDF Jaspersoft
   const handleDescargarActa = async () => {
     if (!asignaturaSeleccionada || !periodoSeleccionado) return;
+    if (!calificacionesGuardadas || registrosModificados.length > 0) {
+      toastRef.current?.show({
+        severity: 'warn',
+        summary: 'Calificaciones pendientes',
+        detail: 'Guarde las calificaciones antes de generar el acta.',
+        life: 4000
+      });
+      return;
+    }
+
     setDescargandoPDF(true);
     try {
       await calificacionesService.descargarActaCalificacionesPDF(
@@ -706,7 +726,13 @@ export const GestionCalificaciones = () => {
             className="p-button-primary"
             onClick={handleDescargarActa}
             loading={descargandoPDF}
-            disabled={estudiantes.length === 0}
+            disabled={
+              estudiantes.length === 0 ||
+              !calificacionesGuardadas ||
+              registrosModificados.length > 0 ||
+              guardando ||
+              descargandoPDF
+            }
           />
         </div>
       </Card>

@@ -53,10 +53,10 @@ export const MainLayout = () => {
       ],
     },
     {
-      title: 'Gestión de Usuarios',
-      icon: 'bx bx-user',
-      path: '/usuario',
-      roles: ['ADMIN', 'ADMINISTRADOR', 'DIRECTOR'],
+      title: 'Pago',
+      icon: 'bx bx-dollar-circle',
+      roles: ['DIRECTOR', 'CAJERO'],
+      subMenu: [{ label: 'Gestión de Cobro', path: '/gestionCobro' }],
     },
     {
       title: 'Matrículas',
@@ -68,22 +68,22 @@ export const MainLayout = () => {
       ],
     },
     {
-      title: 'Notas',
-      icon: 'bx bx-notepad',
-      roles: ['DOCENTE'],
-      subMenu: [{ label: 'Gestión Calificaciones', path: '/calificaciones' }],
-    },
-    {
-      title: 'Pago',
-      icon: 'bx bx-dollar-circle',
-      roles: ['DIRECTOR', 'CAJERO'],
-      subMenu: [{ label: 'Gestión de Cobro', path: '/gestionCobro' }],
-    },
-    {
       title: 'Reportes',
       icon: 'bx bx-line-chart',
       path: '/reportes',
       roles: ['DIRECTOR', 'SECRETARIA'],
+    },
+    {
+      title: 'Gestión de Usuarios',
+      icon: 'bx bx-user',
+      path: '/usuario',
+      roles: ['ADMIN', 'ADMINISTRADOR', 'DIRECTOR'],
+    },
+    {
+      title: 'Notas',
+      icon: 'bx bx-notepad',
+      roles: ['DOCENTE'],
+      subMenu: [{ label: 'Gestión Calificaciones', path: '/calificaciones' }],
     },
   ];
 

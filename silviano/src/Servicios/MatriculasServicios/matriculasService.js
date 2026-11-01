@@ -96,6 +96,16 @@ export const buscarEstudiantesMatricula = async (search) => {
   return Array.isArray(data) ? data : [];
 };
 
+export const obtenerEstudiantePorCodigo = async (codEstudiante) => {
+  const codigo = String(codEstudiante || '').trim();
+  if (!codigo) throw new Error('El código del estudiante es obligatorio.');
+
+  const { data } = await api.get(
+    `/estudiante-app/estudiantes/codigo/${encodeURIComponent(codigo)}`
+  );
+  return data;
+};
+
 /**
  * Consulta Grados Académicos filtrados por Nivel Educativo.
  */
@@ -288,6 +298,7 @@ export const buscarEstudiantesAuto = async (criterio) => {
           nombres: est.nombres || est.nombre_completo || '',
           apellidos: est.apellidos || est.apellido_completo || '',
           codigoMined,
+          codEstudiante: est.codEstudiante || est.cod_estudiante || est.codigo || '',
           cedulaDni: est.cedulaDni || est.codEstudiante || '',
           alergiasEnfermedades: est.alergiasEnfermedades || 'Ninguna'
         },

@@ -18,6 +18,7 @@ import {
   buscarSolvenciaMatricula,
   obtenerGradosPorNivel,
   obtenerSalonesDisponibles,
+  obtenerEstudiantePorCodigo,
   registrarMatriculaCompleta,
   descargarFichaMatriculaPDF
 } from '../../Servicios/MatriculasServicios/matriculasService';
@@ -93,6 +94,45 @@ const INITIAL_REQUISITOS = Object.freeze({
   dniTutores: false
 });
 
+const mapearTutoresEstudiante = (tutores) =>
+  (Array.isArray(tutores) ? tutores : []).map((relacion, index) => {
+    const tutor = relacion?.tutor || relacion || {};
+    const idPersonaTutor =
+      relacion?.idPersonaTutor ??
+      relacion?.idpersonaTutor ??
+      tutor.idPersonaTutor ??
+      tutor.idPersona ??
+      tutor.idpersona ??
+      tutor.id;
+    const nombreCompleto =
+      tutor.nombreCompleto ||
+      tutor.nombre_completo ||
+      [tutor.nombres, tutor.apellidos].filter(Boolean).join(' ') ||
+      tutor.nombre ||
+      '';
+    const parentesco =
+      typeof relacion?.parentesco === 'object'
+        ? relacion.parentesco.value || relacion.parentesco.nombre || 'PADRE'
+        : relacion?.parentesco || 'PADRE';
+    const rawTutor = {
+      idPersonaTutor: idPersonaTutor ?? '',
+      nombreCompleto,
+      cedulaDni: tutor.cedulaDni || tutor.cedula || tutor.cedula_dni || '',
+      parentesco,
+      telefono: String(
+        tutor.telefono || tutor.telefonoPrincipal || tutor.telefono_principal || ''
+      ).replace(/\D/g, '').slice(0, 8),
+      correo: tutor.correo || tutor.email || tutor.correo_electronico || '',
+      esResponsableFinanciero: relacion?.esResponsableFinanciero ?? true
+    };
+
+    return {
+      key: String(idPersonaTutor ?? `tutor-${index}`),
+      label: `${nombreCompleto || 'Tutor sin nombre'}${parentesco ? ` - ${parentesco}` : ''}`,
+      rawTutor
+    };
+  });
+
 export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
   const toast = useRef(null);
   
@@ -104,6 +144,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
   
   const [loadingEstudianteAuto, setLoadingEstudianteAuto] = useState(false);
   const [loadingTutorAuto, setLoadingTutorAuto] = useState(false);
+  const [loadingTutoresEstudiante, setLoadingTutoresEstudiante] = useState(false);
   const [estadoSolvencia, setEstadoSolvencia] = useState('idle');
   const [pagosMatricula, setPagosMatricula] = useState([]);
   const [errorSolvencia, setErrorSolvencia] = useState('');
@@ -113,6 +154,9 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
 
   const [busquedaTutorInput, setBusquedaTutorInput] = useState('');
   const [sugerenciasTutores, setSugerenciasTutores] = useState([]);
+  const [tutoresEstudiante, setTutoresEstudiante] = useState([]);
+  const [tutorEstudianteSeleccionado, setTutorEstudianteSeleccionado] = useState('');
+  const estudianteDetalleRequestId = useRef(0);
 
   const [listNiveles, setListNiveles] = useState([]);
   const [listGrados, setListGrados] = useState([]);
@@ -193,6 +237,10 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
     setBusquedaTutorInput('');
     setSugerenciasEstudiantes([]);
     setSugerenciasTutores([]);
+    setTutoresEstudiante([]);
+    setTutorEstudianteSeleccionado('');
+    estudianteDetalleRequestId.current += 1;
+    setLoadingTutoresEstudiante(false);
     setEstadoSolvencia('idle');
     setPagosMatricula([]);
     setErrorSolvencia('');
@@ -221,12 +269,19 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
     setLoadingTutorAuto(false);
   };
 
-  const handleSelectEstudiante = (e) => {
+  const handleSelectEstudiante = async (e) => {
     const item = e.value;
     if (!item || typeof item !== 'object') return;
 
     const rawEst = item.rawEstudiante || {};
     const rawTut = item.rawTutor || {};
+    const codigoEstudiante =
+      rawEst.codEstudiante ||
+      rawEst.cod_estudiante ||
+      item.codEstudiante ||
+      item.cod_estudiante ||
+      '';
+    const requestId = ++estudianteDetalleRequestId.current;
 
     setFormData((prev) => ({
       ...prev,
@@ -254,14 +309,61 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
       numRecibo: ''
     }));
 
+    setTutoresEstudiante([]);
+    setTutorEstudianteSeleccionado('');
+    setLoadingTutoresEstudiante(Boolean(codigoEstudiante));
     setBusquedaEstudianteInput(item.labelEstudiante || `${rawEst.codigoMined || ''} - ${rawEst.nombres || ''}`);
     setBusquedaTutorInput(item.labelTutor || `${rawTut.cedulaDni || ''} - ${rawTut.nombreCompleto || ''}`);
 
     toast.current?.show({
       severity: 'info',
-      summary: 'Expediente Vinculado',
-      detail: 'Se han cargado los datos del Estudiante y su Tutor Legal.'
+      summary: 'Estudiante seleccionado',
+      detail: 'Se cargaron los datos del estudiante.'
     });
+
+    if (codigoEstudiante) {
+      try {
+        const detalle = await obtenerEstudiantePorCodigo(codigoEstudiante);
+        if (requestId === estudianteDetalleRequestId.current) {
+          const tutores = mapearTutoresEstudiante(detalle?.tutores);
+          setTutoresEstudiante(tutores);
+          if (tutores.length > 0) {
+            setTutorEstudianteSeleccionado(tutores[0].key);
+            setBusquedaTutorInput(tutores[0].label);
+            setFormData((prev) => ({
+              ...prev,
+              tutor: tutores[0].rawTutor
+            }));
+          }
+        }
+      } catch (error) {
+        if (requestId === estudianteDetalleRequestId.current) {
+          toast.current?.show({
+            severity: 'error',
+            summary: 'No se pudieron cargar los tutores del estudiante',
+            detail:
+              error.response?.data?.message ||
+              error.response?.data?.mensaje ||
+              error.message ||
+              'Ocurrió un error al consultar el expediente.',
+            life: 4000
+          });
+        }
+      } finally {
+        if (requestId === estudianteDetalleRequestId.current) {
+          setLoadingTutoresEstudiante(false);
+        }
+      }
+    }
+  };
+
+  const handleSelectTutorEstudiante = (e) => {
+    const tutorSeleccionado = tutoresEstudiante.find((tutor) => tutor.key === e.value);
+    if (!tutorSeleccionado) return;
+
+    setTutorEstudianteSeleccionado(tutorSeleccionado.key);
+    setBusquedaTutorInput(tutorSeleccionado.label);
+    setFormData((prev) => ({ ...prev, tutor: tutorSeleccionado.rawTutor }));
   };
 
   const handleSelectTutor = (e) => {
@@ -269,6 +371,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
     if (!item || typeof item !== 'object') return;
 
     const rawTutor = item.rawTutor || {};
+    setTutorEstudianteSeleccionado('');
     setFormData((prev) => ({
       ...prev,
       tutor: {
@@ -410,7 +513,6 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
   const validacionesPaso0 = useMemo(() => {
     const nombres = String(formData.estudiante?.nombres ?? '').trim();
     const apellidos = String(formData.estudiante?.apellidos ?? '').trim();
-    const codigoMined = String(formData.estudiante?.codigoMined ?? '').trim();
 
     const nombreCompletoTutor = String(formData.tutor?.nombreCompleto ?? '').trim();
     const telefono = String(formData.tutor?.telefono ?? '').trim();
@@ -419,7 +521,6 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
 
     const esNombresValido = nombres.length > 0 && REGEX_SOLO_LETRAS_ESPANOL.test(nombres);
     const esApellidosValido = apellidos.length > 0 && REGEX_SOLO_LETRAS_ESPANOL.test(apellidos);
-    const esCodigoMinedValido = codigoMined.length > 0;
 
     const esTutorNombreValido = nombreCompletoTutor.length > 0 && REGEX_SOLO_LETRAS_ESPANOL.test(nombreCompletoTutor);
     const esTelefonoValido = /^\d{8}$/.test(telefono);
@@ -429,13 +530,12 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
     const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const esCorreoValido = correo === '' || regexEmail.test(correo);
 
-    const esValido = esNombresValido && esApellidosValido && esCodigoMinedValido &&
+    const esValido = esNombresValido && esApellidosValido &&
                      esTutorNombreValido && esTelefonoValido && esCedulaTutorValida && esCorreoValido;
 
     return {
       esNombresValido,
       esApellidosValido,
-      esCodigoMinedValido,
       esTutorNombreValido,
       esTelefonoValido,
       esCedulaTutorValida,
@@ -640,7 +740,15 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
                 completeMethod={handleCompleteEstudiantes}
                 field="labelEstudiante"
                 itemTemplate={estudianteItemTemplate}
-                onChange={(e) => setBusquedaEstudianteInput(e.value)}
+                onChange={(e) => {
+                  setBusquedaEstudianteInput(e.value);
+                  if (typeof e.value === 'string') {
+                    estudianteDetalleRequestId.current += 1;
+                    setLoadingTutoresEstudiante(false);
+                    setTutoresEstudiante([]);
+                    setTutorEstudianteSeleccionado('');
+                  }
+                }}
                 onSelect={handleSelectEstudiante}
                 placeholder="Escriba código MINED o nombre del alumno..."
                 loading={loadingEstudianteAuto}
@@ -684,7 +792,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
 
             <div className="col-12 col-md-4 mb-3">
               <label htmlFor="codigoMined" className="font-bold block mb-1">
-                Código MINED  <span className="text-red-500">*</span>
+                Código MINED
               </label>
               <InputText
                 id="codigoMined"
@@ -718,6 +826,29 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
                 emptyMessage="No se encontraron tutores con ese criterio"
                 className="w-full"
               />
+              {tutoresEstudiante.length > 0 && (
+                <div className="mt-3">
+                  <label htmlFor="tutorEstudiante" className="font-bold block mb-2 text-700">
+                    Tutores asociados al estudiante
+                  </label>
+                  <Dropdown
+                    id="tutorEstudiante"
+                    value={tutorEstudianteSeleccionado}
+                    options={tutoresEstudiante}
+                    optionLabel="label"
+                    optionValue="key"
+                    onChange={handleSelectTutorEstudiante}
+                    placeholder="Seleccione un tutor asociado"
+                    className="w-full"
+                  />
+                </div>
+              )}
+              {loadingTutoresEstudiante && (
+                <small className="text-primary block mt-2">
+                  <i className="pi pi-spin pi-spinner mr-1" />
+                  Cargando tutores asociados...
+                </small>
+              )}
             </div>
 
             <div className="col-12 col-md-6 mb-3">
@@ -786,7 +917,7 @@ export const MatriculaScreenSteps = ({ onSuccess, onCancel }) => {
             </div>
 
             <div className="col-12 col-md-6 mb-3">
-              <label htmlFor="correo" className="font-bold block mb-1">Correo Electrónico</label>
+              <label htmlFor="correo" className="font-bold block mb-1">Correo Electrónico (opcional)</label>
               <InputText
                 id="correo"
                 name="correo"
