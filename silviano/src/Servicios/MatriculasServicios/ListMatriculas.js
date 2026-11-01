@@ -4,7 +4,10 @@ import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
+import { Dialog } from 'primereact/dialog';
 import { FilterMatchMode } from 'primereact/api';
+import MatriculaScreenSteps from '../../Componentes/matriculas/MatriculaPantallaUnica';
+import VerMatricula from './VerMatriculas';
 
 import {
   getMatriculas,
@@ -12,11 +15,37 @@ import {
   descargarFichaMatriculaPDF
 } from './matriculasService';
 
-export const ListMatriculas = ({ onNuevaMatricula, onViewMatricula, reloadTrigger }) => {
+const obtenerAnioMatricula = (matricula) => {
+  const anio =
+    matricula.anio_lectivo ??
+    matricula.anioLectivo ??
+    matricula.anio_escolar ??
+    matricula.anio ??
+    matricula.periodoLectivo ??
+    matricula.salon?.anioLectivo ??
+    matricula.salon?.anio_lectivo ??
+    matricula.salon?.catalogoSalon?.anioLectivo ??
+    matricula.salon?.catalogoSalon?.anio_lectivo;
+  if (anio !== null && anio !== undefined && /^\d{4}$/.test(String(anio))) {
+    return Number(anio);
+  }
+
+  const fecha =
+    matricula.fecha_transaccion ||
+    matricula.fechaInscripcion ||
+    matricula.fecha_matricula ||
+    matricula.fechaMatricula;
+  const anioFecha = String(fecha || '').match(/^\d{4}/)?.[0];
+  return anioFecha ? Number(anioFecha) : null;
+};
+
+export const ListMatriculas = ({ reloadTrigger }) => {
   const [matriculas, setMatriculas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState(null);
   const [globalFilterValue, setGlobalFilterValue] = useState('');
+  const [mostrarNuevaMatricula, setMostrarNuevaMatricula] = useState(false);
+  const [matriculaSeleccionada, setMatriculaSeleccionada] = useState(null);
 
   const [filters, setFilters] = useState({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
@@ -27,7 +56,7 @@ export const ListMatriculas = ({ onNuevaMatricula, onViewMatricula, reloadTrigge
   const fetchMatriculas = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getMatriculas(100);
+      const data = await getMatriculas();
       setMatriculas(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.current?.show({
@@ -44,6 +73,12 @@ export const ListMatriculas = ({ onNuevaMatricula, onViewMatricula, reloadTrigge
   useEffect(() => {
     fetchMatriculas();
   }, [fetchMatriculas, reloadTrigger]);
+
+  const anioActual = new Date().getFullYear();
+  const matriculasDelAnio = useMemo(
+    () => matriculas.filter((matricula) => obtenerAnioMatricula(matricula) === anioActual),
+    [matriculas, anioActual]
+  );
 
   const onGlobalFilterChange = (e) => {
     const value = e.target.value;
@@ -65,10 +100,22 @@ export const ListMatriculas = ({ onNuevaMatricula, onViewMatricula, reloadTrigge
         life: 3000
       });
     } catch (error) {
+      const errorData = error.response?.data;
+      const mensajeBackend =
+        typeof errorData === 'string'
+          ? errorData
+          : errorData?.detail ||
+            errorData?.mensaje ||
+            errorData?.message ||
+            errorData?.error;
+
       toast.current?.show({
         severity: 'error',
-        summary: 'Error',
-        detail: 'No se logró anular la matrícula seleccionada.',
+        summary: 'No se pudo anular la matrícula',
+        detail:
+          mensajeBackend ||
+          error.message ||
+          'Ocurrió un error al anular la matrícula seleccionada.',
         life: 4000
       });
     }
@@ -155,7 +202,7 @@ export const ListMatriculas = ({ onNuevaMatricula, onViewMatricula, reloadTrigge
           outlined
           severity="info"
           tooltip="Ver Expediente"
-          onClick={() => onViewMatricula && onViewMatricula(rowData)}
+          onClick={() => setMatriculaSeleccionada(rowData)}
         />
         <Button
           icon="pi pi-file-pdf"
@@ -203,11 +250,11 @@ export const ListMatriculas = ({ onNuevaMatricula, onViewMatricula, reloadTrigge
           label="Nueva Matrícula"
           icon="pi pi-plus"
           severity="success"
-          onClick={onNuevaMatricula}
+          onClick={() => setMostrarNuevaMatricula(true)}
         />
       </div>
     );
-  }, [onNuevaMatricula]);
+  }, []);
 
   return (
     <div className="card shadow-1 p-4 surface-card border-round">
@@ -216,11 +263,11 @@ export const ListMatriculas = ({ onNuevaMatricula, onViewMatricula, reloadTrigge
       <h2 className="text-xl font-bold text-800 mb-4">Gestión de Matrículas</h2>
 
       <DataTable
-        value={matriculas}
+        value={matriculasDelAnio}
         loading={loading}
         paginator
-        rows={10}
-        rowsPerPageOptions={[10, 25, 50, 100]}
+        rows={15}
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
         filters={filters}
         globalFilterFields={[
           'estudiante.cod_estudiante',
@@ -231,7 +278,7 @@ export const ListMatriculas = ({ onNuevaMatricula, onViewMatricula, reloadTrigge
         ]}
         header={renderHeader}
         footer={renderFooter}
-        emptyMessage="No se encontraron registros de matrícula."
+        emptyMessage={`No se encontraron matrículas del año ${anioActual}.`}
         responsiveLayout="scroll"
         stripedRows
         className="p-datatable-sm"
@@ -244,6 +291,39 @@ export const ListMatriculas = ({ onNuevaMatricula, onViewMatricula, reloadTrigge
         <Column header="Sección" body={seccionTemplate} sortable style={{ minWidth: '6rem' }} />
         <Column header="Acciones" body={accionesTemplate} exportable={false} style={{ width: '12%', minWidth: '10rem' }} />
       </DataTable>
+
+      <Dialog
+        header="Registro de Nueva Matrícula"
+        visible={mostrarNuevaMatricula}
+        onHide={() => setMostrarNuevaMatricula(false)}
+        style={{ width: '95vw' }}
+        contentStyle={{ maxHeight: '80vh', overflowY: 'auto' }}
+        modal
+        maximizable
+        draggable={false}
+        resizable={false}
+      >
+        <MatriculaScreenSteps
+          onCancel={() => setMostrarNuevaMatricula(false)}
+          onSuccess={fetchMatriculas}
+        />
+      </Dialog>
+
+      <Dialog
+        header="Expediente de Matrícula"
+        visible={Boolean(matriculaSeleccionada)}
+        onHide={() => setMatriculaSeleccionada(null)}
+        style={{ width: '95vw' }}
+        contentStyle={{ maxHeight: '80vh', overflowY: 'auto' }}
+        modal
+        maximizable
+        draggable={false}
+        resizable={false}
+      >
+        {matriculaSeleccionada && (
+          <VerMatricula idmatricula={matriculaSeleccionada.idMatricula} />
+        )}
+      </Dialog>
     </div>
   );
 };

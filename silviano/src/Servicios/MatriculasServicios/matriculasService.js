@@ -46,11 +46,11 @@ export const eliminarMatricula = async (idMatricula) => {
 };
 
 /**
- * Obtiene el detalle de una matrícula por su ID.
+ * Obtiene el detalle completo de una matrícula por su ID.
  * @param {number|string} idMatricula - ID de la matrícula.
  */
 export const getMatriculaById = async (idMatricula) => {
-  const response = await api.get(`/estudiante-app/matriculas/${idMatricula}`);
+  const response = await api.get(`/estudiante-app/matriculas/${idMatricula}/detalle`);
   return response.data;
 };
 

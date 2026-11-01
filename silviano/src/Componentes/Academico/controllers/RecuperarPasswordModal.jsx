@@ -170,7 +170,7 @@ export const RecuperarPasswordOTPModal = ({ visible, onHide, toastRef }) => {
     <Dialog
       header={
         step === 1
-          ? 'Recuperación de Contraseña Docente'
+          ? 'Recuperación de Contraseña'
           : 'Verificación de Código OTP '
       }
       visible={visible}
@@ -190,7 +190,7 @@ export const RecuperarPasswordOTPModal = ({ visible, onHide, toastRef }) => {
 
           <div className="field m-0">
             <label htmlFor="identificacion" className="block text-xs font-semibold text-700 mb-1">
-              Cédula / Código MINED *
+              Cédula / Código Docente *
             </label>
             <InputText
               id="identificacion"

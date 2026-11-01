@@ -53,6 +53,12 @@ export const MainLayout = () => {
       ],
     },
     {
+      title: 'Gestión de Usuarios',
+      icon: 'bx bx-user',
+      path: '/usuario',
+      roles: ['ADMIN', 'ADMINISTRADOR', 'DIRECTOR'],
+    },
+    {
       title: 'Matrículas',
       icon: 'bx bx-edit-alt',
       roles: ['DIRECTOR', 'SECRETARIA'],

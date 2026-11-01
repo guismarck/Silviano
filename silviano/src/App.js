@@ -25,6 +25,7 @@ import './index.css';
 import  Docentes  from './Componentes/Academico/controllers/Docentes';
 import  Tutores  from './Componentes/Academico/controllers/Tutores';
 import {GestionPeriodos} from './Componentes/Academico/controllers/GestionPeriodo'
+import { GestionUsuarios } from './Componentes/Academico/controllers/GestionUsuarios';
 
 
 
@@ -61,11 +62,15 @@ function AppRoutes() {
             <Route path="/registroMatricula" element={<RegistroMatricula />} />
           </Route>
 
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'ADMINISTRADOR', 'DIRECTOR']} />}>
+            <Route path="/usuario" element={<GestionUsuarios />} />
+          </Route>
+
           <Route element={<ProtectedRoute allowedRoles={['DOCENTE']} />}>
             <Route path="/calificaciones" element={<Calificaciones />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={['DIRECTOR', 'CAJERO']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['DIRECTOR', 'SECRETARIA', 'CAJERO']} />}>
             <Route path="/gestionCobro" element={<GestionCobroForm />} />
           </Route>
 
