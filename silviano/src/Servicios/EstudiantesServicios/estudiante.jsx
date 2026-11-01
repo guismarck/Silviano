@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
- 
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
@@ -11,41 +11,83 @@ import { Toast } from 'primereact/toast';
 import { Message } from 'primereact/message';
 import { Divider } from 'primereact/divider';
 import { Card } from 'primereact/card';
- 
+
 import {
     getEstudiantes,
     registrarEstudianteConTutor
 } from '../../Servicios/estudianteService.js';
- 
+
 import { ValidarEstudiante } from '../../Util/validaciones/validacionEstudiante.js';
- 
+
 import {
     formatearCedula,
     extraerFechaDeCedula,
     validarFechaNacimiento,
     validarCedula
 } from '../../Util/validaciones/Validacioncedula.js';
- 
+
 import { generarCodigoEstudiante } from '../../Util/validaciones/CodigoEstudiante';
- 
+
+// Edad mínima (estudiante 5 años, tutor 18 años)
+import {
+    validarEdadEstudiante,
+    validarEdadTutor,
+    EDAD_MINIMA_ESTUDIANTE,
+    EDAD_MINIMA_TUTOR
+} from '../../Util/validaciones/ValidacionEdad.js';
+
+// Búsqueda y reutilización de tutores ya registrados
+import SeleccionarTutorExistente from './SeleccionarTutorExistente.js';
+import useTutoresExistentes from './Usetutoresexistentes.js';
+import { buscarCoincidencias } from '../../Util/validaciones/TutorExistente.js';
+
 import '../../estilosCSS/AgregarEstudiantes.css';
- 
+
+// Valores iniciales del tutor (se reutilizan al volver a "tutor nuevo").
+const TUTOR_INICIAL = {
+    nombre_completo: '',
+    apellido_completo: '',
+    sexo: '',
+    direccion: '',
+    partida_nacimiento: 'no',
+    fecha_nacimiento: null,
+    cedula: '',
+    ocupacion: '',
+    telefonoPrincipal: '',
+    telefonoSecundario: '',
+
+    parentesco: 'Padre',
+    activo: true
+};
+
+// NUEVO: fecha más reciente permitida = hoy menos X años.
+// Los días posteriores quedan deshabilitados en el Calendar.
+const fechaMaximaPorEdad = edadMinima => {
+    const hoy = new Date();
+
+    return new Date(
+        hoy.getFullYear() - edadMinima,
+        hoy.getMonth(),
+        hoy.getDate()
+    );
+};
+
 function AddEstudianteTutor(props) {
     const toast = useRef(null);
- 
+
     const [pasoActivo, setPasoActivo] = useState(0);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
- 
+
     // Códigos ya registrados, para calcular el consecutivo del nuevo código.
     const [codigosExistentes, setCodigosExistentes] = useState([]);
- 
+
     // =========================================================
     // ESTADO DEL ESTUDIANTE
     // Los campos se mantienen planos para facilitar validación
     // y construcción del payload.
     // =========================================================
- 
+
     const [estudianteInfo, setEstudianteInfo] = useState({
         idpersona: '',
         nombre_completo: '',
@@ -59,43 +101,46 @@ function AddEstudianteTutor(props) {
         codigoMined: '',
         estado: true
     });
- 
+
     // =========================================================
     // ESTADO DEL TUTOR
     // Los datos personales están separados de los datos
     // de la relación estudiante-tutor.
     // =========================================================
- 
-    const [tutorInfo, setTutorInfo] = useState({
-        nombre_completo: '',
-        apellido_completo: '',
-        sexo: '',
-        direccion: '',
-        partida_nacimiento: 'no',
-        fecha_nacimiento: null,
-        cedula: '',
-        ocupacion: '',
-        telefonoPrincipal: '',
-        telefonoSecundario: '',
- 
-        parentesco: 'Padre',
-        activo: true
-    });
- 
+
+    const [tutorInfo, setTutorInfo] = useState(TUTOR_INICIAL);
+
+    // =========================================================
+    // TUTOR YA REGISTRADO
+    // null = se registrará un tutor nuevo (flujo de siempre).
+    // Si tiene valor, se reutiliza ese tutor y solo se crea la relación.
+    // =========================================================
+
+    const [tutorExistente, setTutorExistente] = useState(null);
+
+    const {
+        tutores: tutoresRegistrados,
+        cargando: cargandoTutores,
+        error: errorTutores,
+        recargar: recargarTutores
+    } = useTutoresExistentes();
+
+    const bloquearTutor = Boolean(tutorExistente);
+
     // =========================================================
     // OPCIONES DE LOS DROPDOWNS
     // =========================================================
- 
+
     const opcionesSexo = [
         { label: 'Femenino', value: 'F' },
         { label: 'Masculino', value: 'M' }
     ];
- 
+
     const opcionesPartida = [
         { label: 'Sí', value: 'si' },
         { label: 'No', value: 'no' }
     ];
- 
+
     const opcionesParentesco = [
         { label: 'Padre', value: 'Padre' },
         { label: 'Madre', value: 'Madre' },
@@ -104,26 +149,26 @@ function AddEstudianteTutor(props) {
         { label: 'Tutor legal', value: 'Tutor legal' },
         { label: 'Otro', value: 'Otro' }
     ];
- 
+
     const pasos = [
         { label: 'Datos del estudiante' },
         { label: 'Datos del tutor' }
     ];
- 
+
     // =========================================================
     // EFECTO: CARGAR CÓDIGOS EXISTENTES
     // Se usan para calcular el consecutivo (0001, 0002, ...).
     // =========================================================
- 
+
     useEffect(() => {
         const cargarCodigos = async () => {
             try {
                 const respuesta = await getEstudiantes();
- 
+
                 const lista = Array.isArray(respuesta)
                     ? respuesta
                     : respuesta?.content ?? [];
- 
+
                 setCodigosExistentes(
                     lista.map(e => e.codEstudiante).filter(Boolean)
                 );
@@ -134,15 +179,15 @@ function AddEstudianteTutor(props) {
                 );
             }
         };
- 
+
         cargarCodigos();
     }, []);
- 
+
     // =========================================================
     // EFECTO: AUTOGENERAR CÓDIGO DE ESTUDIANTE
     // Se recalcula cuando cambian nombres, apellidos o fecha.
     // =========================================================
- 
+
     useEffect(() => {
         const codigo = generarCodigoEstudiante(
             estudianteInfo.nombre_completo,
@@ -150,7 +195,7 @@ function AddEstudianteTutor(props) {
             estudianteInfo.fecha_nacimiento,
             codigosExistentes
         );
- 
+
         setEstudianteInfo(prev =>
             prev.codEstudiante === codigo
                 ? prev
@@ -162,43 +207,116 @@ function AddEstudianteTutor(props) {
         estudianteInfo.fecha_nacimiento,
         codigosExistentes
     ]);
- 
+
     // =========================================================
     // ACTUALIZAR FORMULARIOS
     // =========================================================
- 
+
     const actualizarEstudiante = (campo, valor) => {
         setEstudianteInfo(prev => ({
             ...prev,
             [campo]: valor
         }));
- 
+
         setErrorMessage('');
     };
- 
+
     const actualizarTutor = (campo, valor) => {
         setTutorInfo(prev => ({
             ...prev,
             [campo]: valor
         }));
- 
+
         setErrorMessage('');
     };
- 
+
+    // =========================================================
+    // SELECCIONAR UN TUTOR YA REGISTRADO / VOLVER A TUTOR NUEVO
+    // El parentesco y "representante legal" pertenecen a la relación
+    // con ESTE estudiante, por eso se conservan y siguen editables.
+    // =========================================================
+
+    const usarTutorNuevo = () => {
+        setTutorExistente(null);
+
+        setTutorInfo(prev => ({
+            ...TUTOR_INICIAL,
+            parentesco: prev.parentesco,
+            activo: prev.activo
+        }));
+
+        setErrorMessage('');
+    };
+
+    const seleccionarTutorExistente = tutor => {
+        if (!tutor) {
+            usarTutorNuevo();
+            return;
+        }
+
+        setTutorExistente(tutor);
+
+        setTutorInfo(prev => ({
+            ...prev,
+            nombre_completo: tutor.nombre_completo,
+            apellido_completo: tutor.apellido_completo,
+            sexo: tutor.sexo,
+            direccion: tutor.direccion,
+            partida_nacimiento: tutor.partida_nacimiento,
+            fecha_nacimiento: tutor.fecha_nacimiento,
+            cedula: tutor.cedula,
+            ocupacion: tutor.ocupacion,
+            telefonoPrincipal: tutor.telefonoPrincipal,
+            telefonoSecundario: tutor.telefonoSecundario
+        }));
+
+        setErrorMessage('');
+    };
+
+    // Coincidencias con tutores registrados mientras se escribe un tutor nuevo.
+    const coincidencias = useMemo(
+        () =>
+            tutorExistente
+                ? { porCedula: null, posibles: [] }
+                : buscarCoincidencias(tutorInfo, tutoresRegistrados),
+        [tutorExistente, tutorInfo, tutoresRegistrados]
+    );
+
     // =========================================================
     // CÉDULA: DAR FORMATO Y OBTENER LA FECHA DE NACIMIENTO
     // Sirve para el estudiante (esTutor = false) y el tutor.
+    //
+    // NUEVO: si la fecha que sale de la cédula no cumple la edad
+    // mínima, se rechaza igual que en el Calendar.
     // =========================================================
- 
+
     const manejarCedula = esTutor => (_campo, valor) => {
         const actualizar = esTutor ? actualizarTutor : actualizarEstudiante;
+        const validarEdad = esTutor ? validarEdadTutor : validarEdadEstudiante;
         const cedula = formatearCedula(valor);
- 
+
         actualizar('cedula', cedula);
- 
+
         const fecha = extraerFechaDeCedula(cedula);
- 
+
         if (fecha) {
+            const errorEdad = validarEdad(fecha);
+
+            if (errorEdad) {
+                actualizar('fecha_nacimiento', null);
+                // Después de actualizar(), porque actualizar() limpia el error.
+                setErrorMessage(errorEdad);
+
+                toast.current?.show({
+                    severity: 'warn',
+                    summary: 'Edad no permitida',
+                    detail: errorEdad,
+                    life: 4000
+                });
+
+                return;
+            }
+
             actualizar('fecha_nacimiento', fecha);
         } else if (cedula.length === 16) {
             setErrorMessage(
@@ -206,26 +324,26 @@ function AddEstudianteTutor(props) {
             );
         }
     };
- 
+
     // =========================================================
     // CONVERTIR FECHA DE PRIME REACT A yyyy-MM-dd
     // Evita desplazamientos de fecha por zona horaria.
     // =========================================================
- 
+
     const convertirFecha = fecha => {
         if (!fecha) return null;
- 
+
         const anio = fecha.getFullYear();
         const mes = String(fecha.getMonth() + 1).padStart(2, '0');
         const dia = String(fecha.getDate()).padStart(2, '0');
- 
+
         return `${anio}-${mes}-${dia}`;
     };
- 
+
     // =========================================================
     // VALIDAR ESTUDIANTE
     // =========================================================
- 
+
     const validarPasoEstudiante = () => {
         const requeridos = [
             ['nombre_completo', 'Nombres del estudiante'],
@@ -234,10 +352,10 @@ function AddEstudianteTutor(props) {
             ['fecha_nacimiento', 'Fecha de nacimiento'],
             ['codEstudiante', 'Código de estudiante']
         ];
- 
+
         for (const [campo, etiqueta] of requeridos) {
             const valor = estudianteInfo[campo];
- 
+
             if (
                 valor === null ||
                 valor === undefined ||
@@ -246,42 +364,68 @@ function AddEstudianteTutor(props) {
                 setErrorMessage(
                     `El campo ${etiqueta} es obligatorio.`
                 );
- 
+
                 return false;
             }
         }
- 
+
         const errorFecha = validarFechaNacimiento(
             estudianteInfo.fecha_nacimiento,
             'del estudiante'
         );
- 
+
         if (errorFecha) {
             setErrorMessage(errorFecha);
             return false;
         }
- 
+
+        // El estudiante debe tener al menos 5 años cumplidos.
+        const errorEdadEstudiante = validarEdadEstudiante(
+            estudianteInfo.fecha_nacimiento
+        );
+
+        if (errorEdadEstudiante) {
+            setErrorMessage(errorEdadEstudiante);
+            return false;
+        }
+
         const errorCedula = validarCedula(
             estudianteInfo.cedula,
             estudianteInfo.fecha_nacimiento,
             'del estudiante'
         );
- 
+
         if (errorCedula) {
             setErrorMessage(errorCedula);
             return false;
         }
- 
+
         setErrorMessage('');
         return true;
     };
- 
+
     // =========================================================
     // VALIDAR TUTOR
-    // El teléfono secundario, la cédula y la fecha son opcionales.
+    // El teléfono secundario y la cédula son opcionales.
+    // La fecha de nacimiento es obligatoria en un tutor nuevo (se valida su edad).
     // =========================================================
- 
+
     const validarPasoTutor = () => {
+        // Con un tutor ya registrado sus datos personales ya están
+        // guardados y no se modifican. Solo se exige el parentesco.
+        if (tutorExistente) {
+            if (
+                !tutorInfo.parentesco ||
+                String(tutorInfo.parentesco).trim() === ''
+            ) {
+                setErrorMessage('El campo Parentesco es obligatorio.');
+                return false;
+            }
+
+            setErrorMessage('');
+            return true;
+        }
+
         const requeridos = [
             ['nombre_completo', 'Nombres del tutor'],
             ['apellido_completo', 'Apellidos del tutor'],
@@ -289,10 +433,10 @@ function AddEstudianteTutor(props) {
             ['telefonoPrincipal', 'Teléfono principal'],
             ['parentesco', 'Parentesco']
         ];
- 
+
         for (const [campo, etiqueta] of requeridos) {
             const valor = tutorInfo[campo];
- 
+
             if (
                 valor === null ||
                 valor === undefined ||
@@ -301,19 +445,19 @@ function AddEstudianteTutor(props) {
                 setErrorMessage(
                     `El campo ${etiqueta} es obligatorio.`
                 );
- 
+
                 return false;
             }
         }
- 
+
         if (!/^[0-9]{8}$/.test(tutorInfo.telefonoPrincipal)) {
             setErrorMessage(
                 'El teléfono principal debe contener exactamente 8 dígitos.'
             );
- 
+
             return false;
         }
- 
+
         if (
             tutorInfo.telefonoSecundario &&
             !/^[0-9]{8}$/.test(tutorInfo.telefonoSecundario)
@@ -321,69 +465,114 @@ function AddEstudianteTutor(props) {
             setErrorMessage(
                 'El teléfono secundario debe contener exactamente 8 dígitos.'
             );
- 
+
             return false;
         }
- 
+
         const errorFecha = validarFechaNacimiento(
             tutorInfo.fecha_nacimiento,
             'del tutor'
         );
- 
+
         if (errorFecha) {
             setErrorMessage(errorFecha);
             return false;
         }
- 
+
+        // El tutor nuevo debe tener al menos 18 años cumplidos.
+        // Para poder comprobarlo, su fecha de nacimiento es obligatoria.
+        const errorEdadTutor = validarEdadTutor(
+            tutorInfo.fecha_nacimiento
+        );
+
+        if (errorEdadTutor) {
+            setErrorMessage(errorEdadTutor);
+            return false;
+        }
+
         const errorCedula = validarCedula(
             tutorInfo.cedula,
             tutorInfo.fecha_nacimiento,
             'del tutor'
         );
- 
+
         if (errorCedula) {
             setErrorMessage(errorCedula);
             return false;
         }
- 
+
+        // No se registra un tutor nuevo si no se pudo comprobar
+        // que ya existe (evita duplicados por un fallo de la consulta).
+        if (cargandoTutores) {
+            setErrorMessage(
+                'Espere a que termine la consulta de tutores registrados.'
+            );
+
+            return false;
+        }
+
+        if (errorTutores) {
+            setErrorMessage(
+                'No se pudo verificar si el tutor ya está registrado. ' +
+                'Pulse "Reintentar" en el buscador de tutores antes de guardar.'
+            );
+
+            return false;
+        }
+
+        // La cédula identifica al tutor; si ya existe, se debe reutilizar.
+        if (coincidencias.porCedula) {
+            const t = coincidencias.porCedula;
+
+            setErrorMessage(
+                `Ya existe un tutor con la cédula ${t.cedula}: ${t.etiqueta}. ` +
+                'Selecciónelo en el buscador para reutilizarlo.'
+            );
+
+            return false;
+        }
+
         setErrorMessage('');
         return true;
     };
- 
+
     // =========================================================
     // NAVEGACIÓN ENTRE LOS PASOS
     // =========================================================
- 
+
     const siguientePaso = () => {
         if (!validarPasoEstudiante()) return;
- 
+
         setPasoActivo(1);
         setErrorMessage('');
     };
- 
+
     const pasoAnterior = () => {
         setPasoActivo(0);
         setErrorMessage('');
     };
- 
+
     const seleccionarPaso = e => {
         if (e.index === 0) {
             setPasoActivo(0);
             setErrorMessage('');
             return;
         }
- 
+
         if (e.index === 1 && validarPasoEstudiante()) {
             setPasoActivo(1);
         }
     };
- 
+
     // =========================================================
     // CONSTRUIR JSON COMPUESTO
     // Los campos opcionales vacíos se envían como null
     // (evita choques con columnas únicas como la cédula).
+    //
+    // Si hay un tutor ya registrado, se agrega su "idpersona".
+    // Sin tutor seleccionado el JSON queda exactamente igual que antes.
     // =========================================================
- 
+
     const construirPayload = () => {
         const estudiante = {
             ...estudianteInfo,
@@ -391,8 +580,11 @@ function AddEstudianteTutor(props) {
                 estudianteInfo.fecha_nacimiento
             )
         };
- 
+
         const tutor = {
+            ...(tutorExistente
+                ? { idpersona: tutorExistente.idpersona }
+                : {}),
             nombre_completo: tutorInfo.nombre_completo.trim(),
             apellido_completo: tutorInfo.apellido_completo.trim(),
             sexo: tutorInfo.sexo || null,
@@ -407,7 +599,7 @@ function AddEstudianteTutor(props) {
             telefonoSecundario:
                 tutorInfo.telefonoSecundario.trim() || null
         };
- 
+
         return {
             estudiante,
             tutores: [
@@ -419,99 +611,101 @@ function AddEstudianteTutor(props) {
             ]
         };
     };
- 
+
     // =========================================================
     // GUARDAR ESTUDIANTE Y TUTOR
     // Una sola llamada con el JSON compuesto { estudiante, tutores },
     // que es el formato que ya acepta el backend.
     // =========================================================
- 
+
     const guardarRegistro = async e => {
         e.preventDefault();
- 
+
         if (loading) return;
- 
+
         if (!validarPasoEstudiante()) {
             setPasoActivo(0);
             return;
         }
- 
+
         if (!validarPasoTutor()) {
             setPasoActivo(1);
             return;
         }
- 
+
         setLoading(true);
         setErrorMessage('');
- 
+
         try {
             const payload = construirPayload();
- 
+
             // Valida y sanea los datos del estudiante.
             const validacion = ValidarEstudiante(payload.estudiante);
- 
+
             if (!validacion.esValido) {
                 throw new Error(validacion.error);
             }
- 
+
             await registrarEstudianteConTutor({
                 estudiante: validacion.payloadFormateado,
                 tutores: payload.tutores
             });
- 
+
             toast.current?.show({
                 severity: 'success',
                 summary: 'Registro completado',
-                detail:
-                    'El estudiante y el tutor fueron registrados correctamente.',
+                detail: tutorExistente
+                    ? 'El estudiante fue registrado y asociado al tutor existente.'
+                    : 'El estudiante y el tutor fueron registrados correctamente.',
                 life: 4000
             });
- 
+
             // Recargar listado de estudiantes si el padre
             // del componente proporciona esta función.
             if (props.cargarEstudiante) {
                 await props.cargarEstudiante();
             }
- 
+
             // Cerrar el modal si se proporcionó el callback.
             if (props.setEstudiantedoAdd) {
                 props.setEstudiantedoAdd(false);
             }
- 
+
         } catch (error) {
             console.error(
                 'Error al registrar estudiante y tutor:',
                 error
             );
- 
+
             const respuestaError = error.response?.data;
- 
+
             const mensaje =
                 typeof respuestaError === 'string'
                     ? respuestaError
                     : respuestaError?.mensaje ||
+                    respuestaError?.detail ||
                     respuestaError?.message ||
                     error.message ||
                     'No fue posible completar el registro.';
- 
+
             setErrorMessage(mensaje);
- 
+
             toast.current?.show({
                 severity: 'error',
                 summary: 'Error al guardar',
                 detail: mensaje,
                 life: 6000
             });
- 
+
         } finally {
             setLoading(false);
         }
     };
- 
+
     // =========================================================
     // COMPONENTE AUXILIAR: INPUT DE TEXTO
     // =========================================================
- 
+
     const campoTexto = (
         etiqueta,
         campo,
@@ -525,12 +719,12 @@ function AddEstudianteTutor(props) {
         >
             <label htmlFor={campo}>
                 {etiqueta}
- 
+
                 {opciones.obligatorio && (
                     <span className="registro-obligatorio"> *</span>
                 )}
             </label>
- 
+
             <InputText
                 id={campo}
                 value={valor ?? ''}
@@ -550,25 +744,26 @@ function AddEstudianteTutor(props) {
             />
         </div>
     );
- 
+
     // =========================================================
     // COMPONENTE AUXILIAR: DROPDOWN
     // =========================================================
- 
+
     const campoDropdown = (
         etiqueta,
         campo,
         valor,
         actualizar,
         opciones,
-        placeholder = 'Seleccione'
+        placeholder = 'Seleccione',
+        deshabilitado = false
     ) => (
         <div
             className="col-12 md:col-6 registro-campo"
             key={campo}
         >
             <label htmlFor={campo}>{etiqueta}</label>
- 
+
             <Dropdown
                 inputId={campo}
                 value={valor}
@@ -580,70 +775,111 @@ function AddEstudianteTutor(props) {
                 }
                 placeholder={placeholder}
                 className="w-full"
-                disabled={loading}
+                disabled={loading || deshabilitado}
             />
         </div>
     );
- 
+
     // =========================================================
     // COMPONENTE AUXILIAR: FECHA
+    //
+    // NUEVO: valida la edad apenas se elige (o se escribe) la fecha.
+    //  - edadMinima: años mínimos; el Calendar deshabilita los días
+    //    posteriores a "hoy menos edadMinima años".
+    //  - validarEdad: función (fecha) => mensaje | null. Si devuelve
+    //    un mensaje, la fecha se rechaza y se muestra el error.
     // =========================================================
- 
+
     const campoFecha = (
         etiqueta,
         campo,
         valor,
         actualizar,
-        obligatorio = false
-    ) => (
-        <div
-            className="col-12 md:col-6 registro-campo"
-            key={campo}
-        >
-            <label htmlFor={campo}>
-                {etiqueta}
- 
-                {obligatorio && (
-                    <span className="registro-obligatorio"> *</span>
-                )}
-            </label>
- 
-            <Calendar
-                inputId={campo}
-                value={valor}
-                onChange={e =>
-                    actualizar(campo, e.value)
+        obligatorio = false,
+        deshabilitado = false,
+        edadMinima = 0,
+        validarEdad = null
+    ) => {
+        const maxima =
+            edadMinima > 0
+                ? fechaMaximaPorEdad(edadMinima)
+                : new Date();
+
+        const manejarCambio = e => {
+            const nueva = e.value;
+
+            if (nueva && validarEdad) {
+                const errorEdad = validarEdad(nueva);
+
+                if (errorEdad) {
+                    // Rechaza la fecha.
+                    actualizar(campo, null);
+
+                    // Después, porque actualizar() limpia el error.
+                    setErrorMessage(errorEdad);
+
+                    toast.current?.show({
+                        severity: 'warn',
+                        summary: 'Edad no permitida',
+                        detail: errorEdad,
+                        life: 4000
+                    });
+
+                    return;
                 }
-                dateFormat="dd/mm/yy"
-                showIcon
-                maxDate={new Date()}
-                className="w-full"
-                inputClassName="w-full"
-                placeholder="dd/mm/aaaa"
-                disabled={loading}
-            />
-        </div>
-    );
- 
+            }
+
+            actualizar(campo, nueva);
+        };
+
+        return (
+            <div
+                className="col-12 md:col-6 registro-campo"
+                key={campo}
+            >
+                <label htmlFor={campo}>
+                    {etiqueta}
+
+                    {obligatorio && (
+                        <span className="registro-obligatorio"> *</span>
+                    )}
+                </label>
+
+                <Calendar
+                    inputId={campo}
+                    value={valor}
+                    onChange={manejarCambio}
+                    dateFormat="dd/mm/yy"
+                    showIcon
+                    maxDate={maxima}
+                    className="w-full"
+                    inputClassName="w-full"
+                    placeholder="dd/mm/aaaa"
+                    disabled={loading || deshabilitado}
+                />
+            </div>
+        );
+    };
+
     // =========================================================
     // COMPONENTE AUXILIAR: DIRECCIÓN
     // =========================================================
- 
+
     const campoDireccion = (esTutor = false) => {
         const valor = esTutor
             ? tutorInfo.direccion
             : estudianteInfo.direccion;
- 
+
         const actualizar = esTutor
             ? actualizarTutor
             : actualizarEstudiante;
- 
+
         return (
             <div className="col-12 registro-campo">
                 <label>
                     Dirección {esTutor ? 'del tutor' : 'del estudiante'}
                 </label>
- 
+
                 <InputTextarea
                     value={valor}
                     onChange={e =>
@@ -653,22 +889,22 @@ function AddEstudianteTutor(props) {
                     autoResize
                     className="w-full"
                     placeholder="Dirección exacta"
-                    disabled={loading}
+                    disabled={loading || (esTutor && bloquearTutor)}
                 />
             </div>
         );
     };
- 
+
     // =========================================================
     // RENDER DEL FORMULARIO
     // =========================================================
- 
+
     return (
         <div className="registro-estudiante p-3">
             <Toast ref={toast} />
- 
+
             {/* CABECERA */}
- 
+
             <header className="registro-cabecera flex align-items-center gap-3 mb-3">
                 <div
                     className="registro-logo flex align-items-center justify-content-center bg-primary text-white border-round-md"
@@ -679,35 +915,35 @@ function AddEstudianteTutor(props) {
                 >
                     <i className="pi pi-graduation-cap text-xl" />
                 </div>
- 
+
                 <div>
                     <h3 className="registro-colegio m-0 text-900 font-bold">
                         Colegio Silviano Matamoros
                     </h3>
- 
+
                     <p className="registro-subtitulo m-0 text-600 text-sm">
                         Sistema de gestión académica
                     </p>
                 </div>
             </header>
- 
+
             <div className="registro-migas text-500 text-xs mb-2">
                 Inicio / Estudiantes / Nuevo registro
             </div>
- 
+
             <Divider className="registro-separador my-2" />
- 
+
             <h2 className="registro-extitulo text-xl font-bold text-900 mb-1">
                 Registro de estudiante y tutor
             </h2>
- 
+
             <p className="registro-descripcion text-600 text-sm mb-3">
                 Complete los datos del estudiante y su tutor
                 para realizar el registro.
             </p>
- 
+
             {/* STEPS */}
- 
+
             <div className="registro-steps mb-4">
                 <Steps
                     model={pasos}
@@ -716,9 +952,9 @@ function AddEstudianteTutor(props) {
                     readOnly={false}
                 />
             </div>
- 
+
             {/* MENSAJE DE VALIDACIÓN */}
- 
+
             {errorMessage && (
                 <Message
                     severity="error"
@@ -726,21 +962,21 @@ function AddEstudianteTutor(props) {
                     className="registro-error w-full mb-3"
                 />
             )}
- 
+
             <form onSubmit={guardarRegistro}>
- 
+
                 {/* =================================================
                     PASO 1: ESTUDIANTE
                 ================================================= */}
- 
+
                 {pasoActivo === 0 && (
                     <Card className="shadow-1 border-round-lg p-2 surface-card">
                         <h3 className="registro-paso-titulo text-md font-bold text-primary mb-3">
                             Paso 1. Datos del estudiante
                         </h3>
- 
+
                         <div className="formgrid grid">
- 
+
                             {campoTexto(
                                 'Nombres',
                                 'nombre_completo',
@@ -751,7 +987,7 @@ function AddEstudianteTutor(props) {
                                     maxLength: 100
                                 }
                             )}
- 
+
                             {campoTexto(
                                 'Apellidos',
                                 'apellido_completo',
@@ -762,7 +998,7 @@ function AddEstudianteTutor(props) {
                                     maxLength: 100
                                 }
                             )}
- 
+
                             {campoDropdown(
                                 'Sexo *',
                                 'sexo',
@@ -771,7 +1007,7 @@ function AddEstudianteTutor(props) {
                                 opcionesSexo,
                                 'Seleccione sexo'
                             )}
- 
+
                             {campoTexto(
                                 'Cédula',
                                 'cedula',
@@ -782,15 +1018,18 @@ function AddEstudianteTutor(props) {
                                     placeholder: '000-000000-0000X'
                                 }
                             )}
- 
+
                             {campoFecha(
                                 'Fecha de nacimiento',
                                 'fecha_nacimiento',
                                 estudianteInfo.fecha_nacimiento,
                                 actualizarEstudiante,
-                                true
+                                true,
+                                false,
+                                EDAD_MINIMA_ESTUDIANTE,
+                                validarEdadEstudiante
                             )}
- 
+
                             {campoTexto(
                                 'Código de estudiante',
                                 'codEstudiante',
@@ -803,7 +1042,7 @@ function AddEstudianteTutor(props) {
                                     placeholder: 'Se genera automáticamente'
                                 }
                             )}
- 
+
                             {campoDropdown(
                                 'Partida de nacimiento',
                                 'partida_nacimiento',
@@ -811,7 +1050,7 @@ function AddEstudianteTutor(props) {
                                 actualizarEstudiante,
                                 opcionesPartida
                             )}
- 
+
                             {campoTexto(
                                 'Código MINED',
                                 'codigoMined',
@@ -821,19 +1060,15 @@ function AddEstudianteTutor(props) {
                                     maxLength: 30
                                 }
                             )}
- 
+
                             {campoDireccion(false)}
- 
+
                         </div>
- 
-                        {/* ESTADO DEL ESTUDIANTE */}
- 
-                       
- 
+
                         {/* BOTONES DEL PASO 1 */}
- 
+
                         <div className="registro-acciones flex justify-content-between align-items-center mt-4 pt-3 border-top-1 surface-border">
- 
+
                             <Button
                                 type="button"
                                 label="Cancelar"
@@ -843,7 +1078,7 @@ function AddEstudianteTutor(props) {
                                 }
                                 disabled={loading}
                             />
- 
+
                             <Button
                                 type="button"
                                 label="Siguiente"
@@ -853,28 +1088,131 @@ function AddEstudianteTutor(props) {
                                 onClick={siguientePaso}
                                 disabled={loading}
                             />
- 
+
                         </div>
                     </Card>
                 )}
- 
+
                 {/* =================================================
                     PASO 2: TUTOR
                 ================================================= */}
- 
+
                 {pasoActivo === 1 && (
                     <Card className="shadow-1 border-round-lg p-2 surface-card">
                         <h3 className="registro-paso-titulo text-md font-bold text-primary mb-3">
                             Paso 2. Datos del tutor
                         </h3>
- 
+
                         <p className="registro-paso-descripcion text-600 text-xs mb-3">
                             Complete la información personal,
                             de contacto y el parentesco del tutor.
                         </p>
- 
+
+                        {/* BUSCADOR DE TUTOR YA REGISTRADO */}
+
+                        <div className="registro-campo mb-3">
+                            <label htmlFor="buscarTutorExistente">
+                                ¿El tutor ya está registrado? Búsquelo por
+                                nombre, apellido, cédula o teléfono
+                            </label>
+
+                            <SeleccionarTutorExistente
+                                tutores={tutoresRegistrados}
+                                cargando={cargandoTutores}
+                                error={errorTutores}
+                                onRecargar={recargarTutores}
+                                valor={tutorExistente?.idpersona ?? null}
+                                onSeleccionar={seleccionarTutorExistente}
+                                disabled={loading}
+                            />
+                        </div>
+
+                        {tutorExistente && (
+                            <div className="surface-100 border-round p-3 mb-3">
+                                <Message
+                                    severity="info"
+                                    className="w-full mb-2"
+                                    text={
+                                        `Se reutilizará el tutor ya registrado: ${tutorExistente.etiqueta}. ` +
+                                        'Sus datos no se modifican; solo se creará la relación con este estudiante.'
+                                    }
+                                />
+
+                                <Button
+                                    type="button"
+                                    size="small"
+                                    outlined
+                                    severity="secondary"
+                                    icon="pi pi-user-plus"
+                                    label="Registrar un tutor nuevo"
+                                    onClick={usarTutorNuevo}
+                                    disabled={loading}
+                                />
+                            </div>
+                        )}
+
+                        {!tutorExistente &&
+                            (coincidencias.porCedula ||
+                                coincidencias.posibles.length > 0) && (
+                            <div className="surface-100 border-round p-3 mb-3">
+                                {coincidencias.porCedula && (
+                                    <div className="mb-2">
+                                        <Message
+                                            severity="warn"
+                                            className="w-full mb-2"
+                                            text={
+                                                `Ya existe un tutor con esta cédula: ${coincidencias.porCedula.etiqueta}. ` +
+                                                'No se puede registrar otro igual.'
+                                            }
+                                        />
+
+                                        <Button
+                                            type="button"
+                                            size="small"
+                                            icon="pi pi-user-plus"
+                                            label="Usar este tutor"
+                                            onClick={() =>
+                                                seleccionarTutorExistente(
+                                                    coincidencias.porCedula
+                                                )
+                                            }
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                )}
+
+                                {coincidencias.posibles.length > 0 && (
+                                    <>
+                                        <small className="block mb-2">
+                                            Posibles coincidencias (mismo nombre
+                                            o teléfono). Si es la misma persona,
+                                            reutilícela:
+                                        </small>
+
+                                        <div className="flex flex-wrap gap-2">
+                                            {coincidencias.posibles.map(t => (
+                                                <Button
+                                                    key={t.idpersona}
+                                                    type="button"
+                                                    size="small"
+                                                    outlined
+                                                    severity="secondary"
+                                                    icon="pi pi-user"
+                                                    label={`${t.etiqueta} · ${t.telefonoPrincipal || t.cedula || ''}`}
+                                                    onClick={() =>
+                                                        seleccionarTutorExistente(t)
+                                                    }
+                                                    disabled={loading}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
                         <div className="formgrid grid">
- 
+
                             {campoTexto(
                                 'Nombres del tutor',
                                 'nombre_completo',
@@ -882,10 +1220,11 @@ function AddEstudianteTutor(props) {
                                 actualizarTutor,
                                 {
                                     obligatorio: true,
-                                    maxLength: 100
+                                    maxLength: 100,
+                                    disabled: bloquearTutor
                                 }
                             )}
- 
+
                             {campoTexto(
                                 'Apellidos del tutor',
                                 'apellido_completo',
@@ -893,10 +1232,11 @@ function AddEstudianteTutor(props) {
                                 actualizarTutor,
                                 {
                                     obligatorio: true,
-                                    maxLength: 100
+                                    maxLength: 100,
+                                    disabled: bloquearTutor
                                 }
                             )}
- 
+
                             {campoTexto(
                                 'Cédula del tutor',
                                 'cedula',
@@ -904,26 +1244,32 @@ function AddEstudianteTutor(props) {
                                 manejarCedula(true),
                                 {
                                     maxLength: 16,
-                                    placeholder: '000-000000-0000X'
+                                    placeholder: '000-000000-0000X',
+                                    disabled: bloquearTutor
                                 }
                             )}
- 
+
                             {campoDropdown(
                                 'Sexo del tutor',
                                 'sexo',
                                 tutorInfo.sexo,
                                 actualizarTutor,
                                 opcionesSexo,
-                                'Seleccione sexo'
+                                'Seleccione sexo',
+                                bloquearTutor
                             )}
- 
+
                             {campoFecha(
                                 'Fecha de nacimiento del tutor',
                                 'fecha_nacimiento',
                                 tutorInfo.fecha_nacimiento,
-                                actualizarTutor
+                                actualizarTutor,
+                                !bloquearTutor,
+                                bloquearTutor,
+                                EDAD_MINIMA_TUTOR,
+                                validarEdadTutor
                             )}
- 
+
                             {campoTexto(
                                 'Ocupación',
                                 'ocupacion',
@@ -931,10 +1277,11 @@ function AddEstudianteTutor(props) {
                                 actualizarTutor,
                                 {
                                     obligatorio: true,
-                                    maxLength: 45
+                                    maxLength: 45,
+                                    disabled: bloquearTutor
                                 }
                             )}
- 
+
                             {campoTexto(
                                 'Teléfono principal',
                                 'telefonoPrincipal',
@@ -944,10 +1291,11 @@ function AddEstudianteTutor(props) {
                                     obligatorio: true,
                                     maxLength: 8,
                                     digitos: true,
-                                    placeholder: '88881234'
+                                    placeholder: '88881234',
+                                    disabled: bloquearTutor
                                 }
                             )}
- 
+
                             {campoTexto(
                                 'Teléfono secundario',
                                 'telefonoSecundario',
@@ -956,10 +1304,11 @@ function AddEstudianteTutor(props) {
                                 {
                                     maxLength: 8,
                                     digitos: true,
-                                    placeholder: 'Opcional'
+                                    placeholder: 'Opcional',
+                                    disabled: bloquearTutor
                                 }
                             )}
- 
+
                             {campoDropdown(
                                 'Parentesco *',
                                 'parentesco',
@@ -967,18 +1316,18 @@ function AddEstudianteTutor(props) {
                                 actualizarTutor,
                                 opcionesParentesco
                             )}
- 
+
                             {campoDireccion(true)}
- 
+
                         </div>
- 
+
                         {/* REPRESENTANTE LEGAL */}
- 
+
                         <div className="registro-estado flex align-items-center justify-content-between mt-3 p-2 surface-ground border-round">
                             <span className="registro-estado-texto font-semibold">
                                 Representante legal
                             </span>
- 
+
                             <div className="registro-estado-activo flex align-items-center gap-2">
                                 <InputSwitch
                                     checked={Boolean(
@@ -992,7 +1341,7 @@ function AddEstudianteTutor(props) {
                                     }
                                     disabled={loading}
                                 />
- 
+
                                 <span className="font-bold">
                                     {tutorInfo.activo
                                         ? 'Sí'
@@ -1000,11 +1349,11 @@ function AddEstudianteTutor(props) {
                                 </span>
                             </div>
                         </div>
- 
+
                         {/* BOTONES DEL PASO 2 */}
- 
+
                         <div className="registro-acciones flex justify-content-between align-items-center mt-4 pt-3 border-top-1 surface-border">
- 
+
                             <Button
                                 type="button"
                                 label="Anterior"
@@ -1013,7 +1362,7 @@ function AddEstudianteTutor(props) {
                                 onClick={pasoAnterior}
                                 disabled={loading}
                             />
- 
+
                             <Button
                                 type="submit"
                                 label={
@@ -1026,15 +1375,14 @@ function AddEstudianteTutor(props) {
                                 loading={loading}
                                 disabled={loading}
                             />
- 
+
                         </div>
                     </Card>
                 )}
- 
+
             </form>
         </div>
     );
 }
- 
+
 export default AddEstudianteTutor;
- 

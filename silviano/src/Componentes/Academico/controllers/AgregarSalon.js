@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 
 import { InputText } from 'primereact/inputtext';
@@ -13,6 +12,27 @@ import {
     ServicioValidado
 } from '../../../Servicios/SalonServicios/salonService';
 
+// Opciones fijas de turno. Lo que se guarda en la base de datos es "value".
+const OPCIONES_TURNO = [
+    { label: 'MAÑANA', value: 'MAÑANA' },
+    { label: 'TARDE', value: 'TARDE' }
+];
+
+// Estado inicial del formulario (también se usa para limpiarlo).
+const SALON_INICIAL = {
+    idGrado: null,
+    idcatalogo_salon: null,
+    turno: null,
+    seccion: '',
+    anioLectivo: ''
+};
+
+// Un valor es "vacío" si es null, undefined o texto en blanco.
+const estaVacio = valor =>
+    valor === null ||
+    valor === undefined ||
+    String(valor).trim() === '';
+
 export default function Addsalon({
     cargarSalon,
     setEstudiantedoAdd
@@ -26,13 +46,7 @@ export default function Addsalon({
     const [cargandoCatalogos, setCargandoCatalogos] = useState(true);
     const [errorMessage, setErrorMessage] = useState('');
 
-    const [salonInfo, setSalonInfo] = useState({
-        idGrado: '',
-        idcatalogo_salon: '',
-        turno: '',
-        seccion: '',
-        anioLectivo: ''
-    });
+    const [salonInfo, setSalonInfo] = useState(SALON_INICIAL);
 
     // Cargar grados y catálogo de salones
     useEffect(() => {
@@ -116,15 +130,21 @@ export default function Addsalon({
         setErrorMessage('');
 
         if (
-            salonInfo.idGrado == null ||
-            salonInfo.idcatalogo_salon == null ||
-            !salonInfo.turno.trim() ||
-            !salonInfo.seccion.trim() ||
-            !salonInfo.anioLectivo.trim()
+            estaVacio(salonInfo.idGrado) ||
+            estaVacio(salonInfo.idcatalogo_salon) ||
+            estaVacio(salonInfo.turno) ||
+            estaVacio(salonInfo.seccion) ||
+            estaVacio(salonInfo.anioLectivo)
         ) {
             setErrorMessage(
                 'Todos los campos marcados con * son obligatorios.'
             );
+            return;
+        }
+
+        // El turno solo puede ser una de las opciones del Dropdown.
+        if (!OPCIONES_TURNO.some(op => op.value === salonInfo.turno)) {
+            setErrorMessage('Seleccione un turno válido: Mañana o Tarde.');
             return;
         }
 
@@ -135,7 +155,7 @@ export default function Addsalon({
             catalogoSalon: {
                 idCatalogoSalon: Number(salonInfo.idcatalogo_salon)
             },
-            turno: salonInfo.turno.trim(),
+            turno: salonInfo.turno,
             seccion: salonInfo.seccion.trim(),
             anioLectivo: salonInfo.anioLectivo.trim()
         };
@@ -152,13 +172,7 @@ export default function Addsalon({
                 life: 3000
             });
 
-            setSalonInfo({
-                idGrado: null,
-                idcatalogo_salon: null,
-                turno: '',
-                seccion: '',
-                anioLectivo: ''
-            });
+            setSalonInfo(SALON_INICIAL);
 
             if (typeof cargarSalon === 'function') {
                 await cargarSalon();
@@ -171,14 +185,14 @@ export default function Addsalon({
         } catch (error) {
             // 1. Extraemos los datos del error que envía Axios
             const errorData = error.response?.data;
-            
+
             // 2. Accedemos directamente a las propiedades de tu JSON (detail o title)
             const mensaje =
-                errorData?.detail || 
-                errorData?.title || 
-                error.message || 
+                errorData?.detail ||
+                errorData?.title ||
+                error.message ||
                 'No se pudo registrar el salón.';
-            
+
             console.error('Error al registrar salón:', mensaje);
             setErrorMessage(mensaje);
 
@@ -197,7 +211,7 @@ export default function Addsalon({
         <div className="p-3">
             <Toast ref={toast} />
 
-            <h2 className="text-xl mb-4">Asignar  salón</h2>
+            <h2 className="text-xl mb-4">Asignar salón</h2>
 
             {errorMessage && (
                 <Message
@@ -263,20 +277,23 @@ export default function Addsalon({
                             />
                         </div>
 
-                        {/* Turno */}
+                        {/* Turno: Mañana o Tarde */}
                         <div className="col-12 md:col-6">
                             <label className="block mb-2">
                                 Turno *
                             </label>
 
-                            <InputText
+                            <Dropdown
                                 value={salonInfo.turno}
+                                options={OPCIONES_TURNO}
+                                optionLabel="label"
+                                optionValue="value"
                                 onChange={(e) =>
-                                    handleChange('turno', e.target.value)
+                                    handleChange('turno', e.value)
                                 }
-                                placeholder="Ej. Matutino"
+                                placeholder="Seleccione un turno"
                                 className="w-full"
-                                maxLength={30}
+                                showClear
                                 disabled={loading}
                             />
                         </div>

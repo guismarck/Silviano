@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -18,15 +18,81 @@ import {
 import Addsalon from './AgregarSalon.js';
 import EditarSalon from './EditarCatalogoSalon.js';
 
+// Minúsculas y sin tildes: "Mañana" -> "manana", "Sección" -> "seccion".
+const normalizar = (texto = '') =>
+    String(texto ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+const TURNOS = ['manana', 'tarde'];
+
+/**
+ * Reglas de la búsqueda:
+ *  1. Una sola letra (ej. "A")  -> solo secciones iguales a esa letra.
+ *  2. Empieza como un turno ("ma", "man", "mañana", "ta", "tarde")
+ *                               -> solo ese turno.
+ *  3. Cualquier otro texto      -> coincide en grado, salón, sección,
+ *                                  turno o año lectivo.
+ */
+const filtrarSalones = (salones, busqueda) => {
+    const q = normalizar(busqueda);
+
+    if (!q) return salones;
+
+    // 1. Una sola letra: sección exacta.
+    if (q.length === 1 && /[a-z]/.test(q)) {
+        return salones.filter(
+            salon => normalizar(salon.seccion) === q
+        );
+    }
+
+    // 2. Turno (mínimo 2 letras para no confundirlo con una sección).
+    const esTurno =
+        q.length >= 2 && TURNOS.some(turno => turno.startsWith(q));
+
+    if (esTurno) {
+        return salones.filter(salon =>
+            normalizar(salon.turno).startsWith(q)
+        );
+    }
+
+    // 3. Búsqueda general.
+    return salones.filter(salon =>
+        [
+            salon.nombreGrado,
+            salon.nombreCatalogo,
+            salon.seccion,
+            salon.turno,
+            salon.anioLectivo
+        ].some(campo => normalizar(campo).includes(q))
+    );
+};
+
 export default function ListarCatalogoSalon() {
     const toast = useRef(null);
 
     const [salones, setSalones] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    const [busqueda, setBusqueda] = useState('');
+    const [primeraFila, setPrimeraFila] = useState(0);
+
     const [showAddMode, setShowAddMode] = useState(false);
     const [showEditMode, setShowEditMode] = useState(false);
     const [selectedSalonId, setSelectedSalonId] = useState(null);
+
+    // Salones que se muestran según lo escrito en la barra de búsqueda.
+    const salonesFiltrados = useMemo(
+        () => filtrarSalones(salones, busqueda),
+        [salones, busqueda]
+    );
+
+    const cambiarBusqueda = valor => {
+        setBusqueda(valor);
+        setPrimeraFila(0); // vuelve a la página 1 al buscar
+    };
 
     // Cargar salones y relacionarlos con sus nombres
     const cargarSalones = useCallback(async () => {
@@ -209,6 +275,85 @@ export default function ListarCatalogoSalon() {
         </div>
     );
 
+    // =========================================================
+    // BARRA DE BÚSQUEDA GRANDE (centrada, estilo buscador)
+    // =========================================================
+
+    const barraBusqueda = (
+        <div className="flex flex-column align-items-center mb-4">
+            <div
+                style={{
+                    position: 'relative',
+                    width: '100%',
+                    maxWidth: '720px'
+                }}
+            >
+                <i
+                    className="pi pi-search"
+                    style={{
+                        position: 'absolute',
+                        left: '1rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: '#6b7280',
+                        fontSize: '1.1rem',
+                        pointerEvents: 'none'
+                    }}
+                />
+
+                <input
+                    type="text"
+                    value={busqueda}
+                    onChange={e => cambiarBusqueda(e.target.value)}
+                    placeholder="Buscar por sección (A), turno (Mañana o Tarde), grado o salón..."
+                    aria-label="Buscar salones"
+                    style={{
+                        width: '100%',
+                        height: '3.25rem',
+                        padding: '0 3rem 0 2.75rem',
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '10px',
+                        outline: 'none',
+                        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.08)',
+                        boxSizing: 'border-box'
+                    }}
+                />
+
+                {busqueda && (
+                    <button
+                        type="button"
+                        onClick={() => cambiarBusqueda('')}
+                        aria-label="Limpiar búsqueda"
+                        style={{
+                            position: 'absolute',
+                            right: '0.75rem',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            color: '#6b7280',
+                            fontSize: '1rem'
+                        }}
+                    >
+                        <i className="pi pi-times" />
+                    </button>
+                )}
+            </div>
+
+            {busqueda.trim() && (
+                <small className="mt-2 text-600">
+                    {salonesFiltrados.length}{' '}
+                    {salonesFiltrados.length === 1
+                        ? 'resultado'
+                        : 'resultados'}
+                </small>
+            )}
+        </div>
+    );
+
     const header = (
         <div className="flex flex-wrap justify-content-between align-items-center gap-3">
             <span className="text-lg font-semibold">
@@ -230,15 +375,23 @@ export default function ListarCatalogoSalon() {
             <ConfirmDialog />
 
             <Card title="Lista de salones">
+                {barraBusqueda}
+
                 <DataTable
-                    value={salones}
+                    value={salonesFiltrados}
                     paginator
                     rows={10}
+                    first={primeraFila}
+                    onPage={e => setPrimeraFila(e.first)}
                     dataKey="idSalon"
                     stripedRows
                     loading={loading}
                     header={header}
-                    emptyMessage="No se encontraron salones registrados."
+                    emptyMessage={
+                        busqueda.trim()
+                            ? 'No se encontraron salones con esa búsqueda.'
+                            : 'No se encontraron salones registrados.'
+                    }
                     responsiveLayout="scroll"
                 >
                     <Column
